@@ -6,6 +6,8 @@ defmodule CredoCoreNode.Application do
   def start(_type, _args) do
     import Supervisor.Spec
 
+    setup_mnesia()
+
     # Define workers and child supervisors to be supervised
     children = [
       # Start the endpoint when the application starts
@@ -25,5 +27,13 @@ defmodule CredoCoreNode.Application do
   def config_change(changed, _new, removed) do
     CredoCoreNodeWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  # TODO: move Mnesia initialization logic to a separate module/folder
+  defp setup_mnesia() do
+    :mnesia.create_schema([node()])
+    :mnesia.start()
+
+    :mnesia.create_table(:known_nodes, [attributes: [:url, :last_active_at]])
   end
 end
