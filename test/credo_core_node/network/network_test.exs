@@ -32,7 +32,7 @@ defmodule CredoCoreNode.NetworkTest do
 
     test "delete_known_node/1 deletes the known_node" do
       known_node = known_node_fixture()
-      assert :ok = Network.delete_known_node(known_node)
+      assert {:ok, known_node} = Network.delete_known_node(known_node)
       assert Network.get_known_node(known_node.url) == nil
     end
   end
