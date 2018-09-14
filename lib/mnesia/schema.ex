@@ -4,6 +4,13 @@ defmodule Mnesia.Schema do
     table_name = Keyword.get(opts, :table_name, [])
 
     quote do
+      module_name =
+        __MODULE__
+        |> Module.split
+        |> tl
+        |> Enum.join(".")
+
+      defmodule :"Elixir.Mnesia.Schemas.#{module_name}", do: nil
       defstruct unquote(fields)
 
       def table_name, do: unquote(table_name)

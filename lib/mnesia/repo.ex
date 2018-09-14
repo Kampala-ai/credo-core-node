@@ -1,9 +1,27 @@
 defmodule Mnesia.Repo do
+  defp env(), do: Application.get_env(:credo_core_node, :env)
+
+  def setup() do
+    :mnesia.create_schema([node()])
+    :mnesia.start()
+
+    with {:ok, list} <- :application.get_key(:credo_core_node, :modules) do
+      modules =
+        list
+        |> Enum.filter(& &1 |> Module.split() |> Enum.take(2) |> Enum.join(".") == "Mnesia.Schemas")
+        |> Enum.map(& &1 |> Atom.to_string() |> String.replace("Mnesia.Schemas", "CredoCoreNode") |> String.to_atom())
+
+      Enum.each(modules, fn module ->
+        :mnesia.create_table(:"#{module.table_name()}_#{env()}", [attributes: module.fields()])
+      end)
+    end
+  end
+
   @doc """
   Returns the list of records.
   """
   def list(schema) do
-    schema.table_name
+    :"#{schema.table_name()}_#{env()}"
     |> :mnesia.dirty_all_keys()
     |> Enum.map(fn key -> get(schema, key) end)
   end
@@ -12,7 +30,7 @@ defmodule Mnesia.Repo do
   Gets a single record.
   """
   def get(schema, key) do
-    found = :mnesia.dirty_read(schema.table_name, key)
+    found = :mnesia.dirty_read(:"#{schema.table_name()}_#{env()}", key)
 
     if length(found) > 0 do
       found
@@ -30,7 +48,7 @@ defmodule Mnesia.Repo do
     :ok =
       schema.fields
       |> Enum.map(fn field -> attrs[field] end)
-      |> List.insert_at(0, schema.table_name)
+      |> List.insert_at(0, :"#{schema.table_name()}_#{env()}")
       |> List.to_tuple()
       |> :mnesia.dirty_write()
 
@@ -50,6 +68,9 @@ defmodule Mnesia.Repo do
     :ok =
       record
       |> Mnesia.Table.name()
+      |> Atom.to_string()
+      |> Kernel.<>("_#{env()}")
+      |> String.to_atom()
       |> :mnesia.dirty_delete(key)
 
     {:ok, record}
