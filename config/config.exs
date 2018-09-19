@@ -12,8 +12,7 @@ config :credo_core_node, CredoCoreNodeWeb.Endpoint,
   render_errors: [view: CredoCoreNodeWeb.ErrorView, accepts: ~w(json)],
   pubsub: [name: CredoCoreNode.PubSub, adapter: Phoenix.PubSub.PG2]
 
-config :credo_core_node,
-  env: Mix.env
+config :credo_core_node, Mnesia, table_suffix: System.get_env("MNESIA_TABLE_SUFFIX") || Mix.env()
 
 # Configures Elixir's Logger
 config :logger, :console,

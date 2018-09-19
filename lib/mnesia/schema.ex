@@ -6,11 +6,11 @@ defmodule Mnesia.Schema do
     quote do
       module_name =
         __MODULE__
-        |> Module.split
+        |> Module.split()
         |> tl
         |> Enum.join(".")
 
-      defmodule :"Elixir.Mnesia.Schemas.#{module_name}", do: nil
+      defmodule(:"Elixir.Mnesia.Schemas.#{module_name}", do: nil)
       defstruct unquote(fields)
 
       def table_name, do: unquote(table_name)

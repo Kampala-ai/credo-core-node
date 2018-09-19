@@ -38,7 +38,8 @@ defmodule CredoCoreNode.Mixfile do
       {:cowboy, "~> 1.0"},
       {:phoenix_gen_socket_client, "~> 2.1.1"},
       {:websocket_client, "~> 1.2"},
-      {:poison, "~> 3.1.0"}
+      {:poison, "~> 3.1.0"},
+      {:hackney, "~> 1.9"}
     ]
   end
 end

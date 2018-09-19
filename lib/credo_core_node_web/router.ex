@@ -9,5 +9,6 @@ defmodule CredoCoreNodeWeb.Router do
     pipe_through(:api)
 
     resources("/known_nodes", KnownNodeController, only: [:index])
+    resources("/connections", ConnectionController, only: [:create])
   end
 end

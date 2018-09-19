@@ -8,12 +8,13 @@ defmodule CredoCoreNode.Application do
 
     Mnesia.Repo.setup()
 
+    CredoCoreNode.Network.setup_seed_nodes()
+
     # Define workers and child supervisors to be supervised
     children = [
       # Start the endpoint when the application starts
-      supervisor(CredoCoreNodeWeb.Endpoint, [])
-      # Start your own worker by calling: CredoCoreNode.Worker.start_link(arg1, arg2, arg3)
-      # worker(CredoCoreNode.Worker, [arg1, arg2, arg3]),
+      supervisor(CredoCoreNodeWeb.Endpoint, []),
+      worker(CredoCoreNode.Workers.ConnectionManager, [60_000])
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

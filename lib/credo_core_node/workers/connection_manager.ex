@@ -1,0 +1,91 @@
+defmodule CredoCoreNode.Workers.ConnectionManager do
+  use GenServer
+
+  require Logger
+
+  import Process, only: [send_after: 3]
+
+  alias CredoCoreNode.Network
+
+  def start_link(interval \\ 60_000) do
+    GenServer.start_link(__MODULE__, interval, name: __MODULE__)
+  end
+
+  def init(interval) do
+    Logger.info("Initializing the connection manager...")
+
+    handle_info(:manage_connections, interval)
+
+    {:ok, interval}
+  end
+
+  def handle_info(:manage_connections, interval) do
+    schedule_manage_connections(interval)
+
+    connect()
+
+    {:noreply, interval}
+  end
+
+  defp connect(10), do: nil
+
+  defp connect(num_attempts \\ 0) do
+    unless Network.fully_connected?() do
+      known_node =
+        Network.list_known_nodes()
+        |> Enum.filter(&(!Network.connected_to?(&1.ip)))
+        |> Enum.random()
+
+      port = Application.get_env(:credo_core_node, CredoCoreNode.Network)[:node_connection_port]
+      url = "#{Network.request_url(known_node.ip)}/node_api/v1/connections"
+      headers = Network.node_request_headers()
+
+      Logger.info(
+        "Connection attempt ##{num_attempts + 1}. Trying to connect to #{known_node.ip}:#{port}"
+      )
+
+      case :hackney.request(:post, url, headers, "", [:with_body, pool: false]) do
+        {:ok, 201, _headers, _body} ->
+          Logger.info("Responded with `created`")
+          Network.write_connection(ip: known_node.ip, is_active: true, failed_attempts_count: 0)
+          Network.retrieve_known_nodes(known_node.ip)
+
+        {:ok, 204, _headers, _body} ->
+          Logger.info("Responded with `no_content`")
+          Network.write_connection(ip: known_node.ip, is_active: true, failed_attempts_count: 0)
+          Network.retrieve_known_nodes(known_node.ip)
+
+        {:ok, 409, _headers, _body} ->
+          Logger.info("Responded with `conflict`")
+          Network.retrieve_known_nodes(known_node.ip)
+
+        _ ->
+          Logger.info("No response or incorrect response")
+
+          case Network.get_connection(known_node.ip) do
+            nil ->
+              Network.write_connection(ip: known_node.ip, is_active: false, failed_attempts_count: 1)
+
+            connection ->
+              failed_attempts_count = connection.failed_attempts_count + 1
+
+              Network.write_connection(
+                ip: known_node.ip,
+                is_active: false,
+                failed_attempts_count: failed_attempts_count
+              )
+
+              if !known_node.is_seed && failed_attempts_count >= 5 do
+                Network.delete_known_node(known_node.ip)
+              end
+          end
+      end
+
+      connect(num_attempts + 1)
+    end
+  end
+
+  defp schedule_manage_connections(interval) do
+    send_after(self(), :manage_connections, interval)
+  end
+end

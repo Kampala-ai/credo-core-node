@@ -7,8 +7,7 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.KnownNodeView do
 
   def render("show.json", %{known_node: known_node}) do
     %{
-      url: known_node.url,
-      last_active_at: known_node.last_active_at
+      ip: known_node.ip
     }
   end
 end
