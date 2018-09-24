@@ -6,5 +6,9 @@ config :credo_core_node, CredoCoreNodeWeb.Endpoint,
   http: [port: 4001],
   server: false
 
+config :credo_core_node, CredoCoreNode.Network,
+  seed_node_ips: ["localhost"],
+  node_connection_port: 4001
+
 # Print only warnings and errors during test
 config :logger, level: :warn
