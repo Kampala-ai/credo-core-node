@@ -20,7 +20,7 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.ConnectionController do
 
     cond do
       Network.connected_to?(remote_ip) ->
-        send_resp(conn, :no_content, "")
+        send_resp(conn, :found, "")
 
       Network.fully_connected?() ->
         send_resp(conn, :conflict, "")
