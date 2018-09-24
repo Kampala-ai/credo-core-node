@@ -4,6 +4,7 @@ defmodule CredoCoreNode.NetworkTest do
   alias CredoCoreNode.Network
 
   describe "known_nodes" do
+    @describetag table_name: :known_nodes
     @attrs [ip: "0.0.0.0"]
 
     def known_node_fixture(attrs \\ @attrs) do
