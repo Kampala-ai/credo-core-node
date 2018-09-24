@@ -79,6 +79,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
 
               if !known_node.is_seed && failed_attempts_count >= 5 do
                 Network.delete_known_node(known_node.ip)
+                Network.connection(known_node.ip)
               end
           end
       end
