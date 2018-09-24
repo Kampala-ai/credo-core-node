@@ -14,6 +14,8 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
   def init(interval) do
     Logger.info("Initializing the connection manager...")
 
+    CredoCoreNode.Network.setup_seed_nodes()
+
     handle_info(:manage_connections, interval)
 
     {:ok, interval}

@@ -8,8 +8,6 @@ defmodule CredoCoreNode.Application do
 
     Mnesia.Repo.setup()
 
-    CredoCoreNode.Network.setup_seed_nodes()
-
     # Define workers and child supervisors to be supervised
     children = [
       # Start the endpoint when the application starts
