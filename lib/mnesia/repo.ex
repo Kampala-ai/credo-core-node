@@ -53,6 +53,11 @@ defmodule Mnesia.Repo do
   @doc """
   Creates/updates a record.
   """
+  def write(schema, %{} = record), do: write(schema, Map.to_list(record))
+
+  @doc """
+  Creates/updates a record.
+  """
   def write(schema, attrs) do
     :ok =
       schema.fields
