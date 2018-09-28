@@ -47,6 +47,8 @@ defmodule CredoCoreNode.Pool do
     s = String.slice(sig, 64, 64)
     signed_rlp = PendingTransaction.signed_rlp(unsigned_rlp, v, r, s)
     signed_hash = :libsecp256k1.sha256(signed_rlp)
-    {:ok, struct(PendingTransaction, [hash: Base.encode16(signed_hash), v: v, r: r, s: s] ++ attrs)}
+
+    {:ok,
+     struct(PendingTransaction, [hash: Base.encode16(signed_hash), v: v, r: r, s: s] ++ attrs)}
   end
 end

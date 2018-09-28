@@ -66,7 +66,11 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
 
           case Network.get_connection(known_node.ip) do
             nil ->
-              Network.write_connection(ip: known_node.ip, is_active: false, failed_attempts_count: 1)
+              Network.write_connection(
+                ip: known_node.ip,
+                is_active: false,
+                failed_attempts_count: 1
+              )
 
             connection ->
               failed_attempts_count = connection.failed_attempts_count + 1

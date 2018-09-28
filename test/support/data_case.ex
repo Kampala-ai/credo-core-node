@@ -18,11 +18,11 @@ defmodule CredoCoreNodeWeb.DataCase do
     table_suffix = Application.get_env(:credo_core_node, Mnesia)[:table_suffix]
     table_name = :"#{tags[:table_name]}_#{table_suffix}"
 
-    on_exit fn ->
+    on_exit(fn ->
       table_name
       |> :mnesia.dirty_all_keys()
-      |> Enum.each(&(:mnesia.dirty_delete(table_name, &1)))
-    end
+      |> Enum.each(&:mnesia.dirty_delete(table_name, &1))
+    end)
 
     :ok
   end

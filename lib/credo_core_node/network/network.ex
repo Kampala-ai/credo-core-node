@@ -9,6 +9,7 @@ defmodule CredoCoreNode.Network do
 
   defp seed_node_ips(),
     do: Application.get_env(:credo_core_node, CredoCoreNode.Network)[:seed_node_ips]
+
   defp node_connection_port(),
     do: Application.get_env(:credo_core_node, CredoCoreNode.Network)[:node_connection_port]
 
@@ -68,6 +69,7 @@ defmodule CredoCoreNode.Network do
   """
   def retrieve_known_nodes(ip) do
     url = "#{request_url(ip)}/node_api/v1/known_nodes"
+
     case :hackney.request(:get, url, node_request_headers(), "", [:with_body, pool: false]) do
       {:ok, 200, _headers, body} ->
         known_nodes = Poison.decode!(body)["data"]
@@ -77,6 +79,7 @@ defmodule CredoCoreNode.Network do
             write_known_node(ip: known_node["ip"], is_seed: false)
           end
         end)
+
       _ ->
         write_connection(ip: ip, is_active: false)
     end
