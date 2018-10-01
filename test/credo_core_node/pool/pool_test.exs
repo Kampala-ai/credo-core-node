@@ -30,10 +30,10 @@ defmodule CredoCoreNode.PoolTest do
 
     test "write_pending_transaction/1 with valid data creates a pending_transaction" do
       assert {:ok, pending_transaction} =
-        @private_key
-        |> Pool.generate_pending_transaction(@attrs)
-        |> elem(1)
-        |> Pool.write_pending_transaction()
+               @private_key
+               |> Pool.generate_pending_transaction(@attrs)
+               |> elem(1)
+               |> Pool.write_pending_transaction()
 
       assert pending_transaction.nonce == @attrs[:nonce]
       assert pending_transaction.to == @attrs[:to]

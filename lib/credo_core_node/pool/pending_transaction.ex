@@ -5,24 +5,52 @@ defmodule CredoCoreNode.Pool.PendingTransaction do
 
   alias CredoCoreNode.Pool.PendingTransaction
 
-  def unsigned_rlp(%PendingTransaction{} = tx) do
-    ExRLP.encode(tx.nonce, encoding: :binary) <>
-      ExRLP.encode(tx.to, encoding: :binary) <>
-      ExRLP.encode(tx.value, encoding: :binary) <>
-      ExRLP.encode(tx.fee, encoding: :binary) <> ExRLP.encode(tx.data, encoding: :binary)
+  def hash(%PendingTransaction{} = tx, options \\ []) do
+    hash =
+      tx
+      |> ExRLP.encode(type: options[:type], encoding: :hex)
+      |> :libsecp256k1.sha256()
+
+    if options[:encoding] == :hex, do: Base.encode16(hash), else: hash
   end
 
-  def unsigned_rlp(tx), do: unsigned_rlp(struct(PendingTransaction, tx))
+  def to_list(%PendingTransaction{} = tx, options \\ []) do
+    base_values = [tx.nonce, tx.to, tx.value, tx.fee, tx.data]
+    sig_values = [tx.v, tx.r, tx.s]
 
-  def signed_rlp(unsigned_rlp, v, r, s) do
-    unsigned_rlp <>
-      ExRLP.encode(v, encoding: :binary) <>
-      ExRLP.encode(r, encoding: :binary) <> ExRLP.encode(s, encoding: :binary)
+    case options[:type] do
+      :signed_rlp -> base_values ++ sig_values
+      :unsigned_rlp -> base_values
+      _ -> [tx.hash] ++ base_values ++ sig_values
+    end
   end
 
-  def signed_rlp(%PendingTransaction{} = tx) do
-    signed_rlp(unsigned_rlp(tx), tx.v, tx.r, tx.s)
+  def from_list(list, options) do
+    case options[:type] do
+      :signed_rlp ->
+        tx = from_list([nil] ++ list)
+
+        Map.merge(tx, %{
+          hash: hash(tx, type: :signed_rlp, encoding: :hex),
+          nonce: :binary.decode_unsigned(tx.nonce),
+          value: :binary.decode_unsigned(tx.value),
+          fee: :binary.decode_unsigned(tx.fee),
+          v: :binary.decode_unsigned(tx.v)
+        })
+
+      _ ->
+        from_list(list)
+    end
   end
 
-  def signed_rlp(tx), do: signed_rlp(struct(PendingTransaction, tx))
+  defimpl ExRLP.Encode, for: __MODULE__ do
+    alias ExRLP.Encode
+
+    @spec encode(PendingTransaction.t(), keyword()) :: binary()
+    def encode(tx, options \\ []) do
+      tx
+      |> PendingTransaction.to_list(options)
+      |> Encode.encode(options)
+    end
+  end
 end

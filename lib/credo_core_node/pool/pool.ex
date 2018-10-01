@@ -39,16 +39,16 @@ defmodule CredoCoreNode.Pool do
   Generates a pending_transaction.
   """
   def generate_pending_transaction(private_key, attrs) do
-    unsigned_rlp = PendingTransaction.unsigned_rlp(attrs)
-    unsigned_hash = :libsecp256k1.sha256(unsigned_rlp)
-    {:ok, sig, v} = :libsecp256k1.ecdsa_sign_compact(unsigned_hash, private_key, :default, <<>>)
-    sig = Base.encode16(sig)
-    r = String.slice(sig, 0, 64)
-    s = String.slice(sig, 64, 64)
-    signed_rlp = PendingTransaction.signed_rlp(unsigned_rlp, v, r, s)
-    signed_hash = :libsecp256k1.sha256(signed_rlp)
+    tx = struct(PendingTransaction, attrs)
 
-    {:ok,
-     struct(PendingTransaction, [hash: Base.encode16(signed_hash), v: v, r: r, s: s] ++ attrs)}
+    {:ok, sig, v} =
+      tx
+      |> PendingTransaction.hash(type: :unsigned_rlp)
+      |> :libsecp256k1.ecdsa_sign_compact(private_key, :default, <<>>)
+
+    sig = Base.encode16(sig)
+    tx = Map.merge(tx, %{v: v, r: String.slice(sig, 0, 64), s: String.slice(sig, 64, 64)})
+
+    {:ok, Map.put(tx, :hash, PendingTransaction.hash(tx, type: :signed_rlp, encoding: :hex))}
   end
 end
