@@ -36,7 +36,8 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
       known_node =
         Network.list_known_nodes()
         |> Enum.filter(&(!Network.connected_to?(&1.ip)))
-        |> Enum.random()
+        |> Enum.sort(&(Network.updated_at(&1.ip) <= Network.updated_at(&2.ip)))
+        |> List.first()
 
       port = Application.get_env(:credo_core_node, CredoCoreNode.Network)[:node_connection_port]
       url = "#{Network.request_url(known_node.ip)}/node_api/v1/connections"

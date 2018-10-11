@@ -103,7 +103,7 @@ defmodule CredoCoreNode.Network do
   Creates/updates a connection.
   """
   def write_connection(attrs) do
-    Repo.write(Connection, attrs)
+    Repo.write(Connection, attrs ++ [updated_at: :os.system_time(:millisecond)])
   end
 
   @doc """
@@ -127,6 +127,13 @@ defmodule CredoCoreNode.Network do
     case get_connection(ip) do
       nil -> false
       connection -> connection.is_active
+    end
+  end
+
+  def updated_at(ip) do
+    case get_connection(ip) do
+      nil -> false
+      connection -> connection.updated_at
     end
   end
 end
