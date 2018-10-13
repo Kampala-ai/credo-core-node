@@ -32,6 +32,17 @@ defmodule CredoCoreNode.Validation do
   end
 
   @doc """
+  Deletes a validator when it has an insufficient stake.
+
+  This should be called after a validator has been slashed and after a security deposit withdrawal has occurred.
+  """
+  def delete_validator_for_insufficient_stake(validator) do
+    if validator.stake_amount < @min_stake_size do
+      delete_validator(validator)
+    end
+  end
+
+  @doc """
   Returns whether the current node is already a validator.
   """
   def is_validator?() do
