@@ -92,4 +92,59 @@ defmodule CredoCoreNode.SecurityDeposits do
     |> validate_security_deposits()
     |> process_security_deposits()
   end
+
+  @doc """
+  Checks whether a transaction is a security deposit withdrawal
+  """
+  def is_security_deposit_withdrawal(tx) do
+    tx.from
+    |> Validation.get_validator()
+    |> is_nil
+    |> Kernel.not
+  end
+
+  @doc """
+  Returns security deposit withdrawals from a list of transactions
+  """
+  def get_security_deposit_withdrawals(txs) do
+    txs
+    |> Enum.filter(& is_security_deposit_withdrawal(&1))
+  end
+
+  @doc """
+  Validates the security deposit withdrawal size.
+  """
+  def validate_security_deposit_withdrawal_size(tx, validator) do
+    tx.value <= validator.stake_amount
+  end
+
+  @doc """
+  Validates the security deposit withdrawal timelock.
+  """
+  def validate_security_deposit_withdrawal_timelock(tx, validator) do
+    timelock = Poison.decode!(tx.data)["timelock"]
+
+    tx.block_number <= validator.timelock # TODO Add function for getting a transaction's block number.
+  end
+
+  @doc """
+  Gets validate the security deposit timelock.
+  """
+  def get_invalid_security_deposit_withdrawals(txs) do
+    txs
+    |> Enum.filter(& !validate_security_deposit_withdrawal_size(&1, Validation.get_validator(&1.address)))
+    |> Enum.filter(& !validate_security_deposit_withdrawal_timelock(&1, Validation.get_validator(&1.address)))
+  end
+
+  @doc """
+  Checks whether a list of transactions contains any invalid security deposit withdrawals
+
+  Used to reject a block that has invalid security deposit withdrawals.
+  """
+  def maybe_validate_security_deposit_withdrawals(txs) do
+    txs
+    |> get_security_deposit_withdrawals()
+    |> get_invalid_security_deposit_withdrawals()
+    |> Enum.any?
+  end
 end
