@@ -3,12 +3,39 @@ defmodule CredoCoreNode.Validation do
   The Validation context.
   """
 
+  alias CredoCoreNode.Network
+  alias CredoCoreNode.Pool
   alias CredoCoreNode.Validation.Validator
   alias CredoCoreNode.Validation.Vote
 
   alias Mnesia.Repo
 
   @min_stake_size 10000
+  @default_nonce 0
+  @default_tx_fee 0.1
+
+  @doc """
+  Makes a node become a validator.
+
+  amount is the security deposit size
+  to is the address in which the security deposit will be held
+  timelock is the duration that the security deposit will be deposited for
+  """
+  def become_validator(amount, private_key, to, timelock \\ nil) do
+    unless is_validator?() do
+      construct_security_deposit(amount, private_key, to, timelock)
+      |> broadcast_security_deposit()
+    end
+  end
+
+  @doc """
+  Returns whether the current node is already a validator.
+  """
+  def is_validator?() do
+    list_validators()
+    |> Enum.filter(& &1.is_self)
+    |> Enum.any?
+  end
 
   @doc """
   Returns the list of validators.
@@ -64,5 +91,25 @@ defmodule CredoCoreNode.Validation do
   """
   def delete_vote(%Vote{} = vote) do
     Repo.delete(vote)
+  end
+
+  @doc """
+  Constructs a security deposit transaction.
+  """
+  def construct_security_deposit(amount, private_key, to, timelock \\ nil) do
+    ip = Network.get_current_ip()
+
+    attrs = %{nonce: @default_nonce, to: to, value: amount , fee: @default_tx_fee, data: "{tx_type: 'security_deposit', node_ip: #{ip}, timelock: #{timelock}}"}
+
+    {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
+
+    tx
+  end
+
+  @doc """
+  Broadcasts a security deposit transaction.
+  """
+  def broadcast_security_deposit(tx) do
+    Pool.propagate_pending_transaction(tx)
   end
 end
