@@ -51,4 +51,20 @@ defmodule CredoCoreNode.Pool do
 
     {:ok, Map.put(tx, :hash, PendingTransaction.hash(tx, type: :signed_rlp, encoding: :hex))}
   end
+
+  @doc """
+  Propagates a pending_transaction.
+  """
+  def propagate_pending_transaction(tx) do
+    # TODO: temporary REST implementation, to be replaced with channels-based one later
+    headers = Network.node_request_headers()
+    {:ok, body} = Poison.encode(%{hash: tx.hash, body: ExRLP.encode(tx, encoding: :hex)})
+
+    Network.list_connections()
+    |> Enum.filter(&(&1.is_active))
+    |> Enum.map(&("#{Network.request_url(&1.ip)}/node_api/v1/temp/pending_transactions"))
+    |> Enum.each(&(:hackney.request(:post, &1, headers, body, [:with_body, pool: false])))
+
+    {:ok, tx}
+  end
 end
