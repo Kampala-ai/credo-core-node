@@ -30,6 +30,16 @@ defmodule CredoCoreNode.Network do
   end
 
   @doc """
+  Returns the current node's ip
+  """
+  def get_current_ip do
+    {:ok, ifs} = :inet.getif()
+    [ip | _] = Enum.map(ifs, fn {ip, _broadaddr, _mask} -> ip end)
+
+    ip
+  end
+
+  @doc """
   Returns the list of known_nodes.
   """
   def list_known_nodes() do
