@@ -14,6 +14,10 @@ defmodule CredoCoreNode.Validation do
   @default_nonce 0
   @default_tx_fee 0.1
 
+  # TODO: specify actual timelock limits.
+  @min_timelock 1
+  @max_timelock 100
+
   @doc """
   Makes a node become a validator.
 
@@ -47,8 +51,8 @@ defmodule CredoCoreNode.Validation do
   @doc """
   Gets a single validator.
   """
-  def get_validator(hash) do
-    Repo.get(Validator, hash)
+  def get_validator(address) do
+    Repo.get(Validator, address)
   end
 
   @doc """
@@ -75,8 +79,8 @@ defmodule CredoCoreNode.Validation do
   @doc """
   Gets a single vote.
   """
-  def get_vote(hash) do
-    Repo.get(Vote, hash)
+  def get_vote(block_hash) do
+    Repo.get(Vote, block_hash)
   end
 
   @doc """
@@ -99,7 +103,7 @@ defmodule CredoCoreNode.Validation do
   def construct_security_deposit(amount, private_key, to, timelock \\ nil) do
     ip = Network.get_current_ip()
 
-    attrs = %{nonce: @default_nonce, to: to, value: amount , fee: @default_tx_fee, data: "{tx_type: 'security_deposit', node_ip: #{ip}, timelock: #{timelock}}"}
+    attrs = %{nonce: @default_nonce, to: to, value: amount , fee: @default_tx_fee, data: "{\"tx_type\" : \"security_deposit\", \"node_ip\" : \"#{ip}\", \"timelock\": \"#{timelock}\"}"}
 
     {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
 
@@ -111,5 +115,71 @@ defmodule CredoCoreNode.Validation do
   """
   def broadcast_security_deposit(tx) do
     Pool.propagate_pending_transaction(tx)
+  end
+
+  @doc """
+  Checks whether a transaction is a security deposit
+  """
+  def is_security_deposit(tx) do
+    Poison.decode!(tx.data)["tx_type"] == "security_deposit"
+  end
+
+  @doc """
+  Returns a list of valid security deposits
+  """
+  def validate_security_deposits(txs) do
+    txs
+    |> Enum.filter(& validate_security_deposit_size(&1))
+    |> Enum.filter(& validate_security_deposit_timelock(&1))
+  end
+
+  @doc """
+  Validates the security deposit size.
+  """
+  def validate_security_deposit_size(tx) do
+    tx.value >= @min_stake_size
+  end
+
+  @doc """
+  Validates the security deposit timelock.
+  """
+  def validate_security_deposit_timelock(tx) do
+    timelock = Poison.decode!(tx.data)["timelock"]
+
+    timelock >= @min_timelock && timelock <= @max_timelock
+  end
+
+  @doc """
+  Returns security deposits from a list of transactions
+  """
+  def get_security_deposits(txs) do
+    txs
+    |> Enum.filter(& is_security_deposit(&1))
+  end
+
+  @doc """
+  Creates validators based on security deposit information
+  """
+  def process_security_deposits(txs) do
+    for tx <- txs do
+      unless get_validator(tx.to) do
+        node_ip = Poison.decode!(tx.data)["node_ip"]
+
+        %{ip: node_ip, address: tx.to, stake_amount: tx.value, participation_rate: 1, is_self: false}
+        |> write_validator
+      end
+    end
+  end
+
+  @doc """
+  Retrieves, validates, and processes security deposits.
+
+  To be called after a block is confirmed.
+  """
+  def maybe_process_security_deposits(txs) do
+    txs
+    |> get_security_deposits()
+    |> validate_security_deposits()
+    |> process_security_deposits()
   end
 end
