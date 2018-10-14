@@ -201,6 +201,14 @@ defmodule CredoCoreNode.Validation do
   end
 
   @doc """
+  Returns the list of votes for a given round.
+  """
+  def list_votes_for_round(voting_round) do
+    list_votes()
+    |> Enum.filter(& &1.voting_round == voting_round)
+  end
+
+  @doc """
   Gets a single vote.
   """
   def get_vote(block_hash) do
@@ -282,5 +290,22 @@ defmodule CredoCoreNode.Validation do
     sign_vote(vote)
 
     broadcast_vote_to_validators(vote)
+  end
+
+  @doc """
+  Count votes using a stake-weighted sum.
+  """
+  def count_votes do
+    votes = list_votes_for_round(0)
+    results = %{}
+
+    for vote <- votes do
+      validator =
+        get_validator(vote.validator_address)
+
+      previous_vote_count = results[vote.block_hash] || 0
+
+      Map.merge(results, %{"#{vote.block_hash}": previous_vote_count + validator.stake_amount})
+    end
   end
 end
