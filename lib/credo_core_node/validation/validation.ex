@@ -308,4 +308,41 @@ defmodule CredoCoreNode.Validation do
       Map.merge(results, %{"#{vote.block_hash}": previous_vote_count + validator.stake_amount})
     end
   end
+
+  @doc """
+  Calculate the total voting power among validators.
+  """
+  def total_voting_power do
+  end
+
+  @doc """
+  Initiate another round of voting.
+  """
+  def vote_again do
+  end
+
+  @doc """
+  Determine whether a winner has emerged from the voting using a 2/3rd threshold.
+  Start another voting round if there is insufficient consensus.
+  """
+  def determine_winner_or_vote_again(results) do
+    confirmed_block_hash = nil
+    for block_hash <- Map.keys(results) do
+      if results[block_hash] >= (2.0 / 3) * total_voting_power() do
+        broadcast_confirmed_block(block_hash)
+
+        confirmed_block_hash = block_hash
+      end
+    end
+
+    if is_nil(confirmed_block_hash) do
+      vote_again()
+    end
+  end
+
+  @doc """
+  Broadcast the confimed block to all peers, including non-validators.
+  """
+  def broadcast_confirmed_block(hash) do
+  end
 end
