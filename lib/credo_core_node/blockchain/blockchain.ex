@@ -124,7 +124,7 @@ defmodule CredoCoreNode.Blockchain do
   To be called after a block is confirmed.
   """
   def maybe_produce_next_block(confirmed_block) do
-    if get_next_block_producer(confirmed_block) == Validation.get_own_validator() do
+    if Validation.is_validator?() && get_next_block_producer(confirmed_block) == Validation.get_own_validator() do
       Pool.get_batch_of_pending_transactions()
       |> generate_block()
       |> broadcast_block_to_validators()
