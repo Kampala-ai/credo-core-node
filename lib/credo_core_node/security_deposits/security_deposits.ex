@@ -7,13 +7,17 @@ defmodule CredoCoreNode.SecurityDeposits do
   alias CredoCoreNode.Pool
   alias CredoCoreNode.Validation
 
+  # TODO: specify actual timelock limits.
+  @min_timelock 1
+  @max_timelock 100
+
   @doc """
   Constructs a security deposit transaction.
   """
   def construct_security_deposit(amount, private_key, to, timelock \\ nil) do
     ip = Network.get_current_ip()
 
-    attrs = %{nonce: @default_nonce, to: to, value: amount , fee: @default_tx_fee, data: "{\"tx_type\" : \"security_deposit\", \"node_ip\" : \"#{ip}\", \"timelock\": \"#{timelock}\"}"}
+    attrs = %{nonce: Validation.default_nonce(), to: to, value: amount , fee: Validation.default_tx_fee(), data: "{\"tx_type\" : \"security_deposit\", \"node_ip\" : \"#{ip}\", \"timelock\": \"#{timelock}\"}"}
 
     {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
 
@@ -47,7 +51,7 @@ defmodule CredoCoreNode.SecurityDeposits do
   Validates the security deposit size.
   """
   def validate_security_deposit_size(tx) do
-    tx.value >= @min_stake_size
+    tx.value >= Validation.min_stake_size()
   end
 
   @doc """
@@ -122,8 +126,6 @@ defmodule CredoCoreNode.SecurityDeposits do
   Validates the security deposit withdrawal timelock.
   """
   def validate_security_deposit_withdrawal_timelock(tx, validator) do
-    timelock = Poison.decode!(tx.data)["timelock"]
-
     tx.block_number <= validator.timelock # TODO Add function for getting a transaction's block number.
   end
 

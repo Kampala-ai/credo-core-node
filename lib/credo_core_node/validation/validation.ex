@@ -3,6 +3,8 @@ defmodule CredoCoreNode.Validation do
   The Validation context.
   """
 
+  alias CredoCoreNode.Network
+  alias CredoCoreNode.Pool
   alias CredoCoreNode.SecurityDeposits
   alias CredoCoreNode.Validation.Validator
   alias CredoCoreNode.Validation.Vote
@@ -13,9 +15,17 @@ defmodule CredoCoreNode.Validation do
   @default_nonce 0
   @default_tx_fee 0.1
 
-  # TODO: specify actual timelock limits.
-  @min_timelock 1
-  @max_timelock 100
+  def default_nonce do
+    @default_nonce
+  end
+
+  def default_tx_fee do
+    @default_tx_fee
+  end
+
+  def min_stake_size do
+    @min_stake_size
+  end
 
   @doc """
   Makes a node become a validator.
@@ -45,13 +55,49 @@ defmodule CredoCoreNode.Validation do
   @doc """
   Check whether the node's ip has changed compared with the validator state
   """
-  def detect_validator_ip_change do
-    validator =
-      list_validators()
-      |> Enum.filter(& &1.is_self)
-      |> List.first()
+  def validator_ip_changed? do
+    Network.get_current_ip != get_own_validator().node_ip
+  end
 
-    Network.get_current_ip != validator.node_ip
+  @doc """
+  Update the validator's ip if it has changed.
+  """
+  def maybe_update_validator_ip do
+    if is_validator?() && validator_ip_changed?() do
+      private_key = "" #TODO get actual private key
+
+      construct_validator_ip_update_transaction(private_key, get_own_validator().address)
+      |> broadcast_validator_ip_update_transaction()
+    end
+  end
+
+  @doc """
+  Constructs a security deposit transaction.
+  """
+  def construct_validator_ip_update_transaction(private_key, to) do
+    ip = Network.get_current_ip()
+
+    attrs = %{nonce: @default_nonce, to: to, value: 0 , fee: @default_tx_fee, data: "{\"tx_type\" : \"update_validator_ip\", \"node_ip\" : \"#{ip}\"}"}
+
+    {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
+
+    tx
+  end
+
+  @doc """
+  Broadcasts a validator ip update transaction.
+  """
+  def broadcast_validator_ip_update_transaction(tx) do
+    Pool.propagate_pending_transaction(tx)
+  end
+
+  @doc """
+  Returns whether the current node is already a validator.
+  """
+  def get_own_validator() do
+    list_validators()
+    |> Enum.filter(& &1.is_self)
+    |> List.first()
   end
 
   @doc """
