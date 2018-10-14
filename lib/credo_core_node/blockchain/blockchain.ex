@@ -128,16 +128,29 @@ defmodule CredoCoreNode.Blockchain do
   end
 
   @doc """
+  This will wait, until a specified timeout, for a block to be produced and received by the selected block producer.
+  If a new candidate block is not received by the timeout, a new block producer will be selected.
+
+  This is needed in case the selected block producer is offline or otherwise unresponsive.
+  """
+  def wait_for_block_from_selected_block_producer do
+  end
+
+  @doc """
   Produces the next block if its the node's turn.
 
   To be called after a block is confirmed.
   """
   def maybe_produce_next_block(confirmed_block) do
-    if Validation.is_validator?() && get_next_block_producer(confirmed_block) == Validation.get_own_validator() do
-      Pool.get_batch_of_pending_transactions()
-      |> add_tx_fee_block_producer_reward_transaction()
-      |> generate_block()
-      |> broadcast_block_to_validators()
+    if Validation.is_validator?() do
+      if get_next_block_producer(confirmed_block) == Validation.get_own_validator() do
+        Pool.get_batch_of_pending_transactions()
+        |> add_tx_fee_block_producer_reward_transaction()
+        |> generate_block()
+        |> broadcast_block_to_validators()
+      else
+        wait_for_block_from_selected_block_producer()
+      end
     end
   end
 end
