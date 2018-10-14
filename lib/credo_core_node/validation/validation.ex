@@ -259,4 +259,28 @@ defmodule CredoCoreNode.Validation do
     Blockchain.list_block_candidates(number)
     |> Enum.random()
   end
+
+  @doc """
+  Broadcasts the vote to other validators
+  """
+  def broadcast_vote_to_validators(vote) do
+  end
+
+  @doc """
+  Signs the vote.
+  """
+  def sign_vote(vote) do
+    vote
+  end
+
+  @doc """
+  Construct and broadcast vote to other validators.
+  """
+  def cast_vote(block, validator) do
+    vote = "{\"number\" : #{block.number}, \"voting_round\" : 0, \", \"validator_address\" : #{validator.address}"
+
+    sign_vote(vote)
+
+    broadcast_vote_to_validators(vote)
+  end
 end
