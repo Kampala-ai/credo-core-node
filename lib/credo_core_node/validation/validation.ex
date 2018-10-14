@@ -169,7 +169,7 @@ defmodule CredoCoreNode.Validation do
       tx.to
       |> get_validator()
       |> Map.merge(%{node_ip: node_ip})
-      |> write_validator
+      |> write_validator()
     end
   end
 
@@ -211,5 +211,34 @@ defmodule CredoCoreNode.Validation do
   """
   def delete_vote(%Vote{} = vote) do
     Repo.delete(vote)
+  end
+
+  @doc """
+  Checks whether a validator voted
+  """
+  def validator_voted?(votes, validator) do
+    votes
+    |> Enum.filter(& &1.validator_address == validator.address)
+    |> Enum.any?
+  end
+
+  @doc """
+  Updates validator participation rates based on a set of votes.
+
+  To be called after voting has concluded for a block.
+  """
+  def update_validator_participation_rates(votes) do
+    for validator <- list_validators() do
+      participation_rate =
+        if validator_voted?(votes, validator) do
+          validator.participation_rate + 1
+        else
+          validator.participation_rate - 1
+        end
+
+      validator
+      |> Map.merge(%{participation_rate: participation_rate})
+      |> write_validator()
+    end
   end
 end
