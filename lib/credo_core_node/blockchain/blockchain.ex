@@ -5,6 +5,8 @@ defmodule CredoCoreNode.Blockchain do
 
   alias CredoCoreNode.Blockchain.Block
   alias CredoCoreNode.Blockchain.Transaction
+  alias CredoCoreNode.Pool
+  alias CredoCoreNode.Validation
   alias Mnesia.Repo
 
   @doc """
@@ -119,6 +121,13 @@ defmodule CredoCoreNode.Blockchain do
   end
 
   @doc """
+  Adds a transaction to pay transaction fees to the block producer.
+  """
+  def add_tx_fee_block_producer_reward_transaction(transactions) do
+    transactions
+  end
+
+  @doc """
   Produces the next block if its the node's turn.
 
   To be called after a block is confirmed.
@@ -126,6 +135,7 @@ defmodule CredoCoreNode.Blockchain do
   def maybe_produce_next_block(confirmed_block) do
     if Validation.is_validator?() && get_next_block_producer(confirmed_block) == Validation.get_own_validator() do
       Pool.get_batch_of_pending_transactions()
+      |> add_tx_fee_block_producer_reward_transaction()
       |> generate_block()
       |> broadcast_block_to_validators()
     end
