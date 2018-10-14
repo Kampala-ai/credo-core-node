@@ -92,4 +92,42 @@ defmodule CredoCoreNode.Blockchain do
 
     Map.put(block, :hash, Block.hash(block, encoding: :hex))
   end
+
+  @doc """
+  Broadcasts a block to validators
+  """
+  def broadcast_block_to_validators(block) do
+  end
+
+  @doc """
+  Gets the next block producer.
+
+  #TODO weight by stake size and participation rate.
+  """
+  def get_next_block_producer(last_block) do
+    number = last_block.number + 1
+
+    # Seed rand with the current block number to produce a deterministic, pseudorandom result.
+    :rand.seed(:exsplus, {101, 102, number})
+
+    index =
+      Enum.random(1..Validation.count_validators())
+
+    Validation.list_validators()
+    |> Enum.sort( &(&1.address >= &2.address) )
+    |> Enum.at(index)
+  end
+
+  @doc """
+  Produces the next block if its the node's turn.
+
+  To be called after a block is confirmed.
+  """
+  def maybe_produce_next_block(confirmed_block) do
+    if get_next_block_producer(confirmed_block) == Validation.get_own_validator() do
+      Pool.get_batch_of_pending_transactions()
+      |> generate_block()
+      |> broadcast_block_to_validators()
+    end
+  end
 end

@@ -248,23 +248,4 @@ defmodule CredoCoreNode.Validation do
       |> write_validator()
     end
   end
-
-  @doc """
-  Gets the next block producer.
-
-  #TODO weight by stake size and participation rate.
-  """
-  def get_next_block_producer(last_block) do
-    number = last_block.number + 1
-
-    # Seed rand with the current block number to produce a deterministic, pseudorandom result.
-    :rand.seed(:exsplus, {101, 102, number})
-
-    index =
-      Enum.random(1..count_validators())
-
-    list_validators()
-    |> Enum.sort( &(&1.address >= &2.address) )
-    |> Enum.at(index)
-  end
 end
