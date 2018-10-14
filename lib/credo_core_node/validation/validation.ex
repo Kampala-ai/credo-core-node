@@ -43,6 +43,18 @@ defmodule CredoCoreNode.Validation do
   end
 
   @doc """
+  Check whether the node's ip has changed compared with the validator state
+  """
+  def detect_validator_ip_change do
+    validator =
+      list_validators()
+      |> Enum.filter(& &1.is_self)
+      |> List.first()
+
+    Network.get_current_ip != validator.node_ip
+  end
+
+  @doc """
   Returns whether the current node is already a validator.
   """
   def is_validator?() do
