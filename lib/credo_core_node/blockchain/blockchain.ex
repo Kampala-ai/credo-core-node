@@ -153,4 +153,12 @@ defmodule CredoCoreNode.Blockchain do
       end
     end
   end
+
+  @doc """
+  Returns candidate blocks for a given block number.
+  """
+  def list_block_candidates(number) do
+    list_blocks()
+    |> Enum.filter(&(&1.number == number))
+  end
 end
