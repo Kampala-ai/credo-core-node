@@ -138,6 +138,54 @@ defmodule CredoCoreNode.Validation do
   end
 
   @doc """
+  Checks whether a transaction is a validator ip update transaction
+  """
+  def is_validator_ip_update_transactions(tx) do
+    Poison.decode!(tx.data)["tx_type"] == "update_validator_ip"
+  end
+
+  @doc """
+  Returns validator ip update transactions from a list of transactions
+  """
+  def get_validator_ip_update_transactions(txs) do
+    txs
+    |> Enum.filter(& is_validator_ip_update_transactions(&1))
+  end
+
+  @doc """
+  Validates ip update transactions by checking that they are signed by the security deposit owner.
+  """
+  def validate_validator_ip_update_transactions(txs) do
+    txs #TODO implement signature check.
+  end
+
+  @doc """
+  Updates state of validator ip based on the transaction data.
+  """
+  def process_validator_ip_update_transactions(txs) do
+    for tx <- txs do
+      node_ip = Poison.decode!(tx.data)["node_ip"]
+
+      tx.to
+      |> get_validator()
+      |> Map.merge(%{node_ip: node_ip})
+      |> write_validator
+    end
+  end
+
+  @doc """
+  Retrieves, validates, and processes validator ip update transactions.
+
+  To be called after a block is confirmed.
+  """
+  def maybe_validator_ip_update_transactions(txs) do
+    txs
+    |> get_validator_ip_update_transactions()
+    |> validate_validator_ip_update_transactions()
+    |> process_validator_ip_update_transactions()
+  end
+
+  @doc """
   Returns the list of votes.
   """
   def list_votes() do
