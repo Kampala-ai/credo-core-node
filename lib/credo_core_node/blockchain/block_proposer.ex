@@ -1,5 +1,6 @@
 defmodule CredoCoreNode.Blockchain.BlockProposer do
   alias CredoCoreNode.Blockchain
+  alias CredoCoreNode.Blockchain.BlockValidator
   alias CredoCoreNode.Pool
   alias CredoCoreNode.Validation
 
@@ -94,7 +95,7 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
     :timer.sleep(@block_proposal_timeout)
 
     if (block = Blockchain.get_block_by_number(confirmed_block.number + 1)) do
-      Validation.validate_block(block)
+      BlockValidator.validate_block(block)
     else
       maybe_propose_next_block(confirmed_block, retry_count + 1)
     end

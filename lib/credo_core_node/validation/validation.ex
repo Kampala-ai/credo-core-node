@@ -186,7 +186,7 @@ defmodule CredoCoreNode.Validation do
 
   To be called after a block is confirmed.
   """
-  def maybe_validator_ip_update_transactions(txs) do
+  def maybe_validate_validator_ip_update_transactions(txs) do
     txs
     |> get_validator_ip_update_transactions()
     |> validate_validator_ip_update_transactions()
@@ -256,12 +256,6 @@ defmodule CredoCoreNode.Validation do
       |> Map.merge(%{participation_rate: participation_rate})
       |> write_validator()
     end
-  end
-
-  @doc """
-  Validates a block.
-  """
-  def validate_block(block) do
   end
 
   @doc """
