@@ -27,6 +27,17 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
   def add_tx_fee_block_producer_reward_transaction(transactions) do
     tx_fees_sum =
       Pool.get_pending_transaction_fees_sum(transactions)
+
+    validator =
+      Validation.get_own_validator()
+
+    private_key = "" # TODO: set private key
+    attrs = %{nonce: 0, to: validator.addr, value: tx_fees_sum, fee: 0, data: "{\"tx_type\" : \"coinbase\"}"}
+
+    {:ok, tx} =
+      Pool.generate_pending_transaction(private_key, attrs)
+
+    transactions ++ [tx]
   end
 
   @doc """
