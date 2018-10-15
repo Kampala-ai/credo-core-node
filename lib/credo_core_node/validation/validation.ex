@@ -12,9 +12,10 @@ defmodule CredoCoreNode.Validation do
 
   alias Mnesia.Repo
 
-  @min_stake_size 10000
   @default_nonce 0
   @default_tx_fee 0.1
+  @min_stake_size 10000
+  @vote_collection_timeout 10000
 
   def default_nonce do
     @default_nonce
@@ -268,10 +269,36 @@ defmodule CredoCoreNode.Validation do
     |> Enum.random()
   end
 
+  def vote(block, voting_round \\ 0) do
+    validator = get_own_validator()
+
+    unless already_voted?(block, voting_round, validator) do
+      cast_vote(block, voting_round, validator)
+
+      :timer.sleep(@vote_collection_timeout)
+
+      count_votes()
+      |> determine_winner_or_vote_again(block, voting_round)
+    end
+  end
+
+  def already_voted?(block, voting_round, validator) do
+    list_votes()
+    |> Enum.filter(& &1.block_height == block.number)
+    |> Enum.filter(& &1.voting_round == voting_round)
+    |> Enum.filter(& &1.validator_address == validator.address)
+    |> Enum.any?
+  end
+
   @doc """
-  Broadcasts the vote to other validators
+  Construct and broadcast vote to other validators.
   """
-  def broadcast_vote_to_validators(vote) do
+  def cast_vote(block, voting_round, validator) do
+    vote = "{\"block_hash\" : #{block.hash}, \"block_height\" : #{block.number}, \"voting_round\" : \"#{voting_round}\", \", \"validator_address\" : #{validator.address}"
+
+    sign_vote(vote)
+
+    broadcast_vote_to_validators(vote)
   end
 
   @doc """
@@ -282,14 +309,9 @@ defmodule CredoCoreNode.Validation do
   end
 
   @doc """
-  Construct and broadcast vote to other validators.
+  Broadcasts the vote to other validators
   """
-  def cast_vote(block, validator) do
-    vote = "{\"number\" : #{block.number}, \"voting_round\" : 0, \", \"validator_address\" : #{validator.address}"
-
-    sign_vote(vote)
-
-    broadcast_vote_to_validators(vote)
+  def broadcast_vote_to_validators(vote) do
   end
 
   @doc """
@@ -310,23 +332,10 @@ defmodule CredoCoreNode.Validation do
   end
 
   @doc """
-  Calculate the total voting power among validators.
-  """
-  def total_voting_power do
-    for %{stake_amount: stake_amount, id: _} <- list_validators(), do: stake_amount
-  end
-
-  @doc """
-  Initiate another round of voting.
-  """
-  def vote_again do
-  end
-
-  @doc """
   Determine whether a winner has emerged from the voting using a 2/3rd threshold.
   Start another voting round if there is insufficient consensus.
   """
-  def determine_winner_or_vote_again(results) do
+  def determine_winner_or_vote_again(results, block, voting_round) do
     confirmed_block_hash = nil
     for block_hash <- Map.keys(results) do
       if results[block_hash] >= (2.0 / 3) * total_voting_power() do
@@ -337,8 +346,15 @@ defmodule CredoCoreNode.Validation do
     end
 
     if is_nil(confirmed_block_hash) do
-      vote_again()
+      vote(block, voting_round + 1)
     end
+  end
+
+  @doc """
+  Calculate the total voting power among validators.
+  """
+  def total_voting_power do
+    for %{stake_amount: stake_amount, id: _} <- list_validators(), do: stake_amount
   end
 
   @doc """

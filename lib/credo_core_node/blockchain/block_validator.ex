@@ -43,5 +43,6 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   Validate network consensus.
   """
   def validate_network_consensus(block) do
+    Validation.vote(block)
   end
 end
