@@ -10,15 +10,15 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
 
   To be called after a block is confirmed.
   """
-  def maybe_propose_next_block(confirmed_block) do
+  def maybe_propose_next_block(confirmed_block, retry_count \\ 0) do
     if Validation.is_validator?() do
-      if get_next_block_proposer(confirmed_block) == Validation.get_own_validator() do
+      if get_next_block_proposer(confirmed_block, retry_count) == Validation.get_own_validator() do
         Pool.get_batch_of_pending_transactions()
         |> add_tx_fee_block_proposer_reward_transaction()
         |> Blockchain.generate_block()
         |> broadcast_block_to_validators()
       else
-        wait_for_block_from_selected_block_proposer(confirmed_block)
+        wait_for_block_from_selected_block_proposer(confirmed_block, retry_count)
       end
     end
   end
@@ -47,11 +47,11 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
 
   #TODO weight by stake size and participation rate.
   """
-  def get_next_block_proposer(last_block) do
+  def get_next_block_proposer(last_block, retry_count) do
     number = last_block.number + 1
 
     # Seed rand with the current block number to propose a deterministic, pseudorandom result.
-    :rand.seed(:exsplus, {101, 102, number})
+    :rand.seed(:exsplus, {101, retry_count, number})
 
     index =
       Enum.random(1..Validation.count_validators())
@@ -73,13 +73,13 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
 
   This is needed in case the selected block proposer is offline or otherwise unresponsive.
   """
-  def wait_for_block_from_selected_block_proposer(confirmed_block) do
+  def wait_for_block_from_selected_block_proposer(confirmed_block, retry_count) do
     :timer.sleep(@block_proposal_timeout)
 
-    if block = Blockchain.get_block_by_number(confirmed_block.number + 1) do
+    if (block = Blockchain.get_block_by_number(confirmed_block.number + 1)) do
       Validation.validate_block(block)
     else
-      get_next_block_proposer(confirmed_block)
+      maybe_propose_next_block(confirmed_block, retry_count + 1)
     end
   end
 end
