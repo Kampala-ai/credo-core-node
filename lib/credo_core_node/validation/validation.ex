@@ -260,16 +260,10 @@ defmodule CredoCoreNode.Validation do
   end
 
   @doc """
-  Selects a candidate block to vote for in this round.
-
-  #TODO take into account other votes if a prior round was held for this block number.
+  Votes to validate the block via network consensus.
   """
-  def select_candidate_block_to_vote_for(number) do
-    Blockchain.list_block_candidates(number)
-    |> Enum.random()
-  end
-
-  def vote(block, voting_round \\ 0) do
+  def vote(block_number, voting_round \\ 0) do
+    block = select_candidate_block_to_vote_for(block_number)
     validator = get_own_validator()
 
     unless already_voted?(block, voting_round, validator) do
@@ -282,6 +276,20 @@ defmodule CredoCoreNode.Validation do
     end
   end
 
+  @doc """
+  Selects a candidate block to vote for in this round.
+
+  #TODO take into account other votes if a prior round was held for this block number.
+  """
+  def select_candidate_block_to_vote_for(number) do
+    Blockchain.list_block_candidates(number)
+    |> Enum.random()
+  end
+
+
+  @doc """
+  Checks whether a validator already voted for a block in the current round.
+  """
   def already_voted?(block, voting_round, validator) do
     list_votes()
     |> Enum.filter(& &1.block_height == block.number)
