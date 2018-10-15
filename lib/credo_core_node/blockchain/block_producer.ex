@@ -4,9 +4,28 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
   alias CredoCoreNode.Validation
 
   @doc """
-  Broadcasts a block to validators
+  Produces the next block if its the node's turn.
+
+  To be called after a block is confirmed.
   """
-  def broadcast_block_to_validators(block) do
+  def maybe_produce_next_block(confirmed_block) do
+    if Validation.is_validator?() do
+      if get_next_block_producer(confirmed_block) == Validation.get_own_validator() do
+        Pool.get_batch_of_pending_transactions()
+        |> add_tx_fee_block_producer_reward_transaction()
+        |> Blockchain.generate_block()
+        |> broadcast_block_to_validators()
+      else
+        wait_for_block_from_selected_block_producer()
+      end
+    end
+  end
+
+  @doc """
+  Adds a transaction to pay transaction fees to the block producer.
+  """
+  def add_tx_fee_block_producer_reward_transaction(transactions) do
+    transactions
   end
 
   @doc """
@@ -29,10 +48,9 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
   end
 
   @doc """
-  Adds a transaction to pay transaction fees to the block producer.
+  Broadcasts a block to validators
   """
-  def add_tx_fee_block_producer_reward_transaction(transactions) do
-    transactions
+  def broadcast_block_to_validators(block) do
   end
 
   @doc """
@@ -42,23 +60,5 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
   This is needed in case the selected block producer is offline or otherwise unresponsive.
   """
   def wait_for_block_from_selected_block_producer do
-  end
-
-  @doc """
-  Produces the next block if its the node's turn.
-
-  To be called after a block is confirmed.
-  """
-  def maybe_produce_next_block(confirmed_block) do
-    if Validation.is_validator?() do
-      if get_next_block_producer(confirmed_block) == Validation.get_own_validator() do
-        Pool.get_batch_of_pending_transactions()
-        |> add_tx_fee_block_producer_reward_transaction()
-        |> Blockchain.generate_block()
-        |> broadcast_block_to_validators()
-      else
-        wait_for_block_from_selected_block_producer()
-      end
-    end
   end
 end
