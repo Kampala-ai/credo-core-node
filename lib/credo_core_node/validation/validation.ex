@@ -313,6 +313,7 @@ defmodule CredoCoreNode.Validation do
   Calculate the total voting power among validators.
   """
   def total_voting_power do
+    for %{stake_amount: stake_amount, id: _} <- list_validators(), do: stake_amount
   end
 
   @doc """
