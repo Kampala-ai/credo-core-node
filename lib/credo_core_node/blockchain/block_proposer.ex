@@ -3,6 +3,8 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
   alias CredoCoreNode.Pool
   alias CredoCoreNode.Validation
 
+  require Logger
+
   @block_proposal_timeout 10000
 
   @doc """
@@ -13,6 +15,8 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
   def maybe_propose_next_block(confirmed_block, retry_count \\ 0) do
     if Validation.is_validator?() do
       if get_next_block_proposer(confirmed_block, retry_count) == Validation.get_own_validator() do
+        Logger.info("Proposing block...")
+
         Pool.get_batch_of_pending_transactions()
         |> add_tx_fee_block_proposer_reward_transaction()
         |> Blockchain.generate_block()
@@ -34,7 +38,7 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
       Validation.get_own_validator()
 
     private_key = "" # TODO: set private key
-    attrs = %{nonce: 0, to: validator.addr, value: tx_fees_sum, fee: 0, data: "{\"tx_type\" : \"coinbase\"}"}
+    attrs = %{nonce: 0, to: validator.address, value: tx_fees_sum, fee: 0, data: "{\"tx_type\" : \"coinbase\"}"}
 
     {:ok, tx} =
       Pool.generate_pending_transaction(private_key, attrs)
@@ -54,7 +58,7 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
       for validator <- validators do
         index_count = round(validator.stake_amount * validator.participation_rate)
 
-        for index <- 0..index_count do
+        for _ <- 0..index_count do
           validator.address
         end
       end
@@ -76,7 +80,7 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
   @doc """
   Broadcasts a block to validators
   """
-  def broadcast_block_to_validators(block) do
+  def broadcast_block_to_validators(_block) do
   end
 
   @doc """
@@ -86,6 +90,7 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
   This is needed in case the selected block proposer is offline or otherwise unresponsive.
   """
   def wait_for_block_from_selected_block_proposer(confirmed_block, retry_count) do
+    Logger.info("Waiting for block...")
     :timer.sleep(@block_proposal_timeout)
 
     if (block = Blockchain.get_block_by_number(confirmed_block.number + 1)) do
