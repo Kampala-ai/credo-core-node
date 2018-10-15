@@ -3,6 +3,8 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
   alias CredoCoreNode.Pool
   alias CredoCoreNode.Validation
 
+  @block_proposal_timeout 10000
+
   @doc """
   Proposes the next block if its the node's turn.
 
@@ -16,7 +18,7 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
         |> Blockchain.generate_block()
         |> broadcast_block_to_validators()
       else
-        wait_for_block_from_selected_block_proposer()
+        wait_for_block_from_selected_block_proposer(confirmed_block)
       end
     end
   end
@@ -71,6 +73,13 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
 
   This is needed in case the selected block proposer is offline or otherwise unresponsive.
   """
-  def wait_for_block_from_selected_block_proposer do
+  def wait_for_block_from_selected_block_proposer(confirmed_block) do
+    :timer.sleep(@block_proposal_timeout)
+
+    if block = Blockchain.get_block_by_number(confirmed_block.number + 1) do
+      Validation.validate_block(block)
+    else
+      get_next_block_proposer(confirmed_block)
+    end
   end
 end

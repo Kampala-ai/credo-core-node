@@ -50,6 +50,15 @@ defmodule CredoCoreNode.Blockchain do
   end
 
   @doc """
+  Gets a single block by the number.
+  """
+  def get_block_by_number(number) do
+    list_blocks()
+    |> Enum.filter(&(&1.number == number))
+    |> List.first()
+  end
+
+  @doc """
   Creates/updates a block.
   """
   def write_block(attrs) do

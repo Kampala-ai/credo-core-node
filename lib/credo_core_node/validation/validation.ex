@@ -259,6 +259,12 @@ defmodule CredoCoreNode.Validation do
   end
 
   @doc """
+  Validates a block.
+  """
+  def validate_block(block) do
+  end
+
+  @doc """
   Selects a candidate block to vote for in this round.
 
   #TODO take into account other votes if a prior round was held for this block number.
