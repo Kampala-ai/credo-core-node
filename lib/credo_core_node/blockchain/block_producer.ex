@@ -25,7 +25,8 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
   Adds a transaction to pay transaction fees to the block producer.
   """
   def add_tx_fee_block_producer_reward_transaction(transactions) do
-    transactions
+    tx_fees_sum =
+      Pool.get_pending_transaction_fees_sum(transactions)
   end
 
   @doc """

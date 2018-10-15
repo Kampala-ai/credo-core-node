@@ -22,6 +22,13 @@ defmodule CredoCoreNode.Pool do
   end
 
   @doc """
+  Gets the sum of pending transaction fees.
+  """
+  def get_pending_transaction_fees_sum(transactions) do
+    for %{fee: fee, id: _} <- transactions, do: fee
+  end
+
+  @doc """
   Creates/updates a pending_transaction.
   """
   def write_pending_transaction(attrs) do
