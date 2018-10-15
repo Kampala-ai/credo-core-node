@@ -44,21 +44,33 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
 
   @doc """
   Gets the next block proposer.
-
-  #TODO weight by stake size and participation rate.
   """
   def get_next_block_proposer(last_block, retry_count) do
+    validators =
+      Validation.list_validators()
+      |> Enum.sort(&(&1.address >= &2.address))
+
+    validator_addresses =
+      for validator <- validators do
+        index_count = round(validator.stake_amount * validator.participation_rate)
+
+        for index <- 0..index_count do
+          validator.address
+        end
+      end
+      |> Enum.concat
+
     number = last_block.number + 1
 
-    # Seed rand with the current block number to propose a deterministic, pseudorandom result.
+    # Seed rand with the current block number and the retry count to propose a deterministic, pseudorandom result.
     :rand.seed(:exsplus, {101, retry_count, number})
 
     index =
-      Enum.random(1..Validation.count_validators())
+      Enum.random(1..length(validator_addresses))
 
-    Validation.list_validators()
-    |> Enum.sort( &(&1.address >= &2.address) )
+    validator_addresses
     |> Enum.at(index)
+    |> Validation.get_validator()
   end
 
   @doc """
