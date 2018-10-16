@@ -7,14 +7,25 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
   @doc """
   Validates a block.
+
+  If any validation fails, the candidate block is marked as invalid.
   """
   def validate_block(block) do
-    validate_previous_hash(block)
-    validate_format(block)
-    validate_security_deposits(block)
-    validate_validator_updates(block)
-    validate_block_finalization(block)
-    validate_network_consensus(block)
+    is_valid =
+      validate_previous_hash(block) &&
+      validate_format(block) &&
+      validate_security_deposits(block) &&
+      validate_validator_updates(block) &&
+      validate_block_finalization(block) &&
+      validate_network_consensus(block)
+
+    if is_valid do
+      {:ok, block}
+    else
+      Blockchain.mark_block_as_invalid(block)
+
+      {:error, block}
+    end
   end
 
   @doc """

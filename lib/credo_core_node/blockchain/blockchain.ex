@@ -66,6 +66,14 @@ defmodule CredoCoreNode.Blockchain do
   end
 
   @doc """
+  Marks a block as invalid.
+
+  TODO: add some kind of status field for marking blocks as invalid.
+  """
+  def mark_block_as_invalid(block) do
+  end
+
+  @doc """
   Deletes a block.
   """
   def delete_block(%Block{} = block) do
