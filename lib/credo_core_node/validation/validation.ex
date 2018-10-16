@@ -17,17 +17,9 @@ defmodule CredoCoreNode.Validation do
   @min_stake_size 10000
   @vote_collection_timeout 10000
 
-  def default_nonce do
-    @default_nonce
-  end
-
-  def default_tx_fee do
-    @default_tx_fee
-  end
-
-  def min_stake_size do
-    @min_stake_size
-  end
+  def default_nonce, do: @default_nonce
+  def default_tx_fee, do: @default_tx_fee
+  def min_stake_size, do: @min_stake_size
 
   @doc """
   Makes a node become a validator.
