@@ -1,6 +1,9 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
+  alias CredoCoreNode.Blockchain
   alias CredoCoreNode.SecurityDeposits
   alias CredoCoreNode.Validation
+
+  @finalization_threshold 12
 
   @doc """
   Validates a block.
@@ -37,6 +40,18 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   """
   def validate_validator_updates(block) do
     Validation.maybe_validate_validator_ip_update_transactions(block.body)
+  end
+
+  @doc """
+  Validate finalization condition.
+  """
+  def validate_block_finalization(block) do
+    last_finalized_block =
+      Blockchain.list_blocks()
+      |> Enum.filter(&(&1.number == block.number - @finalization_threshold))
+      |> List.first()
+
+    # Check that the current block is in a chain of blocks containing the last finalized block.
   end
 
   @doc """
