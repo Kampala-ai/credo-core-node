@@ -232,38 +232,6 @@ defmodule CredoCoreNode.Validation do
   end
 
   @doc """
-  Checks whether a validator voted
-  """
-  def validator_voted?(votes, validator) do
-    votes
-    |> Enum.filter(& &1.validator_address == validator.address)
-    |> Enum.any?
-  end
-
-  @doc """
-  Updates validator participation rates based on a set of votes.
-
-  To be called after voting has concluded for a block.
-  """
-  def update_validator_participation_rates(block, voting_round) do
-    votes =
-      list_votes_for_round(block, voting_round)
-
-    for validator <- list_validators() do
-      participation_rate =
-        if validator_voted?(votes, validator) do
-          validator.participation_rate + 1
-        else
-          validator.participation_rate - 1
-        end
-
-      validator
-      |> Map.merge(%{participation_rate: participation_rate})
-      |> write_validator()
-    end
-  end
-
-  @doc """
   Votes to validate the block via network consensus.
   """
   def vote(block_number, voting_round \\ 0) do
@@ -383,5 +351,37 @@ defmodule CredoCoreNode.Validation do
   Broadcast the confimed block to all peers, including non-validators.
   """
   def broadcast_confirmed_block(hash) do
+  end
+
+  @doc """
+  Updates validator participation rates based on a set of votes.
+
+  To be called after voting has concluded for a block.
+  """
+  def update_validator_participation_rates(block, voting_round) do
+    votes =
+      list_votes_for_round(block, voting_round)
+
+    for validator <- list_validators() do
+      participation_rate =
+        if validator_voted?(votes, validator) do
+          validator.participation_rate + 1
+        else
+          validator.participation_rate - 1
+        end
+
+      validator
+      |> Map.merge(%{participation_rate: participation_rate})
+      |> write_validator()
+    end
+  end
+
+  @doc """
+  Checks whether a validator voted
+  """
+  def validator_voted?(votes, validator) do
+    votes
+    |> Enum.filter(& &1.validator_address == validator.address)
+    |> Enum.any?
   end
 end
