@@ -302,7 +302,7 @@ defmodule CredoCoreNode.Validation do
   Construct and broadcast vote to other validators.
   """
   def cast_vote(block, voting_round, validator) do
-    vote = "{\"block_hash\" : #{block.hash}, \"block_height\" : #{block.number}, \"voting_round\" : \"#{voting_round}\", \", \"validator_address\" : #{validator.address}"
+    vote = "{\"block_hash\" : #{block.hash}, \"block_height\" : #{block.number}, \"voting_round\" : \"#{voting_round}\", \"validator_address\" : #{validator.address}}"
 
     sign_vote(vote)
 
@@ -320,6 +320,15 @@ defmodule CredoCoreNode.Validation do
   Broadcasts the vote to other validators
   """
   def broadcast_vote_to_validators(vote) do
+    # TODO: temporary REST implementation, to be replaced with channels-based one later
+    headers = Network.node_request_headers()
+    body = vote
+
+    list_validators()
+    |> Enum.map(&("#{Network.request_url(&1.ip)}/node_api/v1/temp/votes"))
+    |> Enum.each(&(:hackney.request(:post, &1, headers, body, [:with_body, pool: false])))
+
+    {:ok, vote}
   end
 
   @doc """

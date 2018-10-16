@@ -14,6 +14,7 @@ defmodule CredoCoreNodeWeb.Router do
     # Endpoints for temporary usage, to be replaced later with channels-based protocol
     scope "/temp", as: :temp, alias: Temp do
       resources("/pending_transactions", PendingTransactionController, only: [:create])
+      resources("/votes", VoteController, only: [:create])
     end
   end
 end
