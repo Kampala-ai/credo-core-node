@@ -79,11 +79,10 @@ defmodule CredoCoreNode.Pool do
   Gets a batch of a pending_transaction.
 
   To be called when constructing a block.
-
-  TODO: sort by transaction fee.
   """
   def get_batch_of_pending_transactions do
     list_pending_transactions()
+    |> Enum.sort(&(&1.fee > &2.fee))
     |> Enum.take(200)
   end
 end
