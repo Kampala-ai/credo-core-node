@@ -55,6 +55,7 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
       Validation.list_validators()
       |> Enum.sort(&(&1.address >= &2.address))
 
+    # TODO: implement a more memory-efficient weighting mechanism.
     validator_addresses =
       for validator <- validators do
         index_count = round(validator.stake_amount * validator.participation_rate)
