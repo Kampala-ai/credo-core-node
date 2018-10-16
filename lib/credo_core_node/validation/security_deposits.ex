@@ -1,4 +1,4 @@
-defmodule CredoCoreNode.SecurityDeposits do
+defmodule CredoCoreNode.Validation.SecurityDeposits do
   @moduledoc """
   The security deposits context.
   """

@@ -6,7 +6,7 @@ defmodule CredoCoreNode.Validation do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Network
   alias CredoCoreNode.Pool
-  alias CredoCoreNode.SecurityDeposits
+  alias CredoCoreNode.Validation.SecurityDeposits
   alias CredoCoreNode.Validation.Validator
   alias CredoCoreNode.Validation.Vote
 

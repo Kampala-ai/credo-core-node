@@ -1,6 +1,6 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.Blockchain
-  alias CredoCoreNode.SecurityDeposits
+  alias CredoCoreNode.Validation.SecurityDeposits
   alias CredoCoreNode.Validation
 
   @finalization_threshold 12
