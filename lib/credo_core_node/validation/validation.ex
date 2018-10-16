@@ -81,7 +81,7 @@ defmodule CredoCoreNode.Validation do
   def construct_validator_ip_update_transaction(private_key, to) do
     ip = Network.get_current_ip()
 
-    attrs = %{nonce: @default_nonce, to: to, value: 0 , fee: @default_tx_fee, data: "{\"tx_type\" : \"update_validator_ip\", \"node_ip\" : \"#{ip}\"}"}
+    attrs = %{nonce: @default_nonce, to: to, value: 0 , fee: @default_tx_fee, data: "{\"tx_type\" : \"#{Blockchain.update_validator_ip_tx_type()}\", \"node_ip\" : \"#{ip}\"}"}
 
     {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
 
@@ -152,7 +152,7 @@ defmodule CredoCoreNode.Validation do
   Checks whether a transaction is a validator ip update transaction
   """
   def is_validator_ip_update_transactions(tx) do
-    Poison.decode!(tx.data)["tx_type"] == "update_validator_ip"
+    Poison.decode!(tx.data)["tx_type"] == Blockchain.update_validator_ip_tx_type()
   end
 
   @doc """

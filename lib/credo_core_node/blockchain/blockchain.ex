@@ -7,6 +7,10 @@ defmodule CredoCoreNode.Blockchain do
   alias CredoCoreNode.Blockchain.Transaction
   alias Mnesia.Repo
 
+  def coinbase_tx_type, do: "coinbase"
+  def security_deposit_tx_type, do: "security_deposit"
+  def update_validator_ip_tx_type, do: "update_validator_ip"
+
   @doc """
   Returns the list of transactions.
   """

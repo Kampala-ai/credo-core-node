@@ -39,7 +39,7 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
       Validation.get_own_validator()
 
     private_key = "" # TODO: set private key
-    attrs = %{nonce: 0, to: validator.address, value: tx_fees_sum, fee: 0, data: "{\"tx_type\" : \"coinbase\"}"}
+    attrs = %{nonce: 0, to: validator.address, value: tx_fees_sum, fee: 0, data: "{\"tx_type\" : \"#{Blockchain.coinbase_tx_type()}\"}"}
 
     {:ok, tx} =
       Pool.generate_pending_transaction(private_key, attrs)

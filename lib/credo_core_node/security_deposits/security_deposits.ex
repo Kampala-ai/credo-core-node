@@ -3,6 +3,7 @@ defmodule CredoCoreNode.SecurityDeposits do
   The security deposits context.
   """
 
+  alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Network
   alias CredoCoreNode.Pool
   alias CredoCoreNode.Validation
@@ -17,7 +18,7 @@ defmodule CredoCoreNode.SecurityDeposits do
   def construct_security_deposit(amount, private_key, to, timelock \\ nil) do
     ip = Network.get_current_ip()
 
-    attrs = %{nonce: Validation.default_nonce(), to: to, value: amount , fee: Validation.default_tx_fee(), data: "{\"tx_type\" : \"security_deposit\", \"node_ip\" : \"#{ip}\", \"timelock\": \"#{timelock}\"}"}
+    attrs = %{nonce: Validation.default_nonce(), to: to, value: amount , fee: Validation.default_tx_fee(), data: "{\"tx_type\" : \"#{Blockchain.security_deposit_tx_type()}\", \"node_ip\" : \"#{ip}\", \"timelock\": \"#{timelock}\"}"}
 
     {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
 
@@ -35,7 +36,7 @@ defmodule CredoCoreNode.SecurityDeposits do
   Checks whether a transaction is a security deposit
   """
   def is_security_deposit(tx) do
-    Poison.decode!(tx.data)["tx_type"] == "security_deposit"
+    Poison.decode!(tx.data)["tx_type"] == Blockchain.security_deposit_tx_type()
   end
 
   @doc """
