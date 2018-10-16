@@ -17,6 +17,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       validate_security_deposits(block) &&
       validate_validator_updates(block) &&
       validate_block_finalization(block) &&
+      validate_coinbase_transaction(block) &&
       validate_network_consensus(block)
 
     if is_valid do
@@ -64,6 +65,12 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       |> List.first()
 
     # Check that the current block is in a chain of blocks containing the last finalized block.
+  end
+
+  @doc """
+  Validate that the coinbase transaction doesn't pay the block proper more than the transaction fees.
+  """
+  def validate_coinbase_transaction(block) do
   end
 
   @doc """
