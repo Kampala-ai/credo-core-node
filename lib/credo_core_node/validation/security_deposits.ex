@@ -1,6 +1,6 @@
 defmodule CredoCoreNode.Validation.SecurityDeposits do
   @moduledoc """
-  The security deposits context.
+  The security deposits module.
   """
 
   alias CredoCoreNode.Blockchain

@@ -2,6 +2,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Validation.SecurityDeposits
   alias CredoCoreNode.Validation
+  alias CredoCoreNode.Validation.VoteManager
 
   @finalization_threshold 12
 
@@ -77,6 +78,6 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   Validate network consensus.
   """
   def validate_network_consensus(block) do
-    Validation.vote(block)
+    VoteManager.vote(block)
   end
 end
