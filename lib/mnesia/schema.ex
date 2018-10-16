@@ -1,6 +1,7 @@
 defmodule Mnesia.Schema do
   defmacro __using__(opts) do
     fields = Keyword.get(opts, :fields, [])
+    virtual_fields = Keyword.get(opts, :virtual_fields, [])
     table_name = Keyword.get(opts, :table_name, [])
 
     quote do
@@ -11,10 +12,11 @@ defmodule Mnesia.Schema do
         |> Enum.join(".")
 
       defmodule(:"Elixir.Mnesia.Schemas.#{module_name}", do: nil)
-      defstruct unquote(fields)
+      defstruct(unquote(fields) ++ unquote(virtual_fields))
 
       def table_name, do: unquote(table_name)
       def fields, do: unquote(fields)
+      def virtual_fields, do: unquote(virtual_fields)
 
       def from_list(list) do
         attributes =
@@ -28,6 +30,7 @@ defmodule Mnesia.Schema do
       defimpl Mnesia.Table, for: __MODULE__ do
         def name(schema), do: unquote(table_name)
         def fields(schema), do: unquote(fields)
+        def virtual_fields(schema), do: unquote(virtual_fields)
       end
     end
   end
