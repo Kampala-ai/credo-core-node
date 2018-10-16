@@ -56,6 +56,8 @@ defmodule CredoCoreNode.Validation do
 
   @doc """
   Check whether the node's ip has changed compared with the validator state
+
+  TODO: Make this check more robust. :inet.getif may return ips in a different order, but we're just selecting the first once.
   """
   def validator_ip_changed? do
     Network.get_current_ip != get_own_validator().node_ip
