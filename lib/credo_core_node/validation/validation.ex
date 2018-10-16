@@ -204,8 +204,9 @@ defmodule CredoCoreNode.Validation do
   @doc """
   Returns the list of votes for a given round.
   """
-  def list_votes_for_round(voting_round) do
+  def list_votes_for_round(block, voting_round) do
     list_votes()
+    |> Enum.filter(& &1.number == block.number)
     |> Enum.filter(& &1.voting_round == voting_round)
   end
 
@@ -244,7 +245,10 @@ defmodule CredoCoreNode.Validation do
 
   To be called after voting has concluded for a block.
   """
-  def update_validator_participation_rates(votes) do
+  def update_validator_participation_rates(block, voting_round) do
+    votes =
+      list_votes_for_round(block, voting_round)
+
     for validator <- list_validators() do
       participation_rate =
         if validator_voted?(votes, validator) do
@@ -271,7 +275,7 @@ defmodule CredoCoreNode.Validation do
 
       :timer.sleep(@vote_collection_timeout)
 
-      count_votes()
+      count_votes(block, voting_round)
       |> determine_winner_or_vote_again(block, voting_round)
     end
   end
@@ -285,7 +289,6 @@ defmodule CredoCoreNode.Validation do
     Blockchain.list_block_candidates(number)
     |> Enum.random()
   end
-
 
   @doc """
   Checks whether a validator already voted for a block in the current round.
@@ -334,8 +337,8 @@ defmodule CredoCoreNode.Validation do
   @doc """
   Count votes using a stake-weighted sum.
   """
-  def count_votes do
-    votes = list_votes_for_round(0)
+  def count_votes(block, voting_round) do
+    votes = list_votes_for_round(block, voting_round)
     results = %{}
 
     for vote <- votes do
@@ -359,6 +362,8 @@ defmodule CredoCoreNode.Validation do
         broadcast_confirmed_block(block_hash)
 
         confirmed_block_hash = block_hash
+
+        update_validator_participation_rates(block, voting_round)
       end
     end
 
