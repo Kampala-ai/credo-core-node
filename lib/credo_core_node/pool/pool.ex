@@ -3,8 +3,10 @@ defmodule CredoCoreNode.Pool do
   The Pool context.
   """
 
+  alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Network
   alias CredoCoreNode.Pool.PendingTransaction
+  alias CredoCoreNode.Pool.PendingBlock
   alias Mnesia.Repo
 
   @doc """
@@ -66,5 +68,63 @@ defmodule CredoCoreNode.Pool do
     |> Enum.each(&(:hackney.request(:post, &1, headers, body, [:with_body, pool: false])))
 
     {:ok, tx}
+  end
+
+  @doc """
+  Returns the list of pending_blocks.
+  """
+  def list_pending_blocks() do
+    Repo.list(PendingBlock)
+  end
+
+  @doc """
+  Gets a single pending_block.
+  """
+  def get_pending_block(hash) do
+    Repo.get(PendingBlock, hash)
+  end
+
+  @doc """
+  Creates/updates a pending_block.
+  """
+  def write_pending_block(attrs) do
+    Repo.write(PendingBlock, attrs)
+  end
+
+  @doc """
+  Deletes a pending_block.
+  """
+  def delete_pending_block(%PendingBlock{} = pending_block) do
+    Repo.delete(pending_block)
+  end
+
+  @doc """
+  Generates a pending_block.
+  """
+  def generate_pending_block(transactions) do
+    last_block =
+      Blockchain.list_blocks()
+      |> Enum.sort(&(&1.number > &2.number))
+      |> List.first()
+
+    {number, prev_hash} =
+      if last_block, do: {last_block.number + 1, last_block.hash}, else: {0, ""}
+
+    body = ExRLP.encode(transactions, encoding: :hex)
+    tx_root =
+      body
+      |> :libsecp256k1.sha256()
+      |> Base.encode16()
+
+    pending_block = %PendingBlock{
+      prev_hash: prev_hash,
+      number: number,
+      state_root: "",
+      receipt_root: "",
+      tx_root: tx_root,
+      body: body
+    }
+
+    Map.put(pending_block, :hash, PendingBlock.hash(pending_block, encoding: :hex))
   end
 end

@@ -1,18 +1,10 @@
 defmodule CredoCoreNode.Pool.PendingTransaction do
   use Mnesia.Schema,
     table_name: :pending_transactions,
-    fields: [:hash, :nonce, :to, :value, :fee, :data, :v, :r, :s]
+    fields: [:hash, :nonce, :to, :value, :fee, :data, :v, :r, :s],
+    rlp_support: true
 
   alias CredoCoreNode.Pool.PendingTransaction
-
-  def hash(%PendingTransaction{} = tx, options \\ []) do
-    hash =
-      tx
-      |> ExRLP.encode(type: options[:type], encoding: :hex)
-      |> :libsecp256k1.sha256()
-
-    if options[:encoding] == :hex, do: Base.encode16(hash), else: hash
-  end
 
   def to_list(%PendingTransaction{} = tx, options \\ []) do
     base_values = [tx.nonce, tx.to, tx.value, tx.fee, tx.data]
@@ -40,17 +32,6 @@ defmodule CredoCoreNode.Pool.PendingTransaction do
 
       _ ->
         from_list(list)
-    end
-  end
-
-  defimpl ExRLP.Encode, for: __MODULE__ do
-    alias ExRLP.Encode
-
-    @spec encode(PendingTransaction.t(), keyword()) :: binary()
-    def encode(tx, options \\ []) do
-      tx
-      |> PendingTransaction.to_list(options)
-      |> Encode.encode(options)
     end
   end
 end
