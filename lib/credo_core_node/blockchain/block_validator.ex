@@ -13,6 +13,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     validate_format(block)
     validate_security_deposits(block)
     validate_validator_updates(block)
+    validate_block_finalization(block)
     validate_network_consensus(block)
   end
 
