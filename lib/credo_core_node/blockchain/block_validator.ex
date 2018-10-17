@@ -7,6 +7,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   @finalization_threshold 12
   @min_txs_per_block 0
   @max_txs_per_block 250
+  @max_data_length 50000
 
   @doc """
   Validates a block.
@@ -18,6 +19,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       validate_previous_hash(block) &&
       validate_format(block) &&
       validate_transaction_count(block) &&
+      validate_transaction_data_length(block) &&
       validate_security_deposits(block) &&
       validate_validator_updates(block) &&
       validate_block_finalization(block) &&
@@ -54,6 +56,18 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     len = length(block.transactions)
 
     len > @min_txs_per_block && len <= @max_txs_per_block
+  end
+
+  @doc """
+  Validates transaction data length.
+
+  This is to prevent a denial of service attack by a block producer adding an overly large data field.
+  """
+  def validate_transaction_data_length(block) do
+    for tx <- block.transactions do
+      length(tx.data) <= @max_data_length
+    end
+    |> Enum.reduce(true, &(&1 && &2))
   end
 
   @doc """
