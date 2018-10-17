@@ -20,7 +20,7 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
 
         Pool.get_batch_of_pending_transactions()
         |> add_tx_fee_block_proposer_reward_transaction()
-        |> Blockchain.generate_block()
+        |> Pool.generate_pending_block()
         |> broadcast_block_to_validators()
       else
         wait_for_block_from_selected_block_proposer(confirmed_block, retry_count)
