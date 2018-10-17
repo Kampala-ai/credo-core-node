@@ -41,9 +41,12 @@ defmodule CredoCoreNode.Mixfile do
       {:poison, "~> 3.1.0"},
       {:hackney, "~> 1.9"},
       {:libsecp256k1, git: "https://github.com/turinginc/libsecp256k1.git", tag: "0.1"},
-      {:ex_rlp, "~> 0.3.0"},
+      # TODO: remove override once https://github.com/aeternity/elixir-merkle-patricia-tree/pull/18
+      #   is merged
+      {:ex_rlp, "~> 0.3.0", override: true},
       {:quantum, "~> 2.3"},
-      {:timex, "~> 3.0"}
+      {:timex, "~> 3.0"},
+      {:merkle_patricia_tree, github: "aeternity/elixir-merkle-patricia-tree"}
     ]
   end
 end
