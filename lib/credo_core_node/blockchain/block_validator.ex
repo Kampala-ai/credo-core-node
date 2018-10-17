@@ -100,9 +100,17 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   @doc """
-  Validate that the coinbase transaction doesn't pay the block proper more than the transaction fees.
+  Validate that there is only 1 coinbase transaction and that the coinbase transaction pays itself the sum of transactions fees of other transactions in the block.
   """
   def validate_coinbase_transaction(block) do
+    [coinbase_tx] = coinbase_txs =
+      block.transactions
+      |> Enum.filter(&(Poison.decode!(&1.data)["tx_type"] == Blockchain.coinbase_tx_type()))
+
+    non_coinbase_tx_fees_sum =
+      Pool.get_pending_transaction_fees_sum(block.transactions -- coinbase_tx)
+
+    length(coinbase_txs) == 1 && coinbase_tx.fee == non_coinbase_tx_fees_sum
   end
 
   @doc """
