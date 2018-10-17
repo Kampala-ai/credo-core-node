@@ -1,7 +1,7 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Validation.SecurityDeposits
-  alias CredoCoreNode.Validation
+  alias CredoCoreNode.Validation.ValidatorIpManager
   alias CredoCoreNode.Validation.VoteManager
 
   @finalization_threshold 12
@@ -84,7 +84,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   Validate validator updates.
   """
   def validate_validator_updates(block) do
-    Validation.maybe_validate_validator_ip_update_transactions(block.body)
+    ValidatorIpManager.maybe_validate_validator_ip_update_transactions(block.body)
   end
 
   @doc """

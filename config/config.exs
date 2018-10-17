@@ -5,6 +5,8 @@
 # is restricted to this project.
 use Mix.Config
 
+alias CredoCoreNode.Validation.ValidatorIpManager
+
 # Configures the endpoint
 config :credo_core_node, CredoCoreNodeWeb.Endpoint,
   url: [host: "localhost"],
@@ -24,7 +26,7 @@ config :credo_core_node, CredoCoreNode.Scheduler,
   overlap: false,
   timezone: :utc,
   jobs: [
-    {"*/15 * * * *", {CredoCoreNode.Validation, :maybe_update_validator_ip, []}} # Periodically check for an ip change on a running node.
+    {"*/15 * * * *", {ValidatorIpManager, :maybe_update_validator_ip, []}} # Periodically check for an ip change on a running node.
   ]
 
 # Import environment specific config. This must remain at the bottom

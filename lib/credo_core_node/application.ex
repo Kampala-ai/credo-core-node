@@ -1,7 +1,7 @@
 defmodule CredoCoreNode.Application do
   use Application
 
-  alias CredoCoreNode.Validation
+  alias CredoCoreNode.Validation.ValidatorIpManager
 
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
@@ -22,7 +22,7 @@ defmodule CredoCoreNode.Application do
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: CredoCoreNode.Supervisor]
 
-    Validation.maybe_update_validator_ip()
+    ValidatorIpManager.maybe_update_validator_ip()
 
     Supervisor.start_link(children, opts)
   end
