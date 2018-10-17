@@ -19,6 +19,14 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
+config :credo_core_node, CredoCoreNode.Scheduler,
+  global: true,
+  overlap: false,
+  timezone: :utc,
+  jobs: [
+    {"*/15 * * * *", {CredoCoreNode.Validation, :maybe_update_validator_ip, []}} # Periodically check for an ip change on a running node.
+  ]
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"

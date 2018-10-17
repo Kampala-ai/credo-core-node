@@ -41,7 +41,9 @@ defmodule CredoCoreNode.Mixfile do
       {:poison, "~> 3.1.0"},
       {:hackney, "~> 1.9"},
       {:libsecp256k1, git: "https://github.com/turinginc/libsecp256k1.git", tag: "0.1"},
-      {:ex_rlp, "~> 0.3.0"}
+      {:ex_rlp, "~> 0.3.0"},
+      {:quantum, "~> 2.3"},
+      {:timex, "~> 3.0"}
     ]
   end
 end
