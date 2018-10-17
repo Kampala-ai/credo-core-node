@@ -36,9 +36,12 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   @doc """
-  Validates the previous block hash.
+  Validates the previous block hash identifies a validated block with the right block number.
   """
   def validate_previous_hash(block) do
+    prev_block = Blockchain.get_block(block.prev_hash)
+
+    not is_nil(prev_block) && prev_block.number == block.number - 1
   end
 
   @doc """
