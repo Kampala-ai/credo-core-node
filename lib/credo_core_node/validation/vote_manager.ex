@@ -3,8 +3,8 @@ defmodule CredoCoreNode.Validation.VoteManager do
   The vote managers module.
   """
 
-  alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Network
+  alias CredoCoreNode.Pool
   alias CredoCoreNode.Validation
 
   @doc """
@@ -27,10 +27,10 @@ defmodule CredoCoreNode.Validation.VoteManager do
   @doc """
   Selects a candidate block to vote for in this round.
 
-  #TODO take into account other votes if a prior round was held for this block number.
+  # TODO: take into account other votes if a prior round was held for this block number.
   """
   def select_candidate_block_to_vote_for(number) do
-    Blockchain.list_block_candidates(number)
+    Pool.list_pending_blocks(number)
     |> Enum.random()
   end
 

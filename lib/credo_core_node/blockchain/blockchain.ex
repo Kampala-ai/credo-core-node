@@ -86,12 +86,4 @@ defmodule CredoCoreNode.Blockchain do
   def delete_block(%Block{} = block) do
     Repo.delete(block)
   end
-
-  @doc """
-  Returns candidate blocks for a given block number.
-  """
-  def list_block_candidates(number) do
-    list_blocks()
-    |> Enum.filter(&(&1.number == number))
-  end
 end

@@ -95,6 +95,15 @@ defmodule CredoCoreNode.Pool do
     Repo.list(PendingBlock)
   end
 
+
+  @doc """
+  Returns the list of pending_blocks for a given block number.
+  """
+  def list_pending_blocks(number) do
+    list_pending_blocks()
+    |> Enum.filter(&(&1.number == number))
+  end
+
   @doc """
   Gets a single pending_block.
   """
