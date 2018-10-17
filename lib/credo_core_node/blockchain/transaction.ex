@@ -1,18 +1,10 @@
 defmodule CredoCoreNode.Blockchain.Transaction do
   use Mnesia.Schema,
     table_name: :transactions,
-    fields: [:hash, :nonce, :to, :value, :fee, :data, :v, :r, :s]
+    fields: [:hash, :nonce, :to, :value, :fee, :data, :v, :r, :s],
+    rlp_support: true
 
   alias CredoCoreNode.Blockchain.Transaction
-
-  def hash(%Transaction{} = tx, options \\ []) do
-    hash =
-      tx
-      |> ExRLP.encode(type: options[:type], encoding: :hex)
-      |> :libsecp256k1.sha256()
-
-    if options[:encoding] == :hex, do: Base.encode16(hash), else: hash
-  end
 
   def to_list(%Transaction{} = tx, options \\ []) do
     base_values = [tx.nonce, tx.to, tx.value, tx.fee, tx.data]
@@ -40,17 +32,6 @@ defmodule CredoCoreNode.Blockchain.Transaction do
 
       _ ->
         from_list(list)
-    end
-  end
-
-  defimpl ExRLP.Encode, for: __MODULE__ do
-    alias ExRLP.Encode
-
-    @spec encode(Transaction.t(), keyword()) :: binary()
-    def encode(tx, options \\ []) do
-      tx
-      |> Transaction.to_list(options)
-      |> Encode.encode(options)
     end
   end
 end
