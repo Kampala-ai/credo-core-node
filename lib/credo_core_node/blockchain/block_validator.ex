@@ -5,6 +5,8 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.Validation.VoteManager
 
   @finalization_threshold 12
+  @min_txs_per_block 0
+  @max_txs_per_block 250
 
   @doc """
   Validates a block.
@@ -15,6 +17,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     is_valid =
       validate_previous_hash(block) &&
       validate_format(block) &&
+      validate_transaction_count(block) &&
       validate_security_deposits(block) &&
       validate_validator_updates(block) &&
       validate_block_finalization(block) &&
@@ -40,6 +43,17 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   Validates block format.
   """
   def validate_format(block) do
+  end
+
+  @doc """
+  Validates block transaction count.
+
+  TODO: add virtual field or other method of easily retrieving block transactions.
+  """
+  def validate_transaction_count(block) do
+    len = length(block.transactions)
+
+    len > @min_txs_per_block && len <= @max_txs_per_block
   end
 
   @doc """

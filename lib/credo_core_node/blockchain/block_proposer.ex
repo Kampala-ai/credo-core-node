@@ -68,7 +68,7 @@ defmodule CredoCoreNode.Blockchain.BlockProposer do
 
     number = last_block.number + 1
 
-    # Seed rand with the current block number and the retry count to propose a deterministic, pseudorandom result.
+    # Seed rand with the current block number and the retry count to produce a deterministic, pseudorandom result.
     :rand.seed(:exsplus, {101, retry_count, number})
 
     index =
