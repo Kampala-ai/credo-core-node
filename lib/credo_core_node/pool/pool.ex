@@ -8,6 +8,7 @@ defmodule CredoCoreNode.Pool do
   alias CredoCoreNode.Pool.PendingTransaction
   alias CredoCoreNode.Pool.PendingBlock
   alias Mnesia.Repo
+  alias MerklePatriciaTree.Trie
 
   @doc """
   Returns the list of pending_transactions.
@@ -70,9 +71,9 @@ defmodule CredoCoreNode.Pool do
     {:ok, body} = Poison.encode(%{hash: tx.hash, body: ExRLP.encode(tx, encoding: :hex)})
 
     Network.list_connections()
-    |> Enum.filter(&(&1.is_active))
-    |> Enum.map(&("#{Network.request_url(&1.ip)}/node_api/v1/temp/pending_transactions"))
-    |> Enum.each(&(:hackney.request(:post, &1, headers, body, [:with_body, pool: false])))
+    |> Enum.filter(& &1.is_active)
+    |> Enum.map(&"#{Network.request_url(&1.ip)}/node_api/v1/temp/pending_transactions")
+    |> Enum.each(&:hackney.request(:post, &1, headers, body, [:with_body, pool: false]))
 
     {:ok, tx}
   end
@@ -95,7 +96,6 @@ defmodule CredoCoreNode.Pool do
     Repo.list(PendingBlock)
   end
 
-
   @doc """
   Returns the list of pending_blocks for a given block number.
   """
@@ -109,6 +109,20 @@ defmodule CredoCoreNode.Pool do
   """
   def get_pending_block(hash) do
     Repo.get(PendingBlock, hash)
+  end
+
+  @doc """
+  Creates/updates a pending_block.
+  """
+  def write_pending_block(%PendingBlock{hash: hash, tx_trie: tx_trie} = pending_block)
+      when not is_nil(hash) and not is_nil(tx_trie) do
+    tx_trie
+    |> Map.put(:db, MerklePatriciaTree.DB.LevelDB.init("./leveldb/pending_blocks/#{hash}"))
+    |> Trie.store()
+
+    pending_block
+    |> Map.drop([:hash, :trie])
+    |> write_pending_block()
   end
 
   @doc """
@@ -128,7 +142,7 @@ defmodule CredoCoreNode.Pool do
   @doc """
   Generates a pending_block.
   """
-  def generate_pending_block(transactions) do
+  def generate_pending_block(pending_transactions) do
     last_block =
       Blockchain.list_blocks()
       |> Enum.sort(&(&1.number > &2.number))
@@ -137,11 +151,13 @@ defmodule CredoCoreNode.Pool do
     {number, prev_hash} =
       if last_block, do: {last_block.number + 1, last_block.hash}, else: {0, ""}
 
-    body = ExRLP.encode(transactions, encoding: :hex)
-    tx_root =
-      body
-      |> :libsecp256k1.sha256()
-      |> Base.encode16()
+    # Temporary in-memory storage
+    tx_trie =
+      MerklePatriciaTree.DB.ETS.random_ets_db()
+      |> Trie.new()
+      |> put_transactions_to_trie(pending_transactions)
+
+    tx_root = Base.encode16(tx_trie.root_hash)
 
     pending_block = %PendingBlock{
       prev_hash: prev_hash,
@@ -149,9 +165,21 @@ defmodule CredoCoreNode.Pool do
       state_root: "",
       receipt_root: "",
       tx_root: tx_root,
-      body: body
+      body: nil
     }
 
-    Map.put(pending_block, :hash, PendingBlock.hash(pending_block, encoding: :hex))
+    hash = PendingBlock.hash(pending_block, encoding: :hex)
+
+    {:ok, %PendingBlock{pending_block | hash: hash, tx_trie: tx_trie}}
+  end
+
+  # TODO: converting lists of items of a specific type to a trie is a patterned task,
+  #   to be moved to a module and/or a protocol
+  defp put_transactions_to_trie(trie, pending_transactions) do
+    Enum.reduce(
+      pending_transactions,
+      trie,
+      &Trie.update(&2, elem(Base.decode16(&1.hash), 1), ExRLP.encode(&1, type: :signed_rlp))
+    )
   end
 end
