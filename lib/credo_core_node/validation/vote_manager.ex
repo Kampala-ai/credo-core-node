@@ -7,6 +7,8 @@ defmodule CredoCoreNode.Validation.VoteManager do
   alias CredoCoreNode.Pool
   alias CredoCoreNode.Validation
 
+  @vote_collection_timeout 10000
+
   @doc """
   Votes to validate the block via network consensus.
   """

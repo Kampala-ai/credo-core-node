@@ -15,7 +15,6 @@ defmodule CredoCoreNode.Validation do
   @default_nonce 0
   @default_tx_fee 0.1
   @min_stake_size 10000
-  @vote_collection_timeout 10000
 
   def default_nonce, do: @default_nonce
   def default_tx_fee, do: @default_tx_fee
