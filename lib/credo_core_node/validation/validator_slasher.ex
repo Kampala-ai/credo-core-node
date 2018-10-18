@@ -38,4 +38,62 @@ defmodule CredoCoreNode.Validation.ValidatorSlasher do
   def broadcast_validator_slash_transaction(tx) do
     Pool.propagate_pending_transaction(tx)
   end
+
+  @doc """
+  Checks whether a transaction is a slash transaction
+  """
+  def is_slash_transactions(tx) do
+    Poison.decode!(tx.data)["tx_type"] == Blockchain.slash_tx_type()
+  end
+
+  @doc """
+  Returns slash transactions from a list of transactions
+  """
+  def get_slash_transactions(txs) do
+    txs
+    |> Enum.filter(& is_slash_transactions(&1))
+  end
+
+  @doc """
+  Checks that the proof contains two or more votes from a single validator for a given block number and voting round
+  """
+  def slash_proof_is_valid?(proof) do
+    #TODO: implement proof check.
+  end
+
+  @doc """
+  Returns slash transactions with a valid slash proof.
+
+  TODO: check that the validator wasn't already slashed for that block number.
+  """
+  def validate_slash_transactions(txs) do
+    for tx <- txs do
+      proof = Poison.decode!(tx.data)["byzantine_behavior_proof"]
+
+      if slash_proof_is_valid?(proof) do
+        tx
+      end
+    end
+  end
+
+  @doc """
+  Slashes validators
+  """
+  def process_slash_transactions(txs) do
+    for tx <- txs do
+      slashed_validator = Validation.get_validator(tx.validator_address)
+
+      Validation.write_validator(%{slashed_validator | stake_amount: slashed_validator.stake_amount * (1 - @slash_penalty_percentage)})
+    end
+  end
+
+  @doc """
+  Retrieves slash transactions, validates them, and then slashes validators.
+  """
+  def maybe_process_slash_transactions(txs) do
+    txs
+    |> get_slash_transactions()
+    |> validate_slash_transactions()
+    |> process_slash_transactions()
+  end
 end

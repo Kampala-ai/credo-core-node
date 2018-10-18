@@ -2,6 +2,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Validation.SecurityDeposits
   alias CredoCoreNode.Validation.ValidatorIpManager
+  alias CredoCoreNode.Validation.ValidatorSlasher
   alias CredoCoreNode.Validation.VoteManager
 
   @finalization_threshold 12
@@ -22,6 +23,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       validate_transaction_data_length(block) &&
       validate_security_deposits(block) &&
       validate_validator_updates(block) &&
+      validate_slashes(block) &&
       validate_block_finalization(block) &&
       validate_coinbase_transaction(block) &&
       validate_network_consensus(block)
@@ -85,6 +87,13 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   """
   def validate_validator_updates(block) do
     ValidatorIpManager.maybe_validate_validator_ip_update_transactions(block.body)
+  end
+
+  @doc """
+  Validate slashes.
+  """
+  def validate_slashes(block) do
+    ValidatorSlasher.maybe_process_slash_transactions(block.body)
   end
 
   @doc """
