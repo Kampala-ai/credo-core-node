@@ -1,5 +1,6 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.Blockchain
+  alias CredoCoreNode.Pool
   alias CredoCoreNode.Validation.SecurityDeposits
   alias CredoCoreNode.Validation.ValidatorIpManager
   alias CredoCoreNode.Validation.ValidatorSlasher

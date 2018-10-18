@@ -57,6 +57,8 @@ defmodule CredoCoreNode.Blockchain do
 
   @doc """
   Gets a single block by the number.
+
+  # TODO: optimize by retrieving the block via a query that doesn't involve loading all blocks.
   """
   def get_block_by_number(number) do
     list_blocks()
