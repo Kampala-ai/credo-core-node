@@ -10,6 +10,7 @@ defmodule CredoCoreNode.Blockchain do
 
   def coinbase_tx_type, do: "coinbase"
   def security_deposit_tx_type, do: "security_deposit"
+  def slash_tx_type, do: "slash"
   def update_validator_ip_tx_type, do: "update_validator_ip"
 
   @doc """
