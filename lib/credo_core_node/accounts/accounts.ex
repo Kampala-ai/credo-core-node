@@ -14,7 +14,7 @@ defmodule CredoCoreNode.Accounts do
     # HACK: the version of libsecp256k1 we use adds `4` byte value to the beginning of public key
     {:ok, <<4>> <> public_key} =
       tx
-      |> PendingTransaction.hash(type: :unsigned_rlp)
+      |> RLP.Hash.binary(type: :unsigned)
       |> :libsecp256k1.ecdsa_recover_compact(sig, :uncompressed, tx.v)
 
     {:ok, public_key}

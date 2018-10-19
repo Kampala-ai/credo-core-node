@@ -14,7 +14,7 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.Temp.PendingTransactionController do
     else
       params["body"]
       |> ExRLP.decode(encoding: :hex)
-      |> PendingTransaction.from_list(type: :signed_rlp)
+      |> PendingTransaction.from_list(type: :rlp_default)
       |> Pool.write_pending_transaction()
 
       send_resp(conn, :created, "")

@@ -53,13 +53,13 @@ defmodule CredoCoreNode.Pool do
 
     {:ok, sig, v} =
       tx
-      |> PendingTransaction.hash(type: :unsigned_rlp)
+      |> RLP.Hash.binary(type: :unsigned)
       |> :libsecp256k1.ecdsa_sign_compact(private_key, :default, <<>>)
 
     sig = Base.encode16(sig)
     tx = Map.merge(tx, %{v: v, r: String.slice(sig, 0, 64), s: String.slice(sig, 64, 64)})
 
-    {:ok, Map.put(tx, :hash, PendingTransaction.hash(tx, type: :signed_rlp, encoding: :hex))}
+    {:ok, %{tx | hash: RLP.Hash.hex(tx)}}
   end
 
   @doc """
@@ -168,9 +168,7 @@ defmodule CredoCoreNode.Pool do
       body: nil
     }
 
-    hash = PendingBlock.hash(pending_block, encoding: :hex)
-
-    {:ok, %PendingBlock{pending_block | hash: hash, tx_trie: tx_trie}}
+    {:ok, %PendingBlock{pending_block | hash: RLP.Hash.hex(pending_block), tx_trie: tx_trie}}
   end
 
   # TODO: converting lists of items of a specific type to a trie is a patterned task,
@@ -179,7 +177,7 @@ defmodule CredoCoreNode.Pool do
     Enum.reduce(
       pending_transactions,
       trie,
-      &Trie.update(&2, elem(Base.decode16(&1.hash), 1), ExRLP.encode(&1, type: :signed_rlp))
+      &Trie.update(&2, elem(Base.decode16(&1.hash), 1), ExRLP.encode(&1))
     )
   end
 end

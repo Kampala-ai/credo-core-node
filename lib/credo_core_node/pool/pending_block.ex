@@ -5,12 +5,17 @@ defmodule CredoCoreNode.Pool.PendingBlock do
   use Mnesia.Schema,
     table_name: :pending_blocks,
     fields: [:hash, :prev_hash, :number, :state_root, :receipt_root, :tx_root],
-    virtual_fields: [:body, :tx_trie],
-    rlp_support: true
+    virtual_fields: [:body, :tx_trie]
 
-  alias CredoCoreNode.Pool.PendingBlock
+  use RLP.Serializer
 
-  def to_list(%PendingBlock{} = blk, _options) do
-    [blk.prev_hash, blk.number, blk.state_root, blk.receipt_root, blk.tx_root]
-  end
+  @rlp_fields [
+    prev_hash: :string,
+    number: :unsigned,
+    state_root: :string,
+    receipt_root: :string,
+    tx_root: :string
+  ]
+
+  serialize(@rlp_fields)
 end

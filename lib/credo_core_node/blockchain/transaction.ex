@@ -1,37 +1,19 @@
 defmodule CredoCoreNode.Blockchain.Transaction do
   use Mnesia.Schema,
     table_name: :transactions,
-    fields: [:hash, :nonce, :to, :value, :fee, :data, :v, :r, :s],
-    rlp_support: true
+    fields: [:hash, :nonce, :to, :value, :fee, :data, :v, :r, :s]
 
-  alias CredoCoreNode.Blockchain.Transaction
+  use RLP.Serializer
 
-  def to_list(%Transaction{} = tx, options \\ []) do
-    base_values = [tx.nonce, tx.to, tx.value, tx.fee, tx.data]
-    sig_values = [tx.v, tx.r, tx.s]
+  @rlp_base_fields [
+    nonce: :unsigned,
+    to: :string,
+    value: :unsigned,
+    fee: :unsigned,
+    data: :string
+  ]
+  @rlp_sig_fields [v: :unsigned, r: :string, s: :string]
 
-    case options[:type] do
-      :signed_rlp -> base_values ++ sig_values
-      :unsigned_rlp -> base_values
-      _ -> [tx.hash] ++ base_values ++ sig_values
-    end
-  end
-
-  def from_list(list, options) do
-    case options[:type] do
-      :signed_rlp ->
-        tx = from_list([nil] ++ list)
-
-        Map.merge(tx, %{
-          hash: hash(tx, type: :signed_rlp, encoding: :hex),
-          nonce: :binary.decode_unsigned(tx.nonce),
-          value: :binary.decode_unsigned(tx.value),
-          fee: :binary.decode_unsigned(tx.fee),
-          v: :binary.decode_unsigned(tx.v)
-        })
-
-      _ ->
-        from_list(list)
-    end
-  end
+  serialize(:default, @rlp_base_fields ++ @rlp_sig_fields)
+  serialize(:unsigned, @rlp_base_fields)
 end

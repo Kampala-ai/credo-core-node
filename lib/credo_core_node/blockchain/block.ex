@@ -5,12 +5,17 @@ defmodule CredoCoreNode.Blockchain.Block do
   use Mnesia.Schema,
     table_name: :blocks,
     fields: [:hash, :prev_hash, :number, :state_root, :receipt_root, :tx_root],
-    virtual_fields: [:body],
-    rlp_support: :true
+    virtual_fields: [:body]
 
-  alias CredoCoreNode.Blockchain.Block
+  use RLP.Serializer
 
-  def to_list(%Block{} = blk, _options) do
-    [blk.prev_hash, blk.number, blk.state_root, blk.receipt_root, blk.tx_root]
-  end
+  @rlp_fields [
+    prev_hash: :string,
+    number: :unsigned,
+    state_root: :string,
+    receipt_root: :string,
+    tx_root: :string
+  ]
+
+  serialize(@rlp_fields)
 end
