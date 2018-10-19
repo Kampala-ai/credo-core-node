@@ -7,7 +7,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.Validation.VoteManager
 
   @finalization_threshold 12
-  @min_txs_per_block 0
+  @min_txs_per_block 1
   @max_txs_per_block 250
   @max_data_length 50000
 
@@ -61,7 +61,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   def validate_transaction_count(block) do
     len = length(block.transactions)
 
-    len > @min_txs_per_block && len <= @max_txs_per_block
+    len >= @min_txs_per_block && len <= @max_txs_per_block
   end
 
   @doc """
