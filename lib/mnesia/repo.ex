@@ -20,7 +20,7 @@ defmodule Mnesia.Repo do
 
       Enum.each(modules, fn module ->
         :mnesia.create_table(:"#{module.table_name()}_#{table_suffix()}",
-          attributes: module.fields()
+          attributes: module.fields(), disc_copies: [node()]
         )
       end)
     end
