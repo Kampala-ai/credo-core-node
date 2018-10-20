@@ -8,8 +8,6 @@ defmodule CredoCoreNode.Workers.MineOperator do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Mining
 
-  @block_proposal_timeout 10000
-
   def start_link(interval \\ 300_000) do
     GenServer.start_link(__MODULE__, interval, name: __MODULE__)
   end

@@ -16,11 +16,13 @@ defmodule CredoCoreNode.Mining.DepositManager do
   Constructs a security deposit transaction.
   """
   def construct_security_deposit(amount, private_key, to, timelock \\ nil) do
-    ip = Network.get_current_ip()
-
-    attrs = %{nonce: Mining.default_nonce(), to: to, value: amount , fee: Mining.default_tx_fee(), data: "{\"tx_type\" : \"#{Blockchain.security_deposit_tx_type()}\", \"node_ip\" : \"#{ip}\", \"timelock\": \"#{timelock}\"}"}
-
-    {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
+    {:ok, tx} = Pool.generate_pending_transaction(private_key, %{
+      nonce: Mining.default_nonce(),
+      to: to,
+      value: amount,
+      fee: Mining.default_tx_fee(),
+      data: "{\"tx_type\" : \"#{Blockchain.security_deposit_tx_type()}\", \"node_ip\" : \"#{Network.get_current_ip()}\", \"timelock\": \"#{timelock}\"}"
+    })
 
     tx
   end

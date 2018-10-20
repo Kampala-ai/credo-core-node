@@ -82,9 +82,6 @@ defmodule CredoCoreNode.Blockchain do
 
   @doc """
   Marks a block as invalid.
-
-  TODO: Add some kind of status field for marking blocks as invalid.
-  TODO: Clean up invalid pending blocks after finalization threshold is passed.
   """
   def mark_block_as_invalid(pending_block) do
     Pool.delete_pending_block(pending_block)

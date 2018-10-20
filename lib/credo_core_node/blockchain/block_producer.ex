@@ -6,7 +6,7 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
 
   require Logger
 
-  @block_proposal_timeout 10000
+  @block_production_timeout 10000
 
   def is_your_turn?(block, retry_count) do
     get_next_block_producer(block, retry_count) == Mining.get_own_miner()
@@ -49,7 +49,7 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
   end
 
   def wait_for_block(block, retry_count) do
-    :timer.sleep(@block_proposal_timeout)
+    :timer.sleep(@block_production_timeout)
 
     if next_block = next_block?(block) do
       BlockValidator.validate_block(next_block)

@@ -8,45 +8,32 @@ defmodule CredoCoreNode.Mining.IpManager do
   alias CredoCoreNode.Pool
   alias CredoCoreNode.Mining
 
-  @doc """
-  Check whether the node's ip has changed compared with the miner state
-
-  TODO: Make this check more robust. :inet.getif may return ips in a different order, but we're just selecting the first once.
-  """
-  def miner_ip_changed? do
-    Network.get_current_ip != Mining.get_own_miner().node_ip
+  def maybe_update_miner_ip do
+    if Mining.is_miner?() && ip_changed?() do
+      construct_miner_ip_update_transaction("", Mining.get_own_miner().address)
+      |> Pool.propagate_pending_transaction()
+    end
   end
 
   @doc """
-  Update the miner's ip if it has changed.
+  Check whether the node's ip has changed compared with the miner state
   """
-  def maybe_update_miner_ip do
-    if Mining.is_miner?() && miner_ip_changed?() do
-      private_key = "" #TODO get actual private key
-
-      construct_miner_ip_update_transaction(private_key, Mining.get_own_miner().address)
-      |> broadcast_miner_ip_update_transaction()
-    end
+  def ip_changed? do
+    Network.get_current_ip != Mining.get_own_miner().node_ip # TODO: Make this check more robust. :inet.getif may return ips in a different order, but we're just selecting the first once.
   end
 
   @doc """
   Constructs a security deposit transaction.
   """
   def construct_miner_ip_update_transaction(private_key, to) do
-    ip = Network.get_current_ip()
-
-    attrs = %{nonce: Mining.default_nonce(), to: to, value: 0 , fee: Mining.default_tx_fee(), data: "{\"tx_type\" : \"#{Blockchain.update_miner_ip_tx_type()}\", \"node_ip\" : \"#{ip}\"}"}
-
-    {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
+    {:ok, tx} = Pool.generate_pending_transaction(private_key, %{
+      nonce: Mining.default_nonce(),
+      to: to,
+      value: 0,
+      fee: Mining.default_tx_fee(),
+      data: "{\"tx_type\" : \"#{Blockchain.update_miner_ip_tx_type()}\", \"node_ip\" : \"#{Network.get_current_ip()}\"}"})
 
     tx
-  end
-
-  @doc """
-  Broadcasts a miner ip update transaction.
-  """
-  def broadcast_miner_ip_update_transaction(tx) do
-    Pool.propagate_pending_transaction(tx)
   end
 
   @doc """
