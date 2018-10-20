@@ -1,11 +1,11 @@
-defmodule CredoCoreNode.Validation.VoteManager do
+defmodule CredoCoreNode.Mining.VoteManager do
   @moduledoc """
   The vote managers module.
   """
 
   alias CredoCoreNode.Network
   alias CredoCoreNode.Pool
-  alias CredoCoreNode.Validation
+  alias CredoCoreNode.Mining
 
   @vote_collection_timeout 10000
 

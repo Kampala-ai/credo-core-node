@@ -1,11 +1,11 @@
-defmodule CredoCoreNode.Validation.ValidatorSlasher do
+defmodule CredoCoreNode.Mining.ValidatorSlasher do
   @moduledoc """
   The validator slasher module.
   """
 
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Pool
-  alias CredoCoreNode.Validation
+  alias CredoCoreNode.Mining
 
   @slash_penalty_percentage 20
 

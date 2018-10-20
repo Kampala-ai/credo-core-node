@@ -1,10 +1,10 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Pool
-  alias CredoCoreNode.Validation.SecurityDeposits
-  alias CredoCoreNode.Validation.ValidatorIpManager
-  alias CredoCoreNode.Validation.ValidatorSlasher
-  alias CredoCoreNode.Validation.VoteManager
+  alias CredoCoreNode.Mining.SecurityDeposits
+  alias CredoCoreNode.Mining.ValidatorIpManager
+  alias CredoCoreNode.Mining.ValidatorSlasher
+  alias CredoCoreNode.Mining.VoteManager
 
   @min_txs_per_block 1
   @max_txs_per_block 250

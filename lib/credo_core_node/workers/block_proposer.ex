@@ -4,7 +4,7 @@ defmodule CredoCoreNode.Workers.BlockProposer do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Blockchain.BlockValidator
   alias CredoCoreNode.Pool
-  alias CredoCoreNode.Validation
+  alias CredoCoreNode.Mining
 
   require Logger
 

@@ -1,11 +1,11 @@
-defmodule CredoCoreNode.Validation do
+defmodule CredoCoreNode.Mining do
   @moduledoc """
   The Validation context.
   """
 
-  alias CredoCoreNode.Validation.SecurityDeposits
-  alias CredoCoreNode.Validation.Validator
-  alias CredoCoreNode.Validation.Vote
+  alias CredoCoreNode.Mining.SecurityDeposits
+  alias CredoCoreNode.Mining.Validator
+  alias CredoCoreNode.Mining.Vote
 
   alias Mnesia.Repo
 

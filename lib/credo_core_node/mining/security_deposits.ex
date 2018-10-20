@@ -1,4 +1,4 @@
-defmodule CredoCoreNode.Validation.SecurityDeposits do
+defmodule CredoCoreNode.Mining.SecurityDeposits do
   @moduledoc """
   The security deposits module.
   """
@@ -6,7 +6,7 @@ defmodule CredoCoreNode.Validation.SecurityDeposits do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Network
   alias CredoCoreNode.Pool
-  alias CredoCoreNode.Validation
+  alias CredoCoreNode.Mining
 
   # TODO: specify actual timelock limits.
   @min_timelock 1

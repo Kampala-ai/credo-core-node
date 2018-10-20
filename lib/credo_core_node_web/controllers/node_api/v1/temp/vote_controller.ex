@@ -3,7 +3,7 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.Temp.VoteController do
 
   require Logger
 
-  alias CredoCoreNode.Validation
+  alias CredoCoreNode.Mining
 
   def create(conn, params) do
     Logger.info("Incoming vote #{params["block_height"]}")

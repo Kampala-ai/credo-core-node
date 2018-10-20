@@ -1,4 +1,4 @@
-defmodule CredoCoreNode.Validation.ValidatorIpManager do
+defmodule CredoCoreNode.Mining.ValidatorIpManager do
   @moduledoc """
   The validator IP manager module.
   """
@@ -6,7 +6,7 @@ defmodule CredoCoreNode.Validation.ValidatorIpManager do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Network
   alias CredoCoreNode.Pool
-  alias CredoCoreNode.Validation
+  alias CredoCoreNode.Mining
 
   @doc """
   Check whether the node's ip has changed compared with the validator state
