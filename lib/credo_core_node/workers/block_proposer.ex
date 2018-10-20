@@ -29,8 +29,8 @@ defmodule CredoCoreNode.Workers.BlockProposer do
   To be called after a block is confirmed.
   """
   def maybe_propose_next_block(confirmed_block, retry_count \\ 0) do
-    if Validation.is_validator?() do
-      if get_next_block_proposer(confirmed_block, retry_count) == Validation.get_own_validator() do
+    if Mining.is_validator?() do
+      if get_next_block_proposer(confirmed_block, retry_count) == Mining.get_own_validator() do
         Logger.info("Proposing block...")
 
         Pool.get_batch_of_pending_transactions()
@@ -51,7 +51,7 @@ defmodule CredoCoreNode.Workers.BlockProposer do
       Pool.get_pending_transaction_fees_sum(transactions)
 
     validator =
-      Validation.get_own_validator()
+      Mining.get_own_validator()
 
     private_key = "" # TODO: set private key
     attrs = %{nonce: 0, to: validator.address, value: tx_fees_sum, fee: 0, data: "{\"tx_type\" : \"#{Blockchain.coinbase_tx_type()}\"}"}
@@ -67,7 +67,7 @@ defmodule CredoCoreNode.Workers.BlockProposer do
   """
   def get_next_block_proposer(last_block, retry_count) do
     validators =
-      Validation.list_validators()
+      Mining.list_validators()
       |> Enum.sort(&(&1.address >= &2.address))
 
     # TODO: implement a more memory-efficient weighting mechanism.
@@ -91,7 +91,7 @@ defmodule CredoCoreNode.Workers.BlockProposer do
 
     validator_addresses
     |> Enum.at(index)
-    |> Validation.get_validator()
+    |> Mining.get_validator()
   end
 
   @doc """
@@ -111,7 +111,7 @@ defmodule CredoCoreNode.Workers.BlockProposer do
     :timer.sleep(@block_proposal_timeout)
 
     if (block = Blockchain.get_block_by_number(confirmed_block.number + 1)) do
-      BlockValidator.validate_block(block)
+      Validator.validate_block(block)
     else
       maybe_propose_next_block(confirmed_block, retry_count + 1)
     end

@@ -1,4 +1,4 @@
-defmodule CredoCoreNode.Mining.ValidatorSlasher do
+defmodule CredoCoreNode.Mining.Slasher do
   @moduledoc """
   The validator slasher module.
   """
@@ -25,7 +25,7 @@ defmodule CredoCoreNode.Mining.ValidatorSlasher do
   Broadcasts a validator slash transaction.
   """
   def construct_validator_slash_transaction(private_key, byzantine_behavior_proof, to) do
-    attrs = %{nonce: Validation.default_nonce(), to: to, value: 0 , fee: Validation.default_tx_fee(), data: "{\"tx_type\" : \"#{Blockchain.slash_tx_type()}\", \"byzantine_behavior_proof\" : \"#{byzantine_behavior_proof}\"}"}
+    attrs = %{nonce: Mining.default_nonce(), to: to, value: 0 , fee: Mining.default_tx_fee(), data: "{\"tx_type\" : \"#{Blockchain.slash_tx_type()}\", \"byzantine_behavior_proof\" : \"#{byzantine_behavior_proof}\"}"}
 
     {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
 
@@ -81,9 +81,9 @@ defmodule CredoCoreNode.Mining.ValidatorSlasher do
   """
   def process_slash_transactions(txs) do
     for tx <- txs do
-      slashed_validator = Validation.get_validator(tx.validator_address)
+      slashed_validator = Mining.get_validator(tx.validator_address)
 
-      Validation.write_validator(%{slashed_validator | stake_amount: slashed_validator.stake_amount * (1 - @slash_penalty_percentage)})
+      Mining.write_validator(%{slashed_validator | stake_amount: slashed_validator.stake_amount * (1 - @slash_penalty_percentage)})
     end
   end
 

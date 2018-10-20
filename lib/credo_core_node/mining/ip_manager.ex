@@ -1,4 +1,4 @@
-defmodule CredoCoreNode.Mining.ValidatorIpManager do
+defmodule CredoCoreNode.Mining.IpManager do
   @moduledoc """
   The validator IP manager module.
   """
@@ -14,17 +14,17 @@ defmodule CredoCoreNode.Mining.ValidatorIpManager do
   TODO: Make this check more robust. :inet.getif may return ips in a different order, but we're just selecting the first once.
   """
   def validator_ip_changed? do
-    Network.get_current_ip != Validation.get_own_validator().node_ip
+    Network.get_current_ip != Mining.get_own_validator().node_ip
   end
 
   @doc """
   Update the validator's ip if it has changed.
   """
   def maybe_update_validator_ip do
-    if Validation.is_validator?() && validator_ip_changed?() do
+    if Mining.is_validator?() && validator_ip_changed?() do
       private_key = "" #TODO get actual private key
 
-      construct_validator_ip_update_transaction(private_key, Validation.get_own_validator().address)
+      construct_validator_ip_update_transaction(private_key, Mining.get_own_validator().address)
       |> broadcast_validator_ip_update_transaction()
     end
   end
@@ -35,7 +35,7 @@ defmodule CredoCoreNode.Mining.ValidatorIpManager do
   def construct_validator_ip_update_transaction(private_key, to) do
     ip = Network.get_current_ip()
 
-    attrs = %{nonce: Validation.default_nonce(), to: to, value: 0 , fee: Validation.default_tx_fee(), data: "{\"tx_type\" : \"#{Blockchain.update_validator_ip_tx_type()}\", \"node_ip\" : \"#{ip}\"}"}
+    attrs = %{nonce: Mining.default_nonce(), to: to, value: 0 , fee: Mining.default_tx_fee(), data: "{\"tx_type\" : \"#{Blockchain.update_validator_ip_tx_type()}\", \"node_ip\" : \"#{ip}\"}"}
 
     {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
 
@@ -79,9 +79,9 @@ defmodule CredoCoreNode.Mining.ValidatorIpManager do
       node_ip = Poison.decode!(tx.data)["node_ip"]
 
       tx.to
-      |> Validation.get_validator()
+      |> Mining.get_validator()
       |> Map.merge(%{node_ip: node_ip})
-      |> Validation.write_validator()
+      |> Mining.write_validator()
     end
   end
 

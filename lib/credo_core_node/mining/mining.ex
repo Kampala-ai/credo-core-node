@@ -3,8 +3,8 @@ defmodule CredoCoreNode.Mining do
   The Validation context.
   """
 
-  alias CredoCoreNode.Mining.SecurityDeposits
-  alias CredoCoreNode.Mining.Validator
+  alias CredoCoreNode.Mining.DepositManager
+  alias CredoCoreNode.Mining.Miner
   alias CredoCoreNode.Mining.Vote
 
   alias Mnesia.Repo
@@ -26,8 +26,8 @@ defmodule CredoCoreNode.Mining do
   """
   def become_validator(amount, private_key, to, timelock \\ nil) do
     unless is_validator?() do
-      SecurityDeposits.construct_security_deposit(amount, private_key, to, timelock)
-      |> SecurityDeposits.broadcast_security_deposit()
+      DepositManager.construct_security_deposit(amount, private_key, to, timelock)
+      |> DepositManager.broadcast_security_deposit()
     end
   end
 
@@ -64,34 +64,34 @@ defmodule CredoCoreNode.Mining do
   Returns the list of validators.
   """
   def list_validators() do
-    Repo.list(Validator)
+    Repo.list(Miner)
   end
 
   @doc """
   Returns the number of validators.
   """
   def count_validators() do
-    length(Repo.list(Validator))
+    length(Repo.list(Miner))
   end
 
   @doc """
   Gets a single validator.
   """
   def get_validator(address) do
-    Repo.get(Validator, address)
+    Repo.get(Miner, address)
   end
 
   @doc """
   Creates/updates a validator.
   """
   def write_validator(attrs) do
-    Repo.write(Validator, attrs)
+    Repo.write(Miner, attrs)
   end
 
   @doc """
   Deletes a validator.
   """
-  def delete_validator(%Validator{} = validator) do
+  def delete_validator(%Miner{} = validator) do
     Repo.delete(validator)
   end
 

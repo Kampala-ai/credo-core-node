@@ -14,7 +14,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
   """
   def vote(block_number, voting_round \\ 0) do
     block = select_candidate_block_to_vote_for(block_number)
-    validator = Validation.get_own_validator()
+    validator = Mining.get_own_validator()
 
     unless already_voted?(block, voting_round, validator) do
       cast_vote(block, voting_round, validator)
@@ -40,7 +40,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
   Checks whether a validator already voted for a block in the current round.
   """
   def already_voted?(block, voting_round, validator) do
-    Validation.list_votes()
+    Mining.list_votes()
     |> Enum.filter(& &1.block_height == block.number)
     |> Enum.filter(& &1.voting_round == voting_round)
     |> Enum.filter(& &1.validator_address == validator.address)
@@ -73,7 +73,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
     headers = Network.node_request_headers()
     body = vote
 
-    Validation.list_validators()
+    Mining.list_validators()
     |> Enum.map(&("#{Network.request_url(&1.ip)}/node_api/v1/temp/votes"))
     |> Enum.each(&(:hackney.request(:post, &1, headers, body, [:with_body, pool: false])))
 
@@ -84,12 +84,12 @@ defmodule CredoCoreNode.Mining.VoteManager do
   Count votes using a stake-weighted sum.
   """
   def count_votes(block, voting_round) do
-    votes = Validation.list_votes_for_round(block, voting_round)
+    votes = Mining.list_votes_for_round(block, voting_round)
     results = %{}
 
     for vote <- votes do
       validator =
-        Validation.get_validator(vote.validator_address)
+        Mining.get_validator(vote.validator_address)
 
       previous_vote_count = results[vote.block_hash] || 0
 
@@ -122,7 +122,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
   Calculate the total voting power among validators.
   """
   def total_voting_power do
-    for %{stake_amount: stake_amount, id: _} <- Validation.list_validators(), do: stake_amount
+    for %{stake_amount: stake_amount, id: _} <- Mining.list_validators(), do: stake_amount
   end
 
   @doc """
@@ -138,9 +138,9 @@ defmodule CredoCoreNode.Mining.VoteManager do
   """
   def update_validator_participation_rates(block, voting_round) do
     votes =
-      Validation.list_votes_for_round(block, voting_round)
+      Mining.list_votes_for_round(block, voting_round)
 
-    for validator <- Validation.list_validators() do
+    for validator <- Mining.list_validators() do
       participation_rate =
         if validator_voted?(votes, validator) do
           validator.participation_rate + 1
@@ -150,7 +150,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
 
       validator
       |> Map.merge(%{participation_rate: participation_rate})
-      |> Validation.write_validator()
+      |> Mining.write_validator()
     end
   end
 

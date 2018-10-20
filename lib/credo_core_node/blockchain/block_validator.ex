@@ -1,9 +1,9 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Pool
-  alias CredoCoreNode.Mining.SecurityDeposits
-  alias CredoCoreNode.Mining.ValidatorIpManager
-  alias CredoCoreNode.Mining.ValidatorSlasher
+  alias CredoCoreNode.Mining.DepositManager
+  alias CredoCoreNode.Mining.IpManager
+  alias CredoCoreNode.Mining.Slasher
   alias CredoCoreNode.Mining.VoteManager
 
   @min_txs_per_block 1
@@ -79,21 +79,21 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   Validates security deposits.
   """
   def validate_security_deposits(block) do
-    SecurityDeposits.maybe_process_security_deposits(block.body)
+    DepositManager.maybe_process_security_deposits(block.body)
   end
 
   @doc """
   Validate validator updates.
   """
   def validate_validator_updates(block) do
-    ValidatorIpManager.maybe_validate_validator_ip_update_transactions(block.body)
+    IpManager.maybe_validate_validator_ip_update_transactions(block.body)
   end
 
   @doc """
   Validate slashes.
   """
   def validate_slashes(block) do
-    ValidatorSlasher.maybe_process_slash_transactions(block.body)
+    Slasher.maybe_process_slash_transactions(block.body)
   end
 
   @doc """

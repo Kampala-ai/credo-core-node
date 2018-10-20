@@ -1,6 +1,6 @@
-defmodule CredoCoreNode.Mining.SecurityDeposits do
+defmodule CredoCoreNode.Mining.DepositManager do
   @moduledoc """
-  The security deposits module.
+  The security deposit manager module.
   """
 
   alias CredoCoreNode.Blockchain
@@ -18,7 +18,7 @@ defmodule CredoCoreNode.Mining.SecurityDeposits do
   def construct_security_deposit(amount, private_key, to, timelock \\ nil) do
     ip = Network.get_current_ip()
 
-    attrs = %{nonce: Validation.default_nonce(), to: to, value: amount , fee: Validation.default_tx_fee(), data: "{\"tx_type\" : \"#{Blockchain.security_deposit_tx_type()}\", \"node_ip\" : \"#{ip}\", \"timelock\": \"#{timelock}\"}"}
+    attrs = %{nonce: Mining.default_nonce(), to: to, value: amount , fee: Mining.default_tx_fee(), data: "{\"tx_type\" : \"#{Blockchain.security_deposit_tx_type()}\", \"node_ip\" : \"#{ip}\", \"timelock\": \"#{timelock}\"}"}
 
     {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
 
@@ -52,7 +52,7 @@ defmodule CredoCoreNode.Mining.SecurityDeposits do
   Validates the security deposit size.
   """
   def validate_security_deposit_size(tx) do
-    tx.value >= Validation.min_stake_size()
+    tx.value >= Mining.min_stake_size()
   end
 
   @doc """
@@ -77,11 +77,11 @@ defmodule CredoCoreNode.Mining.SecurityDeposits do
   """
   def process_security_deposits(txs) do
     for tx <- txs do
-      unless Validation.get_validator(tx.to) do
+      unless Mining.get_validator(tx.to) do
         node_ip = Poison.decode!(tx.data)["node_ip"]
 
         %{ip: node_ip, address: tx.to, stake_amount: tx.value, participation_rate: 1, is_self: false}
-        |> Validation.write_validator
+        |> Mining.write_validator
       end
     end
   end
@@ -103,7 +103,7 @@ defmodule CredoCoreNode.Mining.SecurityDeposits do
   """
   def is_security_deposit_withdrawal(tx) do
     tx.from
-    |> Validation.get_validator()
+    |> Mining.get_validator()
     |> is_nil
     |> Kernel.not
   end
@@ -135,8 +135,8 @@ defmodule CredoCoreNode.Mining.SecurityDeposits do
   """
   def get_invalid_security_deposit_withdrawals(txs) do
     txs
-    |> Enum.filter(& !validate_security_deposit_withdrawal_size(&1, Validation.get_validator(&1.address)))
-    |> Enum.filter(& !validate_security_deposit_withdrawal_timelock(&1, Validation.get_validator(&1.address)))
+    |> Enum.filter(& !validate_security_deposit_withdrawal_size(&1, Mining.get_validator(&1.address)))
+    |> Enum.filter(& !validate_security_deposit_withdrawal_timelock(&1, Mining.get_validator(&1.address)))
   end
 
   @doc """
