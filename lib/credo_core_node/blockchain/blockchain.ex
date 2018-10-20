@@ -49,6 +49,15 @@ defmodule CredoCoreNode.Blockchain do
   end
 
   @doc """
+  Returns the last confirmed blocks.
+  """
+  def last_block() do
+    list_blocks()
+    |> Enum.sort(&(&1.number > &2.number))
+    |> List.first()
+  end
+
+  @doc """
   Gets a single block.
   """
   def get_block(hash) do
