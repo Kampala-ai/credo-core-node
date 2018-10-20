@@ -14,6 +14,7 @@ defmodule CredoCoreNode.Application do
       supervisor(CredoCoreNodeWeb.Endpoint, []),
       worker(CredoCoreNode.Workers.ConnectionManager, [60_000]),
       worker(CredoCoreNode.Workers.BlockProposer, []),
+      worker(CredoCoreNode.Workers.GarbageCollector, []),
       worker(CredoCoreNode.Scheduler, [])
     ]
 
