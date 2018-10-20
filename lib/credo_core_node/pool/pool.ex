@@ -27,8 +27,8 @@ defmodule CredoCoreNode.Pool do
   @doc """
   Gets the sum of pending transaction fees.
   """
-  def get_pending_transaction_fees_sum(transactions) do
-    for %{fee: fee, id: _} <- transactions, do: fee
+  def sum_pending_transaction_fees(txs) do
+    for %{fee: fee, id: _} <- txs, do: fee
   end
 
   @doc """
@@ -111,6 +111,11 @@ defmodule CredoCoreNode.Pool do
     Repo.get(PendingBlock, hash)
   end
 
+  def get_block_by_number(number) do
+    list_pending_blocks(number)
+    |> List.first()
+  end
+
   @doc """
   Creates/updates a pending_block.
   """
@@ -169,6 +174,9 @@ defmodule CredoCoreNode.Pool do
     }
 
     {:ok, %PendingBlock{pending_block | hash: RLP.Hash.hex(pending_block), tx_trie: tx_trie}}
+  end
+
+  def propagate_block(block, recipients \\ :miners) do
   end
 
   # TODO: converting lists of items of a specific type to a trie is a patterned task,

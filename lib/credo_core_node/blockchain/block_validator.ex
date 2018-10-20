@@ -1,12 +1,11 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Pool
-  alias CredoCoreNode.Validation.SecurityDeposits
-  alias CredoCoreNode.Validation.ValidatorIpManager
-  alias CredoCoreNode.Validation.ValidatorSlasher
-  alias CredoCoreNode.Validation.VoteManager
+  alias CredoCoreNode.Mining.DepositManager
+  alias CredoCoreNode.Mining.IpManager
+  alias CredoCoreNode.Mining.Slasher
+  alias CredoCoreNode.Mining.VoteManager
 
-  @finalization_threshold 12
   @min_txs_per_block 1
   @max_txs_per_block 250
   @max_data_length 50000
@@ -23,7 +22,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       validate_transaction_count(block) &&
       validate_transaction_data_length(block) &&
       validate_security_deposits(block) &&
-      validate_validator_updates(block) &&
+      validate_miner_updates(block) &&
       validate_slashes(block) &&
       validate_block_finalization(block) &&
       validate_coinbase_transaction(block) &&
@@ -80,21 +79,21 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   Validates security deposits.
   """
   def validate_security_deposits(block) do
-    SecurityDeposits.maybe_process_security_deposits(block.body)
+    DepositManager.maybe_process_security_deposits(block.body)
   end
 
   @doc """
-  Validate validator updates.
+  Validate miner updates.
   """
-  def validate_validator_updates(block) do
-    ValidatorIpManager.maybe_validate_validator_ip_update_transactions(block.body)
+  def validate_miner_updates(block) do
+    IpManager.maybe_validate_miner_ip_update_transactions(block.body)
   end
 
   @doc """
   Validate slashes.
   """
   def validate_slashes(block) do
-    ValidatorSlasher.maybe_process_slash_transactions(block.body)
+    Slasher.maybe_process_slash_transactions(block.body)
   end
 
   @doc """
@@ -103,7 +102,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   def validate_block_finalization(block) do
     last_finalized_block =
       Blockchain.list_blocks()
-      |> Enum.filter(&(&1.number == block.number - @finalization_threshold))
+      |> Enum.filter(&(&1.number == block.number - Blockchain.finalization_threshold()))
       |> List.first()
 
     # Check that the current block is in a chain of blocks containing the last finalized block.
@@ -118,7 +117,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       |> Enum.filter(&(Poison.decode!(&1.data)["tx_type"] == Blockchain.coinbase_tx_type()))
 
     non_coinbase_tx_fees_sum =
-      Pool.get_pending_transaction_fees_sum(block.transactions -- coinbase_tx)
+      Pool.sum_pending_transaction_fees(block.transactions -- coinbase_tx)
 
     length(coinbase_txs) == 1 && coinbase_tx.fee == non_coinbase_tx_fees_sum
   end

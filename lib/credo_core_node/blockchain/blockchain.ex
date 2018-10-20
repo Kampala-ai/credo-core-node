@@ -8,10 +8,13 @@ defmodule CredoCoreNode.Blockchain do
   alias CredoCoreNode.Pool
   alias Mnesia.Repo
 
+  @finalization_threshold 12
+
   def coinbase_tx_type, do: "coinbase"
   def security_deposit_tx_type, do: "security_deposit"
   def slash_tx_type, do: "slash"
-  def update_validator_ip_tx_type, do: "update_validator_ip"
+  def update_miner_ip_tx_type, do: "update_miner_ip"
+  def finalization_threshold, do: @finalization_threshold
 
   @doc """
   Returns the list of transactions.
@@ -49,17 +52,21 @@ defmodule CredoCoreNode.Blockchain do
   end
 
   @doc """
+  Returns the last confirmed blocks.
+  """
+  def last_block() do
+    list_blocks()
+    |> Enum.sort(&(&1.number > &2.number))
+    |> List.first()
+  end
+
+  @doc """
   Gets a single block.
   """
   def get_block(hash) do
     Repo.get(Block, hash)
   end
 
-  @doc """
-  Gets a single block by the number.
-
-  # TODO: optimize by retrieving the block via a query that doesn't involve loading all blocks.
-  """
   def get_block_by_number(number) do
     list_blocks()
     |> Enum.filter(&(&1.number == number))
@@ -75,9 +82,6 @@ defmodule CredoCoreNode.Blockchain do
 
   @doc """
   Marks a block as invalid.
-
-  TODO: Add some kind of status field for marking blocks as invalid.
-  TODO: Clean up invalid pending blocks after finalization threshold is passed.
   """
   def mark_block_as_invalid(pending_block) do
     Pool.delete_pending_block(pending_block)
