@@ -14,10 +14,10 @@ defmodule CredoCoreNode.Mining.VoteManager do
   """
   def vote(block_number, voting_round \\ 0) do
     block = select_candidate_block_to_vote_for(block_number)
-    validator = Mining.get_own_validator()
+    miner = Mining.get_own_miner()
 
-    unless already_voted?(block, voting_round, validator) do
-      cast_vote(block, voting_round, validator)
+    unless already_voted?(block, voting_round, miner) do
+      cast_vote(block, voting_round, miner)
 
       :timer.sleep(@vote_collection_timeout)
 
@@ -37,25 +37,25 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   @doc """
-  Checks whether a validator already voted for a block in the current round.
+  Checks whether a miner already voted for a block in the current round.
   """
-  def already_voted?(block, voting_round, validator) do
+  def already_voted?(block, voting_round, miner) do
     Mining.list_votes()
     |> Enum.filter(& &1.block_height == block.number)
     |> Enum.filter(& &1.voting_round == voting_round)
-    |> Enum.filter(& &1.validator_address == validator.address)
+    |> Enum.filter(& &1.miner_address == miner.address)
     |> Enum.any?
   end
 
   @doc """
-  Construct and broadcast vote to other validators.
+  Construct and broadcast vote to other miners.
   """
-  def cast_vote(block, voting_round, validator) do
-    vote = "{\"block_hash\" : #{block.hash}, \"block_height\" : #{block.number}, \"voting_round\" : \"#{voting_round}\", \"validator_address\" : #{validator.address}}"
+  def cast_vote(block, voting_round, miner) do
+    vote = "{\"block_hash\" : #{block.hash}, \"block_height\" : #{block.number}, \"voting_round\" : \"#{voting_round}\", \"miner_address\" : #{miner.address}}"
 
     sign_vote(vote)
 
-    broadcast_vote_to_validators(vote)
+    broadcast_vote_to_miners(vote)
   end
 
   @doc """
@@ -66,14 +66,14 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   @doc """
-  Broadcasts the vote to other validators
+  Broadcasts the vote to other miners
   """
-  def broadcast_vote_to_validators(vote) do
+  def broadcast_vote_to_miners(vote) do
     # TODO: temporary REST implementation, to be replaced with channels-based one later
     headers = Network.node_request_headers()
     body = vote
 
-    Mining.list_validators()
+    Mining.list_miners()
     |> Enum.map(&("#{Network.request_url(&1.ip)}/node_api/v1/temp/votes"))
     |> Enum.each(&(:hackney.request(:post, &1, headers, body, [:with_body, pool: false])))
 
@@ -88,12 +88,12 @@ defmodule CredoCoreNode.Mining.VoteManager do
     results = %{}
 
     for vote <- votes do
-      validator =
-        Mining.get_validator(vote.validator_address)
+      miner =
+        Mining.get_miner(vote.miner_address)
 
       previous_vote_count = results[vote.block_hash] || 0
 
-      Map.merge(results, %{"#{vote.block_hash}": previous_vote_count + validator.stake_amount})
+      Map.merge(results, %{"#{vote.block_hash}": previous_vote_count + miner.stake_amount})
     end
   end
 
@@ -109,7 +109,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
 
         confirmed_block_hash = block_hash
 
-        update_validator_participation_rates(block, voting_round)
+        update_miner_participation_rates(block, voting_round)
       end
     end
 
@@ -119,47 +119,47 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   @doc """
-  Calculate the total voting power among validators.
+  Calculate the total voting power among miners.
   """
   def total_voting_power do
-    for %{stake_amount: stake_amount, id: _} <- Mining.list_validators(), do: stake_amount
+    for %{stake_amount: stake_amount, id: _} <- Mining.list_miners(), do: stake_amount
   end
 
   @doc """
-  Broadcast the confimed block to all peers, including non-validators.
+  Broadcast the confimed block to all peers, including non-miners.
   """
   def broadcast_confirmed_block(hash) do
   end
 
   @doc """
-  Updates validator participation rates based on a set of votes.
+  Updates miner participation rates based on a set of votes.
 
   To be called after voting has concluded for a block.
   """
-  def update_validator_participation_rates(block, voting_round) do
+  def update_miner_participation_rates(block, voting_round) do
     votes =
       Mining.list_votes_for_round(block, voting_round)
 
-    for validator <- Mining.list_validators() do
+    for miner <- Mining.list_miners() do
       participation_rate =
-        if validator_voted?(votes, validator) do
-          validator.participation_rate + 1
+        if miner_voted?(votes, miner) do
+          miner.participation_rate + 1
         else
-          validator.participation_rate - 1
+          miner.participation_rate - 1
         end
 
-      validator
+      miner
       |> Map.merge(%{participation_rate: participation_rate})
-      |> Mining.write_validator()
+      |> Mining.write_miner()
     end
   end
 
   @doc """
-  Checks whether a validator voted
+  Checks whether a miner voted
   """
-  def validator_voted?(votes, validator) do
+  def miner_voted?(votes, miner) do
     votes
-    |> Enum.filter(& &1.validator_address == validator.address)
+    |> Enum.filter(& &1.miner_address == miner.address)
     |> Enum.any?
   end
 end

@@ -1,6 +1,6 @@
 defmodule CredoCoreNode.Mining.Slasher do
   @moduledoc """
-  The validator slasher module.
+  The miner slasher module.
   """
 
   alias CredoCoreNode.Blockchain
@@ -10,21 +10,21 @@ defmodule CredoCoreNode.Mining.Slasher do
   @slash_penalty_percentage 20
 
   @doc """
-  Broadcasts a validator slash transaction.
+  Broadcasts a miner slash transaction.
 
-  A byzantine behavior proof should be two or more votes signed by the allegedly-byzantine validator for a given block number and voting round.
+  A byzantine behavior proof should be two or more votes signed by the allegedly-byzantine miner for a given block number and voting round.
   """
-  def slash_validator(byzantine_behavior_proof, validator_address) do
+  def slash_miner(byzantine_behavior_proof, miner_address) do
     private_key = "" # TODO: set actual private key
 
-    construct_validator_slash_transaction(private_key, byzantine_behavior_proof, validator_address)
-    |> broadcast_validator_slash_transaction()
+    construct_miner_slash_transaction(private_key, byzantine_behavior_proof, miner_address)
+    |> broadcast_miner_slash_transaction()
   end
 
   @doc """
-  Broadcasts a validator slash transaction.
+  Broadcasts a miner slash transaction.
   """
-  def construct_validator_slash_transaction(private_key, byzantine_behavior_proof, to) do
+  def construct_miner_slash_transaction(private_key, byzantine_behavior_proof, to) do
     attrs = %{nonce: Mining.default_nonce(), to: to, value: 0 , fee: Mining.default_tx_fee(), data: "{\"tx_type\" : \"#{Blockchain.slash_tx_type()}\", \"byzantine_behavior_proof\" : \"#{byzantine_behavior_proof}\"}"}
 
     {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
@@ -33,9 +33,9 @@ defmodule CredoCoreNode.Mining.Slasher do
   end
 
   @doc """
-  Broadcasts a validator slash transaction.
+  Broadcasts a miner slash transaction.
   """
-  def broadcast_validator_slash_transaction(tx) do
+  def broadcast_miner_slash_transaction(tx) do
     Pool.propagate_pending_transaction(tx)
   end
 
@@ -55,7 +55,7 @@ defmodule CredoCoreNode.Mining.Slasher do
   end
 
   @doc """
-  Checks that the proof contains two or more votes from a single validator for a given block number and voting round
+  Checks that the proof contains two or more votes from a single miner for a given block number and voting round
   """
   def slash_proof_is_valid?(proof) do
     #TODO: implement proof check.
@@ -64,7 +64,7 @@ defmodule CredoCoreNode.Mining.Slasher do
   @doc """
   Returns slash transactions with a valid slash proof.
 
-  TODO: check that the validator wasn't already slashed for that block number.
+  TODO: check that the miner wasn't already slashed for that block number.
   """
   def validate_slash_transactions(txs) do
     for tx <- txs do
@@ -77,18 +77,18 @@ defmodule CredoCoreNode.Mining.Slasher do
   end
 
   @doc """
-  Slashes validators
+  Slashes miners
   """
   def process_slash_transactions(txs) do
     for tx <- txs do
-      slashed_validator = Mining.get_validator(tx.validator_address)
+      slashed_miner = Mining.get_miner(tx.miner_address)
 
-      Mining.write_validator(%{slashed_validator | stake_amount: slashed_validator.stake_amount * (1 - @slash_penalty_percentage)})
+      Mining.write_miner(%{slashed_miner | stake_amount: slashed_miner.stake_amount * (1 - @slash_penalty_percentage)})
     end
   end
 
   @doc """
-  Retrieves slash transactions, validates them, and then slashes validators.
+  Retrieves slash transactions, validates them, and then slashes miners.
   """
   def maybe_process_slash_transactions(txs) do
     txs

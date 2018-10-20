@@ -18,81 +18,81 @@ defmodule CredoCoreNode.Mining do
   def min_stake_size, do: @min_stake_size
 
   @doc """
-  Makes a node become a validator.
+  Makes a node become a miner.
 
   amount is the security deposit size
   to is the address in which the security deposit will be held
   timelock is the duration that the security deposit will be deposited for
   """
-  def become_validator(amount, private_key, to, timelock \\ nil) do
-    unless is_validator?() do
+  def become_miner(amount, private_key, to, timelock \\ nil) do
+    unless is_miner?() do
       DepositManager.construct_security_deposit(amount, private_key, to, timelock)
       |> DepositManager.broadcast_security_deposit()
     end
   end
 
   @doc """
-  Deletes a validator when it has an insufficient stake.
+  Deletes a miner when it has an insufficient stake.
 
-  This should be called after a validator has been slashed and after a security deposit withdrawal has occurred.
+  This should be called after a miner has been slashed and after a security deposit withdrawal has occurred.
   """
-  def delete_validator_for_insufficient_stake(validator) do
-    if validator.stake_amount < @min_stake_size do
-      delete_validator(validator)
+  def delete_miner_for_insufficient_stake(miner) do
+    if miner.stake_amount < @min_stake_size do
+      delete_miner(miner)
     end
   end
 
   @doc """
-  Returns whether the current node is already a validator.
+  Returns whether the current node is already a miner.
   """
-  def get_own_validator() do
-    list_validators()
+  def get_own_miner() do
+    list_miners()
     |> Enum.filter(& &1.is_self)
     |> List.first()
   end
 
   @doc """
-  Returns whether the current node is already a validator.
+  Returns whether the current node is already a miner.
   """
-  def is_validator?() do
-    list_validators()
+  def is_miner?() do
+    list_miners()
     |> Enum.filter(& &1.is_self)
     |> Enum.any?
   end
 
   @doc """
-  Returns the list of validators.
+  Returns the list of miners.
   """
-  def list_validators() do
+  def list_miners() do
     Repo.list(Miner)
   end
 
   @doc """
-  Returns the number of validators.
+  Returns the number of miners.
   """
-  def count_validators() do
+  def count_miners() do
     length(Repo.list(Miner))
   end
 
   @doc """
-  Gets a single validator.
+  Gets a single miner.
   """
-  def get_validator(address) do
+  def get_miner(address) do
     Repo.get(Miner, address)
   end
 
   @doc """
-  Creates/updates a validator.
+  Creates/updates a miner.
   """
-  def write_validator(attrs) do
+  def write_miner(attrs) do
     Repo.write(Miner, attrs)
   end
 
   @doc """
-  Deletes a validator.
+  Deletes a miner.
   """
-  def delete_validator(%Miner{} = validator) do
-    Repo.delete(validator)
+  def delete_miner(%Miner{} = miner) do
+    Repo.delete(miner)
   end
 
   @doc """

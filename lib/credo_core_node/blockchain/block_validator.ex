@@ -22,7 +22,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       validate_transaction_count(block) &&
       validate_transaction_data_length(block) &&
       validate_security_deposits(block) &&
-      validate_validator_updates(block) &&
+      validate_miner_updates(block) &&
       validate_slashes(block) &&
       validate_block_finalization(block) &&
       validate_coinbase_transaction(block) &&
@@ -83,10 +83,10 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   @doc """
-  Validate validator updates.
+  Validate miner updates.
   """
-  def validate_validator_updates(block) do
-    IpManager.maybe_validate_validator_ip_update_transactions(block.body)
+  def validate_miner_updates(block) do
+    IpManager.maybe_validate_miner_ip_update_transactions(block.body)
   end
 
   @doc """

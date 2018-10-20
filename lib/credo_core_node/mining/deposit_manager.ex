@@ -73,15 +73,15 @@ defmodule CredoCoreNode.Mining.DepositManager do
   end
 
   @doc """
-  Creates validators based on security deposit information
+  Creates miners based on security deposit information
   """
   def process_security_deposits(txs) do
     for tx <- txs do
-      unless Mining.get_validator(tx.to) do
+      unless Mining.get_miner(tx.to) do
         node_ip = Poison.decode!(tx.data)["node_ip"]
 
         %{ip: node_ip, address: tx.to, stake_amount: tx.value, participation_rate: 1, is_self: false}
-        |> Mining.write_validator
+        |> Mining.write_miner
       end
     end
   end
@@ -103,7 +103,7 @@ defmodule CredoCoreNode.Mining.DepositManager do
   """
   def is_security_deposit_withdrawal(tx) do
     tx.from
-    |> Mining.get_validator()
+    |> Mining.get_miner()
     |> is_nil
     |> Kernel.not
   end
@@ -119,15 +119,15 @@ defmodule CredoCoreNode.Mining.DepositManager do
   @doc """
   Validates the security deposit withdrawal size.
   """
-  def validate_security_deposit_withdrawal_size(tx, validator) do
-    tx.value <= validator.stake_amount
+  def validate_security_deposit_withdrawal_size(tx, miner) do
+    tx.value <= miner.stake_amount
   end
 
   @doc """
   Validates the security deposit withdrawal timelock.
   """
-  def validate_security_deposit_withdrawal_timelock(tx, validator) do
-    tx.block_number <= validator.timelock # TODO Add function for getting a transaction's block number.
+  def validate_security_deposit_withdrawal_timelock(tx, miner) do
+    tx.block_number <= miner.timelock # TODO Add function for getting a transaction's block number.
   end
 
   @doc """
@@ -135,8 +135,8 @@ defmodule CredoCoreNode.Mining.DepositManager do
   """
   def get_invalid_security_deposit_withdrawals(txs) do
     txs
-    |> Enum.filter(& !validate_security_deposit_withdrawal_size(&1, Mining.get_validator(&1.address)))
-    |> Enum.filter(& !validate_security_deposit_withdrawal_timelock(&1, Mining.get_validator(&1.address)))
+    |> Enum.filter(& !validate_security_deposit_withdrawal_size(&1, Mining.get_miner(&1.address)))
+    |> Enum.filter(& !validate_security_deposit_withdrawal_timelock(&1, Mining.get_miner(&1.address)))
   end
 
   @doc """
