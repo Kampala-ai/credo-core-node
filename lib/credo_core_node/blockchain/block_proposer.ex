@@ -1,6 +1,4 @@
-defmodule CredoCoreNode.Workers.BlockProposer do
-  use GenServer
-
+defmodule CredoCoreNode.Blockchain.BlockProposer do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Blockchain.BlockValidator
   alias CredoCoreNode.Pool
@@ -9,19 +7,6 @@ defmodule CredoCoreNode.Workers.BlockProposer do
   require Logger
 
   @block_proposal_timeout 10000
-
-  def start_link() do
-    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
-  end
-
-  def init(state) do
-    Logger.info("Initializing the block proposer...")
-
-    Blockchain.last_block()
-    |> maybe_propose_next_block()
-
-    {:ok, state}
-  end
 
   @doc """
   Proposes the next block if its the node's turn.
