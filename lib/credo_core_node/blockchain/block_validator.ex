@@ -117,7 +117,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       |> Enum.filter(&(Poison.decode!(&1.data)["tx_type"] == Blockchain.coinbase_tx_type()))
 
     non_coinbase_tx_fees_sum =
-      Pool.get_pending_transaction_fees_sum(block.transactions -- coinbase_tx)
+      Pool.sum_pending_transaction_fees(block.transactions -- coinbase_tx)
 
     length(coinbase_txs) == 1 && coinbase_tx.fee == non_coinbase_tx_fees_sum
   end

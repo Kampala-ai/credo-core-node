@@ -6,7 +6,6 @@ defmodule CredoCoreNode.Workers.MineOperator do
   import Process, only: [send_after: 3]
 
   alias CredoCoreNode.Blockchain
-  alias CredoCoreNode.Blockchain.BlockProposer
   alias CredoCoreNode.Mining
 
   @block_proposal_timeout 10000
@@ -27,7 +26,7 @@ defmodule CredoCoreNode.Workers.MineOperator do
     case Mining.is_miner?() do
       true ->
         Blockchain.last_block()
-        |> BlockProposer.maybe_propose_next_block()
+        |> Mining.start_mining()
 
       false ->
         schedule_mine_block(interval)

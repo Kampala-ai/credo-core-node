@@ -3,6 +3,7 @@ defmodule CredoCoreNode.Mining do
   The Validation context.
   """
 
+  alias CredoCoreNode.Blockchain.BlockProducer
   alias CredoCoreNode.Mining.DepositManager
   alias CredoCoreNode.Mining.Miner
   alias CredoCoreNode.Mining.Vote
@@ -130,5 +131,13 @@ defmodule CredoCoreNode.Mining do
   """
   def delete_vote(%Vote{} = vote) do
     Repo.delete(vote)
+  end
+
+  def start_mining(block, retry_count \\ 0) do
+    if BlockProducer.is_your_turn?(block, retry_count) do
+      BlockProducer.produce_block()
+    else
+      BlockProducer.wait_for_block(block, retry_count)
+    end
   end
 end
