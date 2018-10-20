@@ -8,15 +8,15 @@ defmodule RLP.Serializer do
   end
 
   defp do_serialize(type, fields) do
-    type = :"rlp_#{type}"
+    to_list_type = :"rlp_#{type}"
 
     quote do
-      def to_list(%__MODULE__{} = record, [type: unquote(type)] = _options) do
+      def to_list(%__MODULE__{} = record, [type: unquote(to_list_type)] = _options) do
         unquote(fields)
         |> Enum.map(&Map.get(record, elem(&1, 0)))
       end
 
-      def from_list(list, [type: unquote(type)] = options) do
+      def from_list(list, [type: unquote(to_list_type)] = options) do
         attributes =
           unquote(fields)
           |> Enum.with_index()
@@ -35,6 +35,32 @@ defmodule RLP.Serializer do
         record = struct(__MODULE__, attributes)
         %{record | hash: RLP.Hash.hex(record, options)}
       end
+
+      unless Module.defines?(__MODULE__, {:to_rlp, 2}) do
+        def to_rlp(%__MODULE__{} = record, options \\ []) do
+          options = if options[:type], do: options, else: [type: :rlp_default] ++ options
+          do_to_rlp(record, Map.new(options))
+        end
+      end
+
+      unless Module.defines?(__MODULE__, {:from_rlp, 2}) do
+        def from_rlp(rlp, options \\ []) do
+          options = if options[:type], do: options, else: [type: :rlp_default] ++ options
+          do_from_rlp(rlp, Map.new(options))
+        end
+      end
+
+      defp do_to_rlp(%__MODULE__{} = record, %{type: unquote(type)} = options),
+        do: do_to_rlp(record, %{options | type: unquote(to_list_type)})
+
+      defp do_to_rlp(%__MODULE__{} = record, %{type: unquote(to_list_type)} = options),
+        do: ExRLP.encode(record, Map.to_list(options))
+
+      defp do_from_rlp(rlp, %{type: unquote(type)} = options),
+        do: do_from_rlp(rlp, %{options | type: unquote(to_list_type)})
+
+      defp do_from_rlp(rlp, %{type: unquote(to_list_type)} = options),
+        do: ExRLP.decode(rlp, Map.to_list(options)) |> from_list(type: options[:type])
     end
   end
 
