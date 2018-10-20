@@ -1,10 +1,8 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Pool
-  alias CredoCoreNode.Mining.DepositManager
-  alias CredoCoreNode.Mining.IpManager
-  alias CredoCoreNode.Mining.Slasher
-  alias CredoCoreNode.Mining.VoteManager
+  alias CredoCoreNode.Mining
+  alias CredoCoreNode.Mining.{DepositManager, IpManager, Slasher}
 
   @min_txs_per_block 1
   @max_txs_per_block 250
@@ -126,6 +124,9 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   Validate network consensus.
   """
   def validate_network_consensus(block) do
-    VoteManager.vote(block)
+    {:ok, confirmed_block}
+      = Mining.start_voting(block)
+
+    block.hash == confirmed_block.hash
   end
 end

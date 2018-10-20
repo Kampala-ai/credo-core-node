@@ -1,12 +1,10 @@
 defmodule CredoCoreNode.Mining do
   @moduledoc """
-  The Validation context.
+  The Mining context.
   """
 
   alias CredoCoreNode.Blockchain.BlockProducer
-  alias CredoCoreNode.Mining.DepositManager
-  alias CredoCoreNode.Mining.Miner
-  alias CredoCoreNode.Mining.Vote
+  alias CredoCoreNode.Mining.{DepositManager, Miner, Vote, VoteManager}
 
   alias Mnesia.Repo
 
@@ -139,5 +137,14 @@ defmodule CredoCoreNode.Mining do
     else
       BlockProducer.wait_for_block(block, retry_count)
     end
+  end
+
+   def start_voting(block, voting_round \\ 0) do
+    unless VoteManager.already_voted?(block, voting_round) do
+      VoteManager.cast_vote(block, voting_round)
+      VoteManager.wait_for_votes()
+    end
+
+    VoteManager.consensus_reached?(block, voting_round)
   end
 end

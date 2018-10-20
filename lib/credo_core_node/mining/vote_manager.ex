@@ -1,162 +1,114 @@
 defmodule CredoCoreNode.Mining.VoteManager do
-  @moduledoc """
-  The vote managers module.
-  """
-
-  alias CredoCoreNode.Network
-  alias CredoCoreNode.Pool
-  alias CredoCoreNode.Mining
+  alias CredoCoreNode.{Mining, Network, Pool}
 
   @vote_collection_timeout 10000
 
-  @doc """
-  Votes to validate the block via network consensus.
-  """
-  def vote(block_number, voting_round \\ 0) do
-    block = select_candidate_block_to_vote_for(block_number)
-    miner = Mining.get_own_miner()
-
-    unless already_voted?(block, voting_round, miner) do
-      cast_vote(block, voting_round, miner)
-
-      :timer.sleep(@vote_collection_timeout)
-
-      count_votes(block, voting_round)
-      |> determine_winner_or_vote_again(block, voting_round)
-    end
-  end
-
-  @doc """
-  Selects a candidate block to vote for in this round.
-
-  # TODO: take into account other votes if a prior round was held for this block number.
-  """
-  def select_candidate_block_to_vote_for(number) do
-    Pool.list_pending_blocks(number)
-    |> Enum.random()
-  end
-
-  @doc """
-  Checks whether a miner already voted for a block in the current round.
-  """
-  def already_voted?(block, voting_round, miner) do
+  def already_voted?(block, voting_round) do
     Mining.list_votes()
-    |> Enum.filter(& &1.block_height == block.number)
-    |> Enum.filter(& &1.voting_round == voting_round)
-    |> Enum.filter(& &1.miner_address == miner.address)
+    |> Enum.filter(&
+      &1.block_number == block.number &&
+      &1.voting_round == voting_round &&
+      &1.miner_address == Mining.get_own_miner().address)
     |> Enum.any?
   end
 
-  @doc """
-  Construct and broadcast vote to other miners.
-  """
-  def cast_vote(block, voting_round, miner) do
-    vote = "{\"block_hash\" : #{block.hash}, \"block_height\" : #{block.number}, \"voting_round\" : \"#{voting_round}\", \"miner_address\" : #{miner.address}}"
-
-    sign_vote(vote)
-
-    broadcast_vote_to_miners(vote)
+  def cast_vote(block, voting_round) do
+    block
+    |> select_candidate(voting_round)
+    |> construct_vote(voting_round)
+    |> sign_vote()
+    |> propagate_vote()
   end
 
-  @doc """
-  Signs the vote.
-  """
+  defp select_candidate(block, voting_round) do
+    if voting_round == 0 do
+      block
+    else
+      Pool.list_pending_blocks(block.number)
+      |> Enum.random() # TODO: weight selection based on votes from prior round.
+    end
+  end
+
+  def construct_vote(candidate, voting_round) do
+    "{\"block_hash\" : #{candidate.hash},
+      \"block_number\" : #{candidate.number},
+      \"voting_round\" : \"#{voting_round}\",
+      \"miner_address\" : #{Mining.get_own_miner().address}}"
+  end
+
   def sign_vote(vote) do
     vote
   end
 
-  @doc """
-  Broadcasts the vote to other miners
-  """
-  def broadcast_vote_to_miners(vote) do
-    # TODO: temporary REST implementation, to be replaced with channels-based one later
+  def propagate_vote(vote) do
     headers = Network.node_request_headers()
-    body = vote
 
     Mining.list_miners()
     |> Enum.map(&("#{Network.request_url(&1.ip)}/node_api/v1/temp/votes"))
-    |> Enum.each(&(:hackney.request(:post, &1, headers, body, [:with_body, pool: false])))
+    |> Enum.each(&(:hackney.request(:post, &1, headers, vote, [:with_body, pool: false])))
 
     {:ok, vote}
   end
 
-  @doc """
-  Count votes using a stake-weighted sum.
-  """
+  def wait_for_votes do
+    :timer.sleep(@vote_collection_timeout)
+  end
+
+  def consensus_reached?(block, voting_round) do
+    confirmed_block =
+      count_votes(block.number, voting_round)
+      |> get_winner()
+
+    update_participation_rates(block, voting_round)
+
+    if confirmed_block do
+      Pool.propagate_block(confirmed_block, :all)
+
+      {:ok, confirmed_block}
+    else
+      Mining.start_voting(block, voting_round + 1)
+    end
+  end
+
   def count_votes(block, voting_round) do
-    votes = Mining.list_votes_for_round(block, voting_round)
     results = %{}
 
-    for vote <- votes do
-      miner =
-        Mining.get_miner(vote.miner_address)
-
-      previous_vote_count = results[vote.block_hash] || 0
-
-      Map.merge(results, %{"#{vote.block_hash}": previous_vote_count + miner.stake_amount})
+    Enum.each Mining.list_votes_for_round(block, voting_round), fn vote ->
+      Map.merge(results,
+        %{"#{vote.block_hash}": (results[vote.block_hash] || 0) + Mining.get_miner(vote.miner_address).stake_amount})
     end
   end
 
-  @doc """
-  Determine whether a winner has emerged from the voting using a 2/3rd threshold.
-  Start another voting round if there is insufficient consensus.
-  """
-  def determine_winner_or_vote_again(results, block, voting_round) do
-    confirmed_block_hash = nil
-    for block_hash <- Map.keys(results) do
-      if results[block_hash] >= (2.0 / 3) * total_voting_power() do
-        broadcast_confirmed_block(block_hash)
-
-        confirmed_block_hash = block_hash
-
-        update_miner_participation_rates(block, voting_round)
-      end
-    end
-
-    if is_nil(confirmed_block_hash) do
-      vote(block, voting_round + 1)
-    end
-  end
-
-  @doc """
-  Calculate the total voting power among miners.
-  """
   def total_voting_power do
     for %{stake_amount: stake_amount, id: _} <- Mining.list_miners(), do: stake_amount
   end
 
-  @doc """
-  Broadcast the confimed block to all peers, including non-miners.
-  """
-  def broadcast_confirmed_block(hash) do
+  def has_supermajority?(num_votes) do
+    num_votes >= 2/3 * total_voting_power()
   end
 
-  @doc """
-  Updates miner participation rates based on a set of votes.
+  def get_winner(results) do
+    results
+    |> Enum.filter(fn {_hash, num_votes} -> has_supermajority?(num_votes) end)
+    |> List.first()
+    |> Map.keys()
+    |> List.first()
+    |> Pool.get_pending_block()
+  end
 
-  To be called after voting has concluded for a block.
-  """
-  def update_miner_participation_rates(block, voting_round) do
+  def update_participation_rates(block, voting_round) do
     votes =
       Mining.list_votes_for_round(block, voting_round)
 
-    for miner <- Mining.list_miners() do
-      participation_rate =
-        if miner_voted?(votes, miner) do
-          miner.participation_rate + 1
-        else
-          miner.participation_rate - 1
-        end
+    Enum.each Mining.list_miners(), fn miner ->
+      rate = if miner_voted?(votes, miner), do: max(miner.participation_rate + 0.01, 1), else: min(miner.participation_rate - 0.01, 0)
 
       miner
-      |> Map.merge(%{participation_rate: participation_rate})
+      |> Map.merge( %{participation_rate: rate})
       |> Mining.write_miner()
     end
   end
 
-  @doc """
-  Checks whether a miner voted
-  """
   def miner_voted?(votes, miner) do
     votes
     |> Enum.filter(& &1.miner_address == miner.address)
