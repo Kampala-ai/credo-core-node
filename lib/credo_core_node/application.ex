@@ -17,6 +17,7 @@ defmodule CredoCoreNode.Application do
       worker(CredoCoreNode.Workers.GarbageCollector, []),
       worker(CredoCoreNode.Workers.IpManager, []),
       worker(CredoCoreNode.Workers.MineOperator, []),
+      worker(CredoCoreNode.Workers.Slasher, []),
       worker(CredoCoreNode.Scheduler, [])
     ]
 

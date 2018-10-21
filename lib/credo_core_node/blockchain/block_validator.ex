@@ -1,6 +1,6 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.{Blockchain, Pool, Mining}
-  alias CredoCoreNode.Mining.{DepositWithdrawal, Slasher}
+  alias CredoCoreNode.Mining.DepositWithdrawal
 
   @min_txs_per_block 1
   @max_txs_per_block 250
@@ -18,7 +18,6 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       validate_transaction_count(block) &&
       validate_transaction_data_length(block) &&
       validate_deposit_withdrawals(block) &&
-      validate_slashes(block) &&
       validate_block_finalization(block) &&
       validate_coinbase_transaction(block) &&
       validate_network_consensus(block)
@@ -72,13 +71,6 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
   def validate_deposit_withdrawals(block) do
     DepositWithdrawal.validate_deposit_withdrawals(block)
-  end
-
-  @doc """
-  Validate slashes.
-  """
-  def validate_slashes(block) do
-    Slasher.maybe_process_slash_transactions(block.body)
   end
 
   @doc """
