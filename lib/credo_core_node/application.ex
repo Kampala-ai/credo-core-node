@@ -15,6 +15,7 @@ defmodule CredoCoreNode.Application do
       worker(CredoCoreNode.Workers.ConnectionManager, [60_000]),
       worker(CredoCoreNode.Workers.MineOperator, []),
       worker(CredoCoreNode.Workers.GarbageCollector, []),
+      worker(CredoCoreNode.Workers.DepositRecognizer, []),
       worker(CredoCoreNode.Scheduler, [])
     ]
 

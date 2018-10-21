@@ -1,21 +1,10 @@
 defmodule CredoCoreNode.Mining.DepositManager do
-  @moduledoc """
-  The security deposit manager module.
-  """
+  alias CredoCoreNode.{Blockchain, Network, Pool, Mining}
 
-  alias CredoCoreNode.Blockchain
-  alias CredoCoreNode.Network
-  alias CredoCoreNode.Pool
-  alias CredoCoreNode.Mining
-
-  # TODO: specify actual timelock limits.
-  @min_timelock 1
+  @min_timelock 1 # TODO: specify actual timelock limits.
   @max_timelock 100
 
-  @doc """
-  Constructs a security deposit transaction.
-  """
-  def construct_security_deposit(amount, private_key, to, timelock \\ nil) do
+  def construct_deposit(amount, private_key, to, timelock \\ nil) do
     {:ok, tx} = Pool.generate_pending_transaction(private_key, %{
       nonce: Mining.default_nonce(),
       to: to,
@@ -27,77 +16,57 @@ defmodule CredoCoreNode.Mining.DepositManager do
     tx
   end
 
-  @doc """
-  Broadcasts a security deposit transaction.
-  """
-  def broadcast_security_deposit(tx) do
-    Pool.propagate_pending_transaction(tx)
+  def maybe_recognize_deposits(block) do
+    block.transactions
+    |> parse_deposits()
+    |> validate_deposits()
+    |> recognize_deposits()
   end
 
-  @doc """
-  Checks whether a transaction is a security deposit
-  """
-  def is_security_deposit(tx) do
+  def parse_deposits(txs) do
+    txs
+    |> Enum.filter(& is_deposit(&1))
+  end
+
+  def is_deposit(tx) do
     Poison.decode!(tx.data)["tx_type"] == Blockchain.security_deposit_tx_type()
   end
 
-  @doc """
-  Returns a list of valid security deposits
-  """
-  def validate_security_deposits(txs) do
-    txs
-    |> Enum.filter(& validate_security_deposit_size(&1))
-    |> Enum.filter(& validate_security_deposit_timelock(&1))
+  def validate_deposits(deposits) do
+    deposits
+    |> Enum.filter(& validate_deposit_size(&1))
+    |> Enum.filter(& validate_deposit_timelock(&1))
   end
 
-  @doc """
-  Validates the security deposit size.
-  """
-  def validate_security_deposit_size(tx) do
+  def validate_deposit_size(tx) do
     tx.value >= Mining.min_stake_size()
   end
 
-  @doc """
-  Validates the security deposit timelock.
-  """
-  def validate_security_deposit_timelock(tx) do
+  def validate_deposit_timelock(tx) do
     timelock = Poison.decode!(tx.data)["timelock"]
 
     timelock >= @min_timelock && timelock <= @max_timelock
   end
 
-  @doc """
-  Returns security deposits from a list of transactions
-  """
-  def get_security_deposits(txs) do
-    txs
-    |> Enum.filter(& is_security_deposit(&1))
+  def miner_already_exists?(deposit) do
+    deposit.from
+    |> Mining.get_miner()
+    |> is_nil
+    |> Kernel.not
   end
 
-  @doc """
-  Creates miners based on security deposit information
-  """
-  def process_security_deposits(txs) do
-    for tx <- txs do
-      unless Mining.get_miner(tx.to) do
-        node_ip = Poison.decode!(tx.data)["node_ip"]
-
-        %{ip: node_ip, address: tx.to, stake_amount: tx.value, participation_rate: 1, is_self: false}
-        |> Mining.write_miner
+  def recognize_deposits(deposits) do
+    Enum.each deposits, fn deposit ->
+      unless miner_already_exists?(deposit) do
+        Mining.write_miner(%{
+          ip: Poison.decode!(deposit.data)["node_ip"],
+          address: deposit.to,
+          stake_amount: deposit.value,
+          participation_rate: 1,
+          is_self: false
+        })
       end
     end
-  end
-
-  @doc """
-  Retrieves, validates, and processes security deposits.
-
-  To be called after a block is confirmed.
-  """
-  def maybe_process_security_deposits(txs) do
-    txs
-    |> get_security_deposits()
-    |> validate_security_deposits()
-    |> process_security_deposits()
   end
 
   @doc """

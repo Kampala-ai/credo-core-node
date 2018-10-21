@@ -25,7 +25,7 @@ defmodule CredoCoreNode.Workers.GarbageCollector do
 
     Pool.list_pending_blocks()
     |> Enum.filter(&(&1.number < last_finalized_block_number()))
-    |> Enum.map(fn block -> Pool.delete_pending_block(block) end)
+    |> Enum.each(fn block -> Pool.delete_pending_block(block) end)
 
     {:noreply, interval}
   end

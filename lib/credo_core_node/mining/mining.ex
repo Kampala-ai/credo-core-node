@@ -5,6 +5,7 @@ defmodule CredoCoreNode.Mining do
 
   alias CredoCoreNode.Blockchain.BlockProducer
   alias CredoCoreNode.Mining.{DepositManager, Miner, Vote, VoteManager}
+  alias CredoCoreNode.Pool
 
   alias Mnesia.Repo
 
@@ -25,8 +26,8 @@ defmodule CredoCoreNode.Mining do
   """
   def become_miner(amount, private_key, to, timelock \\ nil) do
     unless is_miner?() do
-      DepositManager.construct_security_deposit(amount, private_key, to, timelock)
-      |> DepositManager.broadcast_security_deposit()
+      DepositManager.construct_deposit(amount, private_key, to, timelock)
+      |> Pool.propagate_pending_transaction()
     end
   end
 
