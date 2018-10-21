@@ -24,8 +24,7 @@ defmodule CredoCoreNode.Mining.Deposit do
   end
 
   def parse_deposits(txs) do
-    txs
-    |> Enum.filter(& is_deposit(&1))
+    Enum.filter(txs, & is_deposit(&1))
   end
 
   def is_deposit(tx) do

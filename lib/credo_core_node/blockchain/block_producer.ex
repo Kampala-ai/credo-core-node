@@ -1,8 +1,6 @@
 defmodule CredoCoreNode.Blockchain.BlockProducer do
-  alias CredoCoreNode.Blockchain
+  alias CredoCoreNode.{Blockchain, Mining, Pool}
   alias CredoCoreNode.Blockchain.BlockValidator
-  alias CredoCoreNode.Pool
-  alias CredoCoreNode.Mining
 
   require Logger
 

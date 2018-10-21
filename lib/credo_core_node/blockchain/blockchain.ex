@@ -3,8 +3,7 @@ defmodule CredoCoreNode.Blockchain do
   The Blockchain context.
   """
 
-  alias CredoCoreNode.Blockchain.Transaction
-  alias CredoCoreNode.Blockchain.Block
+  alias CredoCoreNode.Blockchain.{Block, Transaction}
   alias CredoCoreNode.Pool
   alias Mnesia.Repo
 

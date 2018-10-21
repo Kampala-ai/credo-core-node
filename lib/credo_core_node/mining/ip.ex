@@ -31,8 +31,7 @@ defmodule CredoCoreNode.Mining.Ip do
   end
 
   def get_miner_ip_updates(txs) do
-    txs
-    |> Enum.filter(& is_miner_ip_update(&1))
+    Enum.filter(txs, & is_miner_ip_update(&1))
   end
 
   def is_miner_ip_update(tx) do

@@ -9,8 +9,7 @@ defmodule CredoCoreNode.Mining.DepositWithdrawal do
   end
 
   def get_deposit_withdrawals(txs) do
-    txs
-    |> Enum.filter(& is_deposit_withdrawal(&1))
+    Enum.filter(txs, & is_deposit_withdrawal(&1))
   end
 
   def is_deposit_withdrawal(tx) do

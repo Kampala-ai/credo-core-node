@@ -5,8 +5,7 @@ defmodule CredoCoreNode.Workers.MineOperator do
 
   import Process, only: [send_after: 3]
 
-  alias CredoCoreNode.Blockchain
-  alias CredoCoreNode.Mining
+  alias CredoCoreNode.{Blockchain, Mining}
 
   def start_link(interval \\ 300_000) do
     GenServer.start_link(__MODULE__, interval, name: __MODULE__)

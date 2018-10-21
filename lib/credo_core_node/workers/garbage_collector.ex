@@ -5,8 +5,7 @@ defmodule CredoCoreNode.Workers.GarbageCollector do
 
   import Process, only: [send_after: 3]
 
-  alias CredoCoreNode.Blockchain
-  alias CredoCoreNode.Pool
+  alias CredoCoreNode.{Blockchain, Pool}
 
   def start_link(interval \\ 60_000) do
     GenServer.start_link(__MODULE__, interval, name: __MODULE__)
