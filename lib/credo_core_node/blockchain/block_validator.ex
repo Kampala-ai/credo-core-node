@@ -1,6 +1,6 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.{Blockchain, Pool, Mining}
-  alias CredoCoreNode.Mining.{DepositWithdrawal, IpManager, Slasher}
+  alias CredoCoreNode.Mining.{DepositWithdrawal, Slasher}
 
   @min_txs_per_block 1
   @max_txs_per_block 250
@@ -17,7 +17,6 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       validate_format(block) &&
       validate_transaction_count(block) &&
       validate_transaction_data_length(block) &&
-      validate_miner_updates(block) &&
       validate_deposit_withdrawals(block) &&
       validate_slashes(block) &&
       validate_block_finalization(block) &&
@@ -69,13 +68,6 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       length(tx.data) <= @max_data_length
     end
     |> Enum.reduce(true, &(&1 && &2))
-  end
-
-  @doc """
-  Validate miner updates.
-  """
-  def validate_miner_updates(block) do
-    IpManager.maybe_validate_miner_ip_update_transactions(block.body)
   end
 
   def validate_deposit_withdrawals(block) do
