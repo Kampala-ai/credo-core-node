@@ -6,11 +6,6 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   @max_txs_per_block 250
   @max_data_length 50000
 
-  @doc """
-  Validates a block.
-
-  If any validation fails, the candidate block is marked as invalid.
-  """
   def validate_block(block) do
     is_valid =
       validate_previous_hash(block) &&
@@ -31,39 +26,29 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     end
   end
 
-  @doc """
-  Validates the previous block hash identifies a validated block with the right block number.
-  """
   def validate_previous_hash(block) do
     prev_block = Blockchain.get_block(block.prev_hash)
 
     not is_nil(prev_block) && prev_block.number == block.number - 1
   end
 
-  @doc """
-  Validates block format.
-  """
   def validate_format(block) do
+    not is_nil(block.hash) &&
+    not is_nil(block.prev_hash) &&
+    not is_nil(block.number) &&
+    not is_nil(block.state_root) &&
+    not is_nil(block.receipt_root) &&
+    not is_nil(block.tx_root)
   end
 
-  @doc """
-  Validates block transaction count.
-
-  TODO: add virtual field or other method of easily retrieving block transactions.
-  """
   def validate_transaction_count(block) do
     len = length(block.transactions)
 
     len >= @min_txs_per_block && len <= @max_txs_per_block
   end
 
-  @doc """
-  Validates transaction data length.
-
-  This is to prevent a denial of service attack by a block producer adding an overly large data field.
-  """
   def validate_transaction_data_length(block) do
-    for tx <- block.transactions do
+    Enum.each block.transactions, fn tx ->
       length(tx.data) <= @max_data_length
     end
     |> Enum.reduce(true, &(&1 && &2))
@@ -73,11 +58,8 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     DepositWithdrawal.validate_deposit_withdrawals(block)
   end
 
-  @doc """
-  Validate finalization condition.
-  """
   def validate_block_finalization(block) do
-    last_finalized_block =
+    _last_finalized_block =
       Blockchain.list_blocks()
       |> Enum.filter(&(&1.number == block.number - Blockchain.finalization_threshold()))
       |> List.first()
@@ -85,9 +67,6 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     # Check that the current block is in a chain of blocks containing the last finalized block.
   end
 
-  @doc """
-  Validate that there is only 1 coinbase transaction and that the coinbase transaction pays itself the sum of transactions fees of other transactions in the block.
-  """
   def validate_coinbase_transaction(block) do
     [coinbase_tx] = coinbase_txs =
       block.transactions
@@ -99,9 +78,6 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     length(coinbase_txs) == 1 && coinbase_tx.fee == non_coinbase_tx_fees_sum
   end
 
-  @doc """
-  Validate network consensus.
-  """
   def validate_network_consensus(block) do
     {:ok, confirmed_block}
       = Mining.start_voting(block)

@@ -17,13 +17,6 @@ defmodule CredoCoreNode.Mining do
   def default_tx_fee, do: @default_tx_fee
   def min_stake_size, do: @min_stake_size
 
-  @doc """
-  Makes a node become a miner.
-
-  amount is the security deposit size
-  to is the address in which the security deposit will be held
-  timelock is the duration that the security deposit will be deposited for
-  """
   def become_miner(amount, private_key, to, timelock \\ nil) do
     unless is_miner?() do
       Deposit.construct_deposit(amount, private_key, to, timelock)
@@ -31,15 +24,8 @@ defmodule CredoCoreNode.Mining do
     end
   end
 
-  @doc """
-  Deletes a miner when it has an insufficient stake.
-
-  This should be called after a miner has been slashed and after a security deposit withdrawal has occurred.
-  """
   def delete_miner_for_insufficient_stake(miner) do
-    if miner.stake_amount < @min_stake_size do
-      delete_miner(miner)
-    end
+    if miner.stake_amount < @min_stake_size, do: delete_miner(miner)
   end
 
   @doc """
