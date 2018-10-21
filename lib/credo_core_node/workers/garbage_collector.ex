@@ -24,14 +24,11 @@ defmodule CredoCoreNode.Workers.GarbageCollector do
     schedule_collect_garbage(interval)
 
     Pool.list_pending_blocks()
-    |> Enum.filter(&(&1.number < last_finalized_block_number()))
+    |> Enum.filter(&(&1.number < Blockchain.last_finalized_block_number()))
     |> Enum.each(fn block -> Pool.delete_pending_block(block) end)
 
     {:noreply, interval}
   end
-
-  defp last_finalized_block_number, do: last_confirmed_block_number() - Blockchain.finalization_threshold()
-  defp last_confirmed_block_number, do: Blockchain.last_block().number
 
   defp schedule_collect_garbage(interval) do
     send_after(self(), :collect_garbage, interval)

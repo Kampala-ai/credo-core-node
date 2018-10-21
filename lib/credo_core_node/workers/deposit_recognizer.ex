@@ -29,7 +29,7 @@ defmodule CredoCoreNode.Workers.DepositRecognizer do
     processable_blocks =
       Blockchain.list_blocks()
       |> Enum.filter(&(&1.number > last_processed_block.number))
-      |> Enum.filter(&(&1.number < last_finalized_block_number()))
+      |> Enum.filter(&(&1.number < Blockchain.last_finalized_block_number()))
 
     processable_blocks
     |> Enum.each(fn block -> Deposit.maybe_recognize_deposits(block) end)
@@ -44,9 +44,6 @@ defmodule CredoCoreNode.Workers.DepositRecognizer do
 
     {:ok, state}
   end
-
-  defp last_finalized_block_number, do: last_confirmed_block_number() - Blockchain.finalization_threshold()
-  defp last_confirmed_block_number, do: Blockchain.last_block().number
 
   defp schedule_recognize_deposits(interval) do
     send_after(self(), :recognize_deposits, interval)
