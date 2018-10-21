@@ -6,7 +6,7 @@ defmodule CredoCoreNode.Workers.DepositRecognizer do
   import Process, only: [send_after: 3]
 
   alias CredoCoreNode.Blockchain
-  alias CredoCoreNode.Mining.DepositManager
+  alias CredoCoreNode.Mining.Deposit
 
   def start_link(interval \\ 120_000) do
     GenServer.start_link(__MODULE__, %{last_processed_block: nil, interval: interval}, name: __MODULE__)
@@ -32,7 +32,7 @@ defmodule CredoCoreNode.Workers.DepositRecognizer do
       |> Enum.filter(&(&1.number < last_finalized_block_number()))
 
     processable_blocks
-    |> Enum.each(fn block -> DepositManager.maybe_recognize_deposits(block) end)
+    |> Enum.each(fn block -> Deposit.maybe_recognize_deposits(block) end)
 
     last_processed_block =
       processable_blocks
