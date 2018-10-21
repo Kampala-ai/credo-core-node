@@ -5,7 +5,7 @@ defmodule CredoCoreNode.Mining.DepositWithdrawal do
     block.transactions
     |> get_deposit_withdrawals()
     |> get_invalid_deposit_withdrawals()
-    |> Enum.any?
+    |> Enum.empty?
   end
 
   def get_deposit_withdrawals(txs) do
