@@ -13,9 +13,10 @@ defmodule CredoCoreNode.Application do
       # Start the endpoint when the application starts
       supervisor(CredoCoreNodeWeb.Endpoint, []),
       worker(CredoCoreNode.Workers.ConnectionManager, [60_000]),
-      worker(CredoCoreNode.Workers.MineOperator, []),
-      worker(CredoCoreNode.Workers.GarbageCollector, []),
       worker(CredoCoreNode.Workers.DepositRecognizer, []),
+      worker(CredoCoreNode.Workers.GarbageCollector, []),
+      worker(CredoCoreNode.Workers.IpManager, []),
+      worker(CredoCoreNode.Workers.MineOperator, []),
       worker(CredoCoreNode.Scheduler, [])
     ]
 

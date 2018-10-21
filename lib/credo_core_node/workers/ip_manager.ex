@@ -1,4 +1,4 @@
-defmodule CredoCoreNode.Workers.DepositRecognizer do
+defmodule CredoCoreNode.Workers.IpManager do
   use GenServer
 
   require Logger
@@ -6,25 +6,25 @@ defmodule CredoCoreNode.Workers.DepositRecognizer do
   import Process, only: [send_after: 3]
 
   alias CredoCoreNode.Blockchain
-  alias CredoCoreNode.Mining.Deposit
+  alias CredoCoreNode.Mining.Ip
 
-  def start_link(interval \\ 120_000) do
+  def start_link(interval \\ 240_000) do
     GenServer.start_link(__MODULE__, %{last_processed_block: nil, interval: interval}, name: __MODULE__)
   end
 
   def init(%{interval: interval} = state) do
-    Logger.info("Initializing the deposit recognizer...")
+    Logger.info("Initializing the ip manager...")
 
     state =
       %{state | last_processed_block: Blockchain.last_block()} #TODO: Implement a more robust way of initially setting the last processed block.
 
-    schedule_recognize_deposits(interval)
+    schedule_update_miner_ips(interval)
 
     {:ok, state}
   end
 
-  def handle_info(:recognize_deposits, %{last_processed_block: last_processed_block, interval: interval} = state) do
-    schedule_recognize_deposits(interval)
+  def handle_info(:update_miner_ips, %{last_processed_block: last_processed_block, interval: interval} = state) do
+    schedule_update_miner_ips(interval)
 
     processable_blocks =
       Blockchain.list_blocks()
@@ -32,7 +32,7 @@ defmodule CredoCoreNode.Workers.DepositRecognizer do
       |> Enum.filter(&(&1.number < Blockchain.last_finalized_block_number()))
 
     processable_blocks
-    |> Enum.each(fn block -> Deposit.maybe_recognize_deposits(block) end)
+    |> Enum.each(fn block -> Ip.maybe_update_miner_ips(block) end)
 
     last_processed_block =
       processable_blocks
@@ -45,7 +45,7 @@ defmodule CredoCoreNode.Workers.DepositRecognizer do
     {:ok, state}
   end
 
-  defp schedule_recognize_deposits(interval) do
-    send_after(self(), :recognize_deposits, interval)
+  defp schedule_update_miner_ips(interval) do
+    send_after(self(), :update_miner_ips, interval)
   end
 end
