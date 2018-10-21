@@ -3,10 +3,8 @@ defmodule CredoCoreNode.Pool do
   The Pool context.
   """
 
-  alias CredoCoreNode.Blockchain
-  alias CredoCoreNode.Network
-  alias CredoCoreNode.Pool.PendingTransaction
-  alias CredoCoreNode.Pool.PendingBlock
+  alias CredoCoreNode.{Blockchain, Network}
+  alias CredoCoreNode.Pool.{PendingBlock, PendingTransaction}
   alias Mnesia.Repo
   alias MerklePatriciaTree.Trie
 

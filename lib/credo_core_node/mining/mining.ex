@@ -1,12 +1,11 @@
 defmodule CredoCoreNode.Mining do
   @moduledoc """
-  The Validation context.
+  The Mining context.
   """
 
   alias CredoCoreNode.Blockchain.BlockProducer
-  alias CredoCoreNode.Mining.DepositManager
-  alias CredoCoreNode.Mining.Miner
-  alias CredoCoreNode.Mining.Vote
+  alias CredoCoreNode.Mining.{Deposit, Miner, Vote, VoteManager}
+  alias CredoCoreNode.Pool
 
   alias Mnesia.Repo
 
@@ -18,29 +17,15 @@ defmodule CredoCoreNode.Mining do
   def default_tx_fee, do: @default_tx_fee
   def min_stake_size, do: @min_stake_size
 
-  @doc """
-  Makes a node become a miner.
-
-  amount is the security deposit size
-  to is the address in which the security deposit will be held
-  timelock is the duration that the security deposit will be deposited for
-  """
   def become_miner(amount, private_key, to, timelock \\ nil) do
     unless is_miner?() do
-      DepositManager.construct_security_deposit(amount, private_key, to, timelock)
-      |> DepositManager.broadcast_security_deposit()
+      Deposit.construct_deposit(amount, private_key, to, timelock)
+      |> Pool.propagate_pending_transaction()
     end
   end
 
-  @doc """
-  Deletes a miner when it has an insufficient stake.
-
-  This should be called after a miner has been slashed and after a security deposit withdrawal has occurred.
-  """
   def delete_miner_for_insufficient_stake(miner) do
-    if miner.stake_amount < @min_stake_size do
-      delete_miner(miner)
-    end
+    if miner.stake_amount < @min_stake_size, do: delete_miner(miner)
   end
 
   @doc """
@@ -139,5 +124,14 @@ defmodule CredoCoreNode.Mining do
     else
       BlockProducer.wait_for_block(block, retry_count)
     end
+  end
+
+   def start_voting(block, voting_round \\ 0) do
+    unless VoteManager.already_voted?(block, voting_round) do
+      VoteManager.cast_vote(block, voting_round)
+      VoteManager.wait_for_votes()
+    end
+
+    VoteManager.consensus_reached?(block, voting_round)
   end
 end

@@ -3,8 +3,7 @@ defmodule CredoCoreNode.Network do
   The Network context.
   """
 
-  alias CredoCoreNode.Network.KnownNode
-  alias CredoCoreNode.Network.Connection
+  alias CredoCoreNode.Network.{Connection, KnownNode}
   alias Mnesia.Repo
 
   defp seed_node_ips(),
@@ -26,7 +25,7 @@ defmodule CredoCoreNode.Network do
   @doc """
   """
   def request_url(ip) do
-    "http://#{ip}:#{node_connection_port}"
+    "http://#{ip}:#{node_connection_port()}"
   end
 
   @doc """

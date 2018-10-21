@@ -3,8 +3,7 @@ defmodule CredoCoreNode.Blockchain do
   The Blockchain context.
   """
 
-  alias CredoCoreNode.Blockchain.Transaction
-  alias CredoCoreNode.Blockchain.Block
+  alias CredoCoreNode.Blockchain.{Block, Transaction}
   alias CredoCoreNode.Pool
   alias Mnesia.Repo
 
@@ -15,6 +14,9 @@ defmodule CredoCoreNode.Blockchain do
   def slash_tx_type, do: "slash"
   def update_miner_ip_tx_type, do: "update_miner_ip"
   def finalization_threshold, do: @finalization_threshold
+
+  def last_finalized_block_number, do: last_confirmed_block_number() - finalization_threshold()
+  def last_confirmed_block_number, do: last_block().number
 
   @doc """
   Returns the list of transactions.
