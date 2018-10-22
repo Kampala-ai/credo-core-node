@@ -26,6 +26,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     end
   end
 
+  def validate_previous_hash(%{number: number} = block) when number == 0, do: true
   def validate_previous_hash(block) do
     prev_block = Blockchain.get_block(block.prev_hash)
 
