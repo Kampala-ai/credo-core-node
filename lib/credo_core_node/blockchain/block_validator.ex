@@ -48,10 +48,12 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   def validate_transaction_data_length(block) do
-    Enum.each block.transactions, fn tx ->
-      length(tx.data) <= @max_data_length
-    end
-    |> Enum.reduce(true, &(&1 && &2))
+    res =
+      Enum.map block.transactions, fn tx ->
+        String.length(tx.data) <= @max_data_length
+      end
+
+    Enum.reduce(res, true, &(&1 && &2))
   end
 
   def validate_deposit_withdrawals(block) do
