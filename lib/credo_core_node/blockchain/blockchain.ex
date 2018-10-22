@@ -16,7 +16,16 @@ defmodule CredoCoreNode.Blockchain do
   def finalization_threshold, do: @finalization_threshold
 
   def last_finalized_block_number, do: last_confirmed_block_number() - finalization_threshold()
-  def last_confirmed_block_number, do: last_block().number
+
+  def last_confirmed_block_number() do
+    case last_block() do
+      %{number: number} ->
+        number
+
+      nil ->
+        0
+    end
+  end
 
   @doc """
   Returns the list of transactions.
