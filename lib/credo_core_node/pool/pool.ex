@@ -5,21 +5,20 @@ defmodule CredoCoreNode.Pool do
 
   alias CredoCoreNode.{Blockchain, Network}
   alias CredoCoreNode.Pool.{PendingBlock, PendingTransaction}
-  alias Mnesia.Repo
   alias MerklePatriciaTree.Trie
 
   @doc """
   Returns the list of pending_transactions.
   """
   def list_pending_transactions() do
-    Repo.list(PendingTransaction)
+    Mnesia.Repo.list(PendingTransaction)
   end
 
   @doc """
   Gets a single pending_transaction.
   """
   def get_pending_transaction(hash) do
-    Repo.get(PendingTransaction, hash)
+    Mnesia.Repo.get(PendingTransaction, hash)
   end
 
   @doc """
@@ -33,14 +32,14 @@ defmodule CredoCoreNode.Pool do
   Creates/updates a pending_transaction.
   """
   def write_pending_transaction(attrs) do
-    Repo.write(PendingTransaction, attrs)
+    Mnesia.Repo.write(PendingTransaction, attrs)
   end
 
   @doc """
   Deletes a pending_transaction.
   """
   def delete_pending_transaction(%PendingTransaction{} = pending_transaction) do
-    Repo.delete(pending_transaction)
+    Mnesia.Repo.delete(pending_transaction)
   end
 
   @doc """
@@ -91,7 +90,7 @@ defmodule CredoCoreNode.Pool do
   Returns the list of pending_blocks.
   """
   def list_pending_blocks() do
-    Repo.list(PendingBlock)
+    Mnesia.Repo.list(PendingBlock)
   end
 
   @doc """
@@ -106,7 +105,7 @@ defmodule CredoCoreNode.Pool do
   Gets a single pending_block.
   """
   def get_pending_block(hash) do
-    Repo.get(PendingBlock, hash)
+    Mnesia.Repo.get(PendingBlock, hash)
   end
 
   def get_block_by_number(number) do
@@ -132,14 +131,14 @@ defmodule CredoCoreNode.Pool do
   Creates/updates a pending_block.
   """
   def write_pending_block(attrs) do
-    Repo.write(PendingBlock, attrs)
+    Mnesia.Repo.write(PendingBlock, attrs)
   end
 
   @doc """
   Deletes a pending_block.
   """
   def delete_pending_block(%PendingBlock{} = pending_block) do
-    Repo.delete(pending_block)
+    Mnesia.Repo.delete(pending_block)
   end
 
   @doc """
@@ -155,10 +154,10 @@ defmodule CredoCoreNode.Pool do
       if last_block, do: {last_block.number + 1, last_block.hash}, else: {0, ""}
 
     # Temporary in-memory storage
-    tx_trie =
+    {:ok, tx_trie, _pending_transactions} =
       MerklePatriciaTree.DB.ETS.random_ets_db()
       |> Trie.new()
-      |> put_transactions_to_trie(pending_transactions)
+      |> MPT.Repo.write_list(PendingTransaction, pending_transactions)
 
     tx_root = Base.encode16(tx_trie.root_hash)
 
@@ -175,15 +174,5 @@ defmodule CredoCoreNode.Pool do
   end
 
   def propagate_block(block, recipients \\ :miners) do
-  end
-
-  # TODO: converting lists of items of a specific type to a trie is a patterned task,
-  #   to be moved to a module and/or a protocol
-  defp put_transactions_to_trie(trie, pending_transactions) do
-    Enum.reduce(
-      pending_transactions,
-      trie,
-      &Trie.update(&2, elem(Base.decode16(&1.hash), 1), ExRLP.encode(&1))
-    )
   end
 end
