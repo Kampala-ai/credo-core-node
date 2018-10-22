@@ -21,7 +21,7 @@ defmodule RLP.Serializer do
             {:decimal, decimal_places} ->
               field_value = D.new(field_value)
               if D.cmp(field_value, 0) == :gt do
-                precision = :math.floor(:math.log10(D.to_integer(field_value))) + decimal_places
+                precision = :math.floor(:math.log10(D.to_integer(D.round(field_value)))) + decimal_places
                 D.with_context(%D.Context{precision: trunc(precision)}, fn ->
                   field_value
                   |> D.new()
