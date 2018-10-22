@@ -8,8 +8,8 @@ defmodule CredoCoreNode.Blockchain.Transaction do
   @rlp_base_fields [
     nonce: :unsigned,
     to: :string,
-    value: :unsigned,
-    fee: :unsigned,
+    value: {:decimal, 18},
+    fee: {:decimal, 18},
     data: :string
   ]
   @rlp_sig_fields [v: :unsigned, r: :string, s: :string]

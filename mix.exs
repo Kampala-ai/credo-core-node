@@ -46,7 +46,8 @@ defmodule CredoCoreNode.Mixfile do
       {:ex_rlp, "~> 0.3.0", override: true},
       {:quantum, "~> 2.3"},
       {:timex, "~> 3.0"},
-      {:merkle_patricia_tree, github: "aeternity/elixir-merkle-patricia-tree"}
+      {:merkle_patricia_tree, github: "aeternity/elixir-merkle-patricia-tree"},
+      {:decimal, "~> 1.0"}
     ]
   end
 end
