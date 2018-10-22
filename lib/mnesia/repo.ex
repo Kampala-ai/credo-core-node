@@ -73,20 +73,13 @@ defmodule Mnesia.Repo do
   Deletes a record.
   """
   def delete(record) do
-    key_field =
-      record
-      |> Mnesia.Table.fields()
-      |> hd()
-
-    key = Map.get(record, key_field)
-
     :ok =
       record
       |> Mnesia.Table.name()
       |> Atom.to_string()
       |> Kernel.<>("_#{table_suffix()}")
       |> String.to_atom()
-      |> :mnesia.dirty_delete(key)
+      |> :mnesia.dirty_delete(Mnesia.Record.key(record))
 
     {:ok, record}
   end

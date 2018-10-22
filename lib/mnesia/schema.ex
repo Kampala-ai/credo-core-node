@@ -32,6 +32,10 @@ defmodule Mnesia.Schema do
         def fields(schema), do: unquote(fields)
         def virtual_fields(schema), do: unquote(virtual_fields)
       end
+
+      defimpl Mnesia.Record, for: __MODULE__ do
+        def key(record), do: Map.get(record, hd(unquote(fields)))
+      end
     end
   end
 end
