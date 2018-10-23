@@ -9,7 +9,7 @@ defmodule CredoCoreNode.Mining.Ip do
   end
 
   def miner_ip_changed? do
-    Network.get_current_ip != Mining.my_miner().node_ip # TODO: Make this check more robust. :inet.getif may return ips in a different order, but we're just selecting the first once.
+    Network.get_current_ip != Mining.my_miner().ip # TODO: Make this check more robust. :inet.getif may return ips in a different order, but we're just selecting the first once.
   end
 
   def construct_miner_ip_update_transaction(private_key, to) do
@@ -46,7 +46,7 @@ defmodule CredoCoreNode.Mining.Ip do
     Enum.each miner_ip_updates, fn miner_ip_update ->
       miner_ip_update.to
       |> Mining.get_miner()
-      |> Map.merge(%{node_ip: Poison.decode!(miner_ip_update.data)["node_ip"]})
+      |> Map.merge(%{ip: Poison.decode!(miner_ip_update.data)["node_ip"]})
       |> Mining.write_miner()
     end
   end
