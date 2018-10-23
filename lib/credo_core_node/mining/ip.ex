@@ -3,13 +3,13 @@ defmodule CredoCoreNode.Mining.Ip do
 
   def maybe_update_miner_ip do
     if Mining.is_miner?() && miner_ip_changed?() do
-      construct_miner_ip_update_transaction("", Mining.get_own_miner().address)
+      construct_miner_ip_update_transaction("", Mining.my_miner().address)
       |> Pool.propagate_pending_transaction()
     end
   end
 
   def miner_ip_changed? do
-    Network.get_current_ip != Mining.get_own_miner().node_ip # TODO: Make this check more robust. :inet.getif may return ips in a different order, but we're just selecting the first once.
+    Network.get_current_ip != Mining.my_miner().node_ip # TODO: Make this check more robust. :inet.getif may return ips in a different order, but we're just selecting the first once.
   end
 
   def construct_miner_ip_update_transaction(private_key, to) do

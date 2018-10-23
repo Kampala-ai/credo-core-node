@@ -7,7 +7,7 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
   @block_production_timeout 10000
 
   def is_your_turn?(block, retry_count) do
-    get_next_block_producer(block, retry_count) == Mining.get_own_miner()
+    get_next_block_producer(block, retry_count) == Mining.my_miner()
   end
 
   def produce_block() do
@@ -21,7 +21,7 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
     {:ok, tx} =
       Pool.generate_pending_transaction("", %{ # TODO: set private key
         nonce: 0,
-        to: Mining.get_own_miner().address,
+        to: Mining.my_miner().address,
         value: Pool.sum_pending_transaction_fees(txs),
         fee: 0,
         data: "{\"tx_type\" : \"#{Blockchain.coinbase_tx_type()}\"}"

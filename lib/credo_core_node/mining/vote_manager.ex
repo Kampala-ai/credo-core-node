@@ -8,7 +8,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
     |> Enum.filter(&
       &1.block_number == block.number &&
       &1.voting_round == voting_round &&
-      &1.miner_address == Mining.get_own_miner().address)
+      &1.miner_address == Mining.my_miner().address)
     |> Enum.any?
   end
 
@@ -33,7 +33,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
     "{\"block_hash\" : #{candidate.hash},
       \"block_number\" : #{candidate.number},
       \"voting_round\" : \"#{voting_round}\",
-      \"miner_address\" : #{Mining.get_own_miner().address}}"
+      \"miner_address\" : #{Mining.my_miner().address}}"
   end
 
   def sign_vote(vote) do

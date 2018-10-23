@@ -28,10 +28,7 @@ defmodule CredoCoreNode.Mining do
     if miner.stake_amount < @min_stake_size, do: delete_miner(miner)
   end
 
-  @doc """
-  Returns whether the current node is already a miner.
-  """
-  def get_own_miner() do
+  def my_miner() do
     list_miners()
     |> Enum.filter(& &1.is_self)
     |> List.first()
