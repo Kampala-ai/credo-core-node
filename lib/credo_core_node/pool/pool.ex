@@ -175,4 +175,12 @@ defmodule CredoCoreNode.Pool do
 
   def propagate_block(block, recipients \\ :miners) do
   end
+
+  def parse_transactions(block) do
+    get_batch_of_pending_transactions() # Stub for development pending actual implementation.
+  end
+
+  def parse_tx_from(tx) do
+    nil # Stub for development pending actual implementation.
+  end
 end

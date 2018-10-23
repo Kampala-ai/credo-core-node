@@ -1,5 +1,6 @@
 defmodule CredoCoreNode.Mining.DepositWithdrawal do
   alias CredoCoreNode.Mining
+  alias CredoCoreNode.Pool
 
   def validate_deposit_withdrawals(block) do
     block.transactions
@@ -13,7 +14,7 @@ defmodule CredoCoreNode.Mining.DepositWithdrawal do
   end
 
   def is_deposit_withdrawal(tx) do
-    tx.from
+    Pool.parse_tx_from(tx)
     |> Mining.get_miner()
     |> is_nil
     |> Kernel.not
