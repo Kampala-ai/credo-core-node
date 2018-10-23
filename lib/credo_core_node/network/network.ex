@@ -36,6 +36,8 @@ defmodule CredoCoreNode.Network do
     [ip | _] = Enum.map(ifs, fn {ip, _broadaddr, _mask} -> ip end)
 
     ip
+    |> Tuple.to_list()
+    |> Enum.join(".")
   end
 
   @doc """
