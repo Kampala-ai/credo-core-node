@@ -7,6 +7,8 @@ defmodule CredoCoreNode.Pool do
   alias CredoCoreNode.Pool.{PendingBlock, PendingTransaction}
   alias MerklePatriciaTree.Trie
 
+  alias Decimal, as: D
+
   @doc """
   Returns the list of pending_transactions.
   """
@@ -25,7 +27,8 @@ defmodule CredoCoreNode.Pool do
   Gets the sum of pending transaction fees.
   """
   def sum_pending_transaction_fees(txs) do
-    for %{fee: fee, id: _} <- txs, do: fee
+    fees = for %{fee: fee} <- txs, do: D.new(fee)
+    Enum.reduce(fees, fn x, acc -> D.add(x, acc) end)
   end
 
   @doc """
@@ -144,6 +147,7 @@ defmodule CredoCoreNode.Pool do
   @doc """
   Generates a pending_block.
   """
+  def generate_pending_block(pending_transactions) when pending_transactions == [], do: {:error, :no_txs}
   def generate_pending_block(pending_transactions) do
     last_block =
       Blockchain.list_blocks()

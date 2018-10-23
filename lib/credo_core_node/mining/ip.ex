@@ -16,7 +16,7 @@ defmodule CredoCoreNode.Mining.Ip do
     {:ok, tx} = Pool.generate_pending_transaction(private_key, %{
       nonce: Mining.default_nonce(),
       to: to,
-      value: 0,
+      value: 1.0,
       fee: Mining.default_tx_fee(),
       data: "{\"tx_type\" : \"#{Blockchain.update_miner_ip_tx_type()}\", \"node_ip\" : \"#{Network.get_current_ip()}\"}"})
 

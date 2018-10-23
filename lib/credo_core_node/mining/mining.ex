@@ -10,7 +10,7 @@ defmodule CredoCoreNode.Mining do
   alias Mnesia.Repo
 
   @default_nonce 0
-  @default_tx_fee 0.1
+  @default_tx_fee 1.0
   @min_stake_size 10000
 
   def default_nonce, do: @default_nonce

@@ -68,7 +68,14 @@ defmodule CredoCoreNode.Blockchain do
   def last_block() do
     list_blocks()
     |> Enum.sort(&(&1.number > &2.number))
-    |> List.first()
+    |> List.first() || load_genesis_block()
+  end
+
+  def load_genesis_block() do
+    {:ok, block} = # TODO: load actual genesis block.
+      write_block(%{number: 0, hash: "0xe454d0d47a6e45ccd055dcc31e319d71da1063e5d2073aadb44e9d6e602b1916"})
+
+    block
   end
 
   @doc """

@@ -1,33 +1,22 @@
 defmodule CredoCoreNode.Blockchain.BlockProducer do
   alias CredoCoreNode.{Blockchain, Mining, Pool}
   alias CredoCoreNode.Blockchain.BlockValidator
+  alias CredoCoreNode.Mining.Coinbase
 
   require Logger
 
   @block_production_timeout 10000
 
+  def is_your_turn?(block, _retry_count) when is_nil(block), do: false
   def is_your_turn?(block, retry_count) do
     get_next_block_producer(block, retry_count) == Mining.my_miner()
   end
 
   def produce_block() do
     Pool.get_batch_of_pending_transactions()
-    |> add_coinbase_tx()
+    |> Coinbase.add_coinbase_tx()
     |> Pool.generate_pending_block()
     |> Pool.propagate_block()
-  end
-
-  def add_coinbase_tx(txs) do
-    {:ok, tx} =
-      Pool.generate_pending_transaction("", %{ # TODO: set private key
-        nonce: 0,
-        to: Mining.my_miner().address,
-        value: Pool.sum_pending_transaction_fees(txs),
-        fee: 0,
-        data: "{\"tx_type\" : \"#{Blockchain.coinbase_tx_type()}\"}"
-      })
-
-    txs ++ [tx]
   end
 
   def get_next_block_producer(block, retry_count) do
