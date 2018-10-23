@@ -1,6 +1,6 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.{Blockchain, Pool, Mining}
-  alias CredoCoreNode.Mining.DepositWithdrawal
+  alias CredoCoreNode.Mining.{Coinbase, DepositWithdrawal}
 
   @min_txs_per_block 1
   @max_txs_per_block 250
@@ -67,18 +67,14 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       |> Enum.filter(&(&1.number == block.number - Blockchain.finalization_threshold()))
       |> List.first()
 
-    # Check that the current block is in a chain of blocks containing the last finalized block.
+    true # Check that the current block is in a chain of blocks containing the last finalized block.
   end
 
   def validate_coinbase_transaction(block) do
-    [coinbase_tx] = coinbase_txs =
-      block.transactions
-      |> Enum.filter(&(Poison.decode!(&1.data)["tx_type"] == Blockchain.coinbase_tx_type()))
+    coinbase_txs =
+      Coinbase.get_coinbase_txs(block)
 
-    non_coinbase_tx_fees_sum =
-      Pool.sum_pending_transaction_fees(block.transactions -- coinbase_tx)
-
-    length(coinbase_txs) == 1 && coinbase_tx.fee == non_coinbase_tx_fees_sum
+    length(coinbase_txs) == 1 && Coinbase.tx_fee_sums_match(block, coinbase_txs)
   end
 
   def validate_network_consensus(block) do
