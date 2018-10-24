@@ -16,6 +16,10 @@ defmodule CredoCoreNode.Pool do
     Mnesia.Repo.list(PendingTransaction)
   end
 
+  def list_pending_transactions(block) do
+    MPT.Repo.list(block.tx_trie, PendingTransaction)
+  end
+
   @doc """
   Gets a single pending_transaction.
   """
@@ -178,10 +182,6 @@ defmodule CredoCoreNode.Pool do
   end
 
   def propagate_block(block, recipients \\ :miners) do
-  end
-
-  def parse_transactions(block) do
-    get_batch_of_pending_transactions() # Stub for development pending actual implementation.
   end
 
   def parse_tx_from(tx) do

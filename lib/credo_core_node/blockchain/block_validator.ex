@@ -43,14 +43,14 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   def validate_transaction_count(block) do
-    len = length(block.transactions)
+    len = length(Pool.list_pending_transactions(block))
 
     len >= @min_txs_per_block && len <= @max_txs_per_block
   end
 
   def validate_transaction_data_length(block) do
     res =
-      Enum.map block.transactions, fn tx ->
+      Enum.map Pool.list_pending_transactions(block), fn tx ->
         String.length(tx.data) <= @max_data_length
       end
 

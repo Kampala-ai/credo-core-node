@@ -3,7 +3,8 @@ defmodule CredoCoreNode.Mining.DepositWithdrawal do
   alias CredoCoreNode.Pool
 
   def validate_deposit_withdrawals(block) do
-    block.transactions
+    block
+    |> Pool.list_pending_transactions()
     |> get_deposit_withdrawals()
     |> get_invalid_deposit_withdrawals()
     |> Enum.empty?
