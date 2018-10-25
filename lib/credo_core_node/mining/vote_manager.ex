@@ -20,13 +20,10 @@ defmodule CredoCoreNode.Mining.VoteManager do
     |> propagate_vote()
   end
 
+  defp select_candidate(block, voting_round) when voting_round == 0, do: block
   defp select_candidate(block, voting_round) do
-    if voting_round == 0 do
-      block
-    else
-      Pool.list_pending_blocks(block.number)
-      |> Enum.random() # TODO: weight selection based on votes from prior round.
-    end
+    Pool.list_pending_blocks(block.number)
+    |> Enum.random() # TODO: weight selection based on votes from prior round.
   end
 
   def construct_vote(candidate, voting_round) do
