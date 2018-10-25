@@ -92,7 +92,7 @@ defmodule CredoCoreNode.Mining do
   """
   def list_votes_for_round(block, voting_round) do
     list_votes()
-    |> Enum.filter(& &1.number == block.number)
+    |> Enum.filter(& &1.block_number == block.number)
     |> Enum.filter(& &1.voting_round == voting_round)
   end
 

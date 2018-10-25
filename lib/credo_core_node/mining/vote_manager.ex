@@ -15,6 +15,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
   def cast_vote(block, voting_round) do
     block
     |> select_candidate(voting_round)
+    |> save_vote(voting_round)
     |> construct_vote(voting_round)
     |> sign_vote()
     |> propagate_vote()
@@ -24,6 +25,17 @@ defmodule CredoCoreNode.Mining.VoteManager do
   defp select_candidate(block, voting_round) do
     Pool.list_pending_blocks(block.number)
     |> Enum.random() # TODO: weight selection based on votes from prior round.
+  end
+
+  def save_vote(candidate, voting_round) do
+    Mining.write_vote(%{
+      miner_address: Mining.my_miner().address,
+      block_number: candidate.number,
+      block_hash: candidate.hash,
+      voting_round: voting_round
+      })
+
+    candidate
   end
 
   def construct_vote(candidate, voting_round) do
@@ -53,7 +65,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
 
   def consensus_reached?(block, voting_round) do
     confirmed_block =
-      count_votes(block.number, voting_round)
+      count_votes(block, voting_round)
       |> get_winner()
 
     update_participation_rates(block, voting_round)
@@ -68,18 +80,23 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def count_votes(block, voting_round) do
-    results = %{}
+    votes =
+      Mining.list_votes_for_round(block, voting_round)
 
-    Enum.each Mining.list_votes_for_round(block, voting_round), fn vote ->
-      Map.merge(results,
-        %{"#{vote.block_hash}": (results[vote.block_hash] || 0) + Mining.get_miner(vote.miner_address).stake_amount})
+    Enum.map votes, fn vote ->
+      count =
+        votes
+        |> Enum.filter(& &1.block_hash == vote.block_hash)
+        |> Enum.map(& Mining.get_miner(&1.miner_address).stake_amount)
+        |> Enum.sum()
+
+      %{hash: vote.block_hash, count: count}
     end
-
-    results
   end
 
   def total_voting_power do
-    for %{stake_amount: stake_amount, id: _} <- Mining.list_miners(), do: stake_amount
+    stake_amounts = for %{stake_amount: stake_amount} <- Mining.list_miners(), do: stake_amount
+    Enum.reduce(stake_amounts, fn x, acc -> D.add(x, acc) end)
   end
 
   def has_supermajority?(num_votes) do
@@ -89,16 +106,13 @@ defmodule CredoCoreNode.Mining.VoteManager do
   def get_winner(results) do
     winning_result =
       results
-      |> Enum.filter(fn {_hash, num_votes} -> has_supermajority?(num_votes) end)
+      |> Enum.filter(fn result -> has_supermajority?(result.count) end)
       |> List.first()
 
     if is_nil(winning_result) do
       nil
     else
-      winning_result
-      |> Map.keys()
-      |> List.first()
-      |> Pool.get_pending_block()
+      Pool.get_pending_block(winning_result.hash)
     end
   end
 
