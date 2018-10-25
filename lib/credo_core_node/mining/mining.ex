@@ -9,6 +9,8 @@ defmodule CredoCoreNode.Mining do
 
   alias Mnesia.Repo
 
+  require Logger
+
   @default_nonce 0
   @default_tx_fee 1.0
   @min_stake_size 10000
@@ -124,6 +126,8 @@ defmodule CredoCoreNode.Mining do
   end
 
    def start_voting(block, voting_round \\ 0) do
+    Logger.info("Started voting at block height #{block.number} in round #{voting_round}.")
+
     unless VoteManager.already_voted?(block, voting_round) do
       VoteManager.cast_vote(block, voting_round)
       VoteManager.wait_for_votes()

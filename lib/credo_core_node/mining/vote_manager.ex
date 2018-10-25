@@ -77,6 +77,8 @@ defmodule CredoCoreNode.Mining.VoteManager do
       Map.merge(results,
         %{"#{vote.block_hash}": (results[vote.block_hash] || 0) + Mining.get_miner(vote.miner_address).stake_amount})
     end
+
+    results
   end
 
   def total_voting_power do
@@ -88,12 +90,19 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def get_winner(results) do
-    results
-    |> Enum.filter(fn {_hash, num_votes} -> has_supermajority?(num_votes) end)
-    |> List.first()
-    |> Map.keys()
-    |> List.first()
-    |> Pool.get_pending_block()
+    winning_result =
+      results
+      |> Enum.filter(fn {_hash, num_votes} -> has_supermajority?(num_votes) end)
+      |> List.first()
+
+    if is_nil(winning_result) do
+      nil
+    else
+      winning_result
+      |> Map.keys()
+      |> List.first()
+      |> Pool.get_pending_block()
+    end
   end
 
   def update_participation_rates(block, voting_round) do
