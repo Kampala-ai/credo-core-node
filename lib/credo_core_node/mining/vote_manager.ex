@@ -1,6 +1,8 @@
 defmodule CredoCoreNode.Mining.VoteManager do
   alias CredoCoreNode.{Mining, Network, Pool}
 
+  alias Decimal, as: D
+
   @vote_collection_timeout 10000
 
   def already_voted?(block, voting_round) do

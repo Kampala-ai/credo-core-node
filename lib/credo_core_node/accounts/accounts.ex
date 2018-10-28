@@ -3,7 +3,10 @@ defmodule CredoCoreNode.Accounts do
   The Accounts context.
   """
 
+  alias CredoCoreNode.Accounts.Address
   alias CredoCoreNode.Pool.PendingTransaction
+
+  alias Mnesia.Repo
 
   @doc """
   Calculates a public key for a given pending_transaction.
@@ -39,5 +42,51 @@ defmodule CredoCoreNode.Accounts do
     |> :libsecp256k1.sha256()
     |> Base.encode16()
     |> String.slice(24, 40)
+  end
+
+  @doc """
+  Generates a new address.
+  """
+  def generate_address(label \\ nil) do
+    private_key =
+      :crypto.strong_rand_bytes(32)
+
+    {:ok, public_key} =
+      calculate_public_key(private_key)
+
+    write_address(%{
+      address: payment_address(public_key),
+      private_key: private_key,
+      public_key: public_key,
+      label: label
+    })
+  end
+
+  @doc """
+  Returns the list of addresss.
+  """
+  def list_addresss() do
+    Repo.list(Address)
+  end
+
+  @doc """
+  Gets a single address.
+  """
+  def get_address(address) do
+    Repo.get(Address, address)
+  end
+
+  @doc """
+  Creates/updates a address.
+  """
+  def write_address(attrs) do
+    Repo.write(Address, attrs)
+  end
+
+  @doc """
+  Deletes a address.
+  """
+  def delete_address(%Address{} = address) do
+    Repo.delete(address)
   end
 end
