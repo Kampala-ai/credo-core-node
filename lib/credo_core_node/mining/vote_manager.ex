@@ -24,8 +24,8 @@ defmodule CredoCoreNode.Mining.VoteManager do
     |> propagate_vote()
   end
 
-  defp select_candidate(block, voting_round) when voting_round == 0, do: block
-  defp select_candidate(block, voting_round) do
+  def select_candidate(block, voting_round) when voting_round == 0, do: block
+  def select_candidate(block, voting_round) do
     Pool.list_pending_blocks(block.number)
     |> Enum.random() # TODO: weight selection based on votes from prior round.
   end
@@ -34,7 +34,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
     %Vote{
       miner_address: Mining.my_miner().address,
       block_number: candidate.number,
-      block_hash: candidate.hash,
+      block_hash: RLP.Hash.hex(candidate),
       voting_round: voting_round
     }
   end
