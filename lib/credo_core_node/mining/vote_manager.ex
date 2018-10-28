@@ -29,27 +29,22 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def construct_and_save_vote(candidate, voting_round) do
-    Mining.write_vote(%{
-      miner_address: Mining.my_miner().address,
-      block_number: candidate.number,
-      block_hash: candidate.hash,
-      voting_round: voting_round
-      })
+    {:ok, vote} =
+      Mining.write_vote(%{
+        miner_address: Mining.my_miner().address,
+        block_number: candidate.number,
+        block_hash: candidate.hash,
+        voting_round: voting_round
+        })
+
+    vote
   end
 
   def sign_vote(vote) do
-    private_key =
+    address =
       Accounts.get_address(vote.miner_address)
 
-    {:ok, sig, v} =
-      vote
-      |> RLP.Hash.binary(type: :unsigned)
-      |> :libsecp256k1.ecdsa_sign_compact(private_key, :default, <<>>)
-
-    sig = Base.encode16(sig)
-    vote = Map.merge(vote, %{v: v, r: String.slice(sig, 0, 64), s: String.slice(sig, 64, 64)})
-
-    vote
+    Pool.sign_message(address.private_key, vote)
   end
 
   def propagate_vote(vote) do

@@ -55,15 +55,19 @@ defmodule CredoCoreNode.Pool do
   def generate_pending_transaction(private_key, attrs) do
     tx = struct(PendingTransaction, attrs)
 
+    tx = sign_message(private_key, tx)
+
+    {:ok, %{tx | hash: RLP.Hash.hex(tx)}}
+  end
+
+  def sign_message(private_key, message) do
     {:ok, sig, v} =
-      tx
+      message
       |> RLP.Hash.binary(type: :unsigned)
       |> :libsecp256k1.ecdsa_sign_compact(private_key, :default, <<>>)
 
     sig = Base.encode16(sig)
-    tx = Map.merge(tx, %{v: v, r: String.slice(sig, 0, 64), s: String.slice(sig, 64, 64)})
-
-    {:ok, %{tx | hash: RLP.Hash.hex(tx)}}
+    Map.merge(message, %{v: v, r: String.slice(sig, 0, 64), s: String.slice(sig, 64, 64)})
   end
 
   @doc """
