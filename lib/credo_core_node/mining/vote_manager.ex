@@ -1,5 +1,6 @@
 defmodule CredoCoreNode.Mining.VoteManager do
   alias CredoCoreNode.{Accounts, Mining, Network, Pool}
+  alias CredoCoreNode.Mining.Vote
 
   alias Decimal, as: D
 
@@ -17,8 +18,9 @@ defmodule CredoCoreNode.Mining.VoteManager do
   def cast_vote(block, voting_round) do
     block
     |> select_candidate(voting_round)
-    |> construct_and_save_vote(voting_round)
+    |> construct_vote(voting_round)
     |> sign_vote()
+    |> save_vote()
     |> propagate_vote()
   end
 
@@ -28,16 +30,13 @@ defmodule CredoCoreNode.Mining.VoteManager do
     |> Enum.random() # TODO: weight selection based on votes from prior round.
   end
 
-  def construct_and_save_vote(candidate, voting_round) do
-    {:ok, vote} =
-      Mining.write_vote(%{
-        miner_address: Mining.my_miner().address,
-        block_number: candidate.number,
-        block_hash: candidate.hash,
-        voting_round: voting_round
-        })
-
-    vote
+  def construct_vote(candidate, voting_round) do
+    %Vote{
+      miner_address: Mining.my_miner().address,
+      block_number: candidate.number,
+      block_hash: candidate.hash,
+      voting_round: voting_round
+    }
   end
 
   def sign_vote(vote) do
@@ -45,6 +44,12 @@ defmodule CredoCoreNode.Mining.VoteManager do
       Accounts.get_address(vote.miner_address)
 
     Pool.sign_message(address.private_key, vote)
+  end
+
+  def save_vote(vote) do
+    {:ok, vote} = Mining.write_vote(vote)
+
+    vote
   end
 
   def propagate_vote(vote) do

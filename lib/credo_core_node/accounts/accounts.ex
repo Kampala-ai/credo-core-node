@@ -5,13 +5,17 @@ defmodule CredoCoreNode.Accounts do
 
   alias CredoCoreNode.Accounts.Address
   alias CredoCoreNode.Pool.PendingTransaction
+  alias CredoCoreNode.Mining.Vote
 
   alias Mnesia.Repo
 
   @doc """
   Calculates a public key for a given pending_transaction.
   """
-  def calculate_public_key(%PendingTransaction{} = tx) do
+  def calculate_public_key(%PendingTransaction{} = tx), do: calculate_public_key_from_signature(tx)
+  def calculate_public_key(%Vote{} = vote), do: calculate_public_key_from_signature(vote)
+
+  def calculate_public_key_from_signature(tx) do
     {:ok, sig} = Base.decode16(tx.r <> tx.s)
 
     # HACK: the version of libsecp256k1 we use adds `4` byte value to the beginning of public key
