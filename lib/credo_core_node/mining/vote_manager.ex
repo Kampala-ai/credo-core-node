@@ -1,5 +1,5 @@
 defmodule CredoCoreNode.Mining.VoteManager do
-  alias CredoCoreNode.{Mining, Network, Pool}
+  alias CredoCoreNode.{Accounts, Mining, Network, Pool}
 
   alias Decimal, as: D
 
@@ -17,8 +17,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
   def cast_vote(block, voting_round) do
     block
     |> select_candidate(voting_round)
-    |> save_vote(voting_round)
-    |> construct_vote(voting_round)
+    |> construct_and_save_vote(voting_round)
     |> sign_vote()
     |> propagate_vote()
   end
@@ -29,25 +28,27 @@ defmodule CredoCoreNode.Mining.VoteManager do
     |> Enum.random() # TODO: weight selection based on votes from prior round.
   end
 
-  def save_vote(candidate, voting_round) do
+  def construct_and_save_vote(candidate, voting_round) do
     Mining.write_vote(%{
       miner_address: Mining.my_miner().address,
       block_number: candidate.number,
       block_hash: candidate.hash,
       voting_round: voting_round
       })
-
-    candidate
-  end
-
-  def construct_vote(candidate, voting_round) do
-    "{\"block_hash\" : #{candidate.hash},
-      \"block_number\" : #{candidate.number},
-      \"voting_round\" : \"#{voting_round}\",
-      \"miner_address\" : #{Mining.my_miner().address}}"
   end
 
   def sign_vote(vote) do
+    private_key =
+      Accounts.get_address(vote.miner_address)
+
+    {:ok, sig, v} =
+      vote
+      |> RLP.Hash.binary(type: :unsigned)
+      |> :libsecp256k1.ecdsa_sign_compact(private_key, :default, <<>>)
+
+    sig = Base.encode16(sig)
+    vote = Map.merge(vote, %{v: v, r: String.slice(sig, 0, 64), s: String.slice(sig, 64, 64)})
+
     vote
   end
 
@@ -84,6 +85,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
   def count_votes(block, voting_round) do
     votes =
       Mining.list_votes_for_round(block, voting_round)
+      |> get_valid_votes()
 
     Enum.map votes, fn vote ->
       count =
@@ -94,6 +96,20 @@ defmodule CredoCoreNode.Mining.VoteManager do
 
       %{hash: vote.block_hash, count: count}
     end
+  end
+
+  def get_valid_votes(votes) do
+    Enum.filter(votes, & is_valid_vote(&1))
+  end
+
+  def is_valid_vote(vote) do
+    {:ok, public_key} =
+      Accounts.calculate_public_key(vote)
+
+    address =
+      Accounts.payment_address(public_key)
+
+    address == vote.miner_address && !is_nil(Mining.get_miner(vote.miner_address))
   end
 
   def total_voting_power do
