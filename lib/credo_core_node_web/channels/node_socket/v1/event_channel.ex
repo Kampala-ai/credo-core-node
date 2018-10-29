@@ -1,6 +1,8 @@
 defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
   use Phoenix.Channel
 
+  alias CredoCoreNode.Blockchain
+  alias CredoCoreNode.Blockchain.Block
   alias CredoCoreNode.Pool
   alias CredoCoreNode.Pool.PendingTransaction
   alias CredoCoreNode.Pool.PendingBlock

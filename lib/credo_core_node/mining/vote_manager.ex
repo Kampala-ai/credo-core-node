@@ -1,5 +1,5 @@
 defmodule CredoCoreNode.Mining.VoteManager do
-  alias CredoCoreNode.{Accounts, Mining, Network, Pool}
+  alias CredoCoreNode.{Accounts, Mining, Network, Pool, Blockchain}
   alias CredoCoreNode.Mining.Vote
 
   alias Decimal, as: D

@@ -216,7 +216,10 @@ defmodule CredoCoreNode.Network do
     end
   end
 
-  def notify_connected_nodes(record, event, _recipients \\ :all) do
+  def propagate_record(record, options \\ []) do
+    event = options[:event] || :create
+    _recipients = options[:recipients] || :all
+
     # TODO: pushing notifications synchronously may cause delays,
     #   consider executing this code asynchronously
     list_connections()

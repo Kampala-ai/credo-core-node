@@ -74,7 +74,7 @@ defmodule CredoCoreNode.Pool do
   Propagates a pending_transaction.
   """
   def propagate_pending_transaction(tx) do
-    Network.notify_connected_nodes(tx, :create)
+    Network.propagate_record(tx)
 
     {:ok, tx}
   end
@@ -179,7 +179,7 @@ defmodule CredoCoreNode.Pool do
   end
 
   def propagate_pending_block(block) do
-    Network.notify_connected_nodes(block, :create, :miners)
+    Network.propagate_record(block, recipients: :miners)
 
     {:ok, block}
   end

@@ -5,6 +5,7 @@ defmodule CredoCoreNode.Blockchain do
 
   alias CredoCoreNode.Blockchain.{Block, Transaction}
   alias CredoCoreNode.Pool
+  alias CredoCoreNode.Network
   alias Mnesia.Repo
 
   @finalization_threshold 12
@@ -113,7 +114,7 @@ defmodule CredoCoreNode.Blockchain do
   end
 
   def propagate_block(block) do
-    Network.notify_connected_nodes(block, :create)
+    Network.propagate_record(block)
 
     {:ok, block}
   end
