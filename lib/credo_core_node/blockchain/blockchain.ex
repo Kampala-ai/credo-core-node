@@ -111,4 +111,10 @@ defmodule CredoCoreNode.Blockchain do
   def delete_block(%Block{} = block) do
     Repo.delete(block)
   end
+
+  def propagate_block(block) do
+    Network.notify_connected_nodes(block, :create)
+
+    {:ok, block}
+  end
 end

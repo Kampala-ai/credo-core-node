@@ -50,7 +50,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
       case :hackney.request(:post, url, headers, "", [:with_body, pool: false]) do
         {:ok, 201, _headers, _body} ->
           Logger.info("Responded with `created` (successfully connected)")
-          Network.write_connection(ip: known_node.ip, is_active: true, failed_attempts_count: 0)
+          Network.connect_to(known_node.ip)
           Network.retrieve_known_nodes(known_node.ip)
 
         {:ok, 302, _headers, _body} ->

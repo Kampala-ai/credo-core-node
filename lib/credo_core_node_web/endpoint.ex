@@ -41,6 +41,8 @@ defmodule CredoCoreNodeWeb.Endpoint do
 
   plug(CredoCoreNodeWeb.Router)
 
+  socket("/node_socket/v1", CredoCoreNodeWeb.NodeSocket.V1.Socket)
+
   @doc """
   Callback invoked for dynamically configuring the endpoint.
 

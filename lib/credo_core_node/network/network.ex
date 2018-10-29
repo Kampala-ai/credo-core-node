@@ -13,6 +13,11 @@ defmodule CredoCoreNode.Network do
     do: Application.get_env(:credo_core_node, CredoCoreNode.Network)[:node_connection_port]
 
   @doc """
+  Returns the maximum allowed number of active connections.
+  """
+  def max_active_connections, do: 6
+
+  @doc """
   Returns the request headers for cross-node requests.
   """
   def node_request_headers() do
@@ -26,6 +31,26 @@ defmodule CredoCoreNode.Network do
   """
   def request_url(ip) do
     "http://#{ip}:#{node_connection_port()}"
+  end
+
+  @doc """
+  """
+  def socket_url(ip) do
+    "ws://#{ip}:#{node_connection_port()}/node_socket/v1/websocket"
+  end
+
+  @doc """
+  Returns socket client module with the given id.
+  """
+  def socket_client_module(id) when is_integer(id) do
+    :"Elixir.CredoCoreNodeWeb.NodeSocket.V1.SocketClient#{id}"
+  end
+
+  @doc """
+  Returns channel client module with the given id.
+  """
+  def channel_client_module(id) when is_integer(id) do
+    :"Elixir.CredoCoreNodeWeb.NodeSocket.V1.EventChannelClient#{id}"
   end
 
   @doc """
@@ -128,7 +153,21 @@ defmodule CredoCoreNode.Network do
   Returns if the necessary number of active connections is reached.
   """
   def fully_connected?() do
-    length(Enum.filter(list_connections(), & &1.is_active)) >= min(length(list_known_nodes()), 6)
+    length(Enum.filter(list_connections(), & &1.is_active)) >=
+      min(length(list_known_nodes()), max_active_connections())
+  end
+
+  @doc """
+  Returns the first available socket client id.
+  """
+  def available_socket_client_id() do
+    used_ids =
+      list_connections()
+      |> Enum.filter(& &1.is_active)
+      |> Enum.map(& &1.socket_client_id)
+
+    diff = Enum.to_list(0..max_active_connections() - 1) -- used_ids
+    List.first(diff)
   end
 
   @doc """
@@ -141,10 +180,49 @@ defmodule CredoCoreNode.Network do
     end
   end
 
+  @doc """
+  Establishes socket connection to the given IP and writes the `Connection` record
+  """
+  def connect_to(ip) do
+    socket_client_id = available_socket_client_id()
+
+    # TODO: using Poison encoding/decoding upper-level `Phoenix.Socket.Message` struct;
+    #   to be replaced with RLP serializer later to reduce the payload size
+    socket_client_module(socket_client_id).start_link(
+      url: socket_url(ip),
+      serializer: Poison
+    )
+
+    channel_client_module(socket_client_id).start_link(
+      socket: CredoCoreNode.Network.socket_client_module(0),
+      topic: "events:all",
+      caller: self()
+    )
+
+    channel_client_module(socket_client_id).push("phx_join", %{})
+
+    write_connection(
+      ip: ip,
+      is_active: true,
+      failed_attempts_count: 0,
+      socket_client_id: socket_client_id
+    )
+  end
+
   def updated_at(ip) do
     case get_connection(ip) do
       nil -> false
       connection -> connection.updated_at
     end
+  end
+
+  def notify_connected_nodes(record, event, _recipients \\ :all) do
+    # TODO: pushing notifications synchronously may cause delays,
+    #   consider executing this code asynchronously
+    list_connections()
+    |> Enum.filter(& &1.is_active)
+    |> Enum.map(& &1.socket_client_id)
+    |> Enum.map(&channel_client_module(&1))
+    |> Enum.each(& &1.push("#{Mnesia.Table.name(record)}:#{event}", %{rlp: ExRLP.encode(record, encoding: :hex)}))
   end
 end

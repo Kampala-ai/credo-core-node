@@ -26,7 +26,7 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.ConnectionController do
         send_resp(conn, :conflict, "")
 
       true ->
-        Network.write_connection(ip: remote_ip, is_active: true, failed_attempts_count: 0)
+        Network.connect_to(remote_ip)
         send_resp(conn, :created, "")
     end
   end

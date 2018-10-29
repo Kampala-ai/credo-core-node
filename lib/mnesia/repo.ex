@@ -51,6 +51,33 @@ defmodule Mnesia.Repo do
   end
 
   @doc """
+  Returns if a record is new (no record with the same key exists).
+  """
+  def new_record?(schema, %{} = record) do
+    key = Mnesia.Record.key(record)
+    new_record?(schema, key)
+  end
+
+  @doc """
+  Returns if a record is new (no record with the same key exists).
+  """
+  def new_record?(schema, attrs) when is_list(attrs) do
+    key =
+      attrs
+      |> hd()
+      |> elem(1)
+
+    new_record?(schema, key)
+  end
+
+  @doc """
+  Returns if a record is new (no record with the same key exists).
+  """
+  def new_record?(schema, key) do
+    !get(schema, key)
+  end
+
+  @doc """
   Creates/updates a record.
   """
   def write(schema, %{} = record), do: write(schema, Map.to_list(record))

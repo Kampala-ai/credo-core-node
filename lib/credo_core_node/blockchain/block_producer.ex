@@ -16,7 +16,7 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
     Pool.get_batch_of_pending_transactions()
     |> Coinbase.add_coinbase_tx()
     |> Pool.generate_pending_block()
-    |> Pool.propagate_block()
+    |> Pool.propagate_pending_block()
   end
 
   def get_next_block_producer(block, retry_count) do

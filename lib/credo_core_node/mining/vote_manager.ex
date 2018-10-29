@@ -67,14 +67,15 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def consensus_reached?(block, voting_round) do
-    confirmed_block =
+    winner_block =
       count_votes(block, voting_round)
       |> get_winner()
 
     update_participation_rates(block, voting_round)
 
-    if confirmed_block do
-      Pool.propagate_block(confirmed_block, :all)
+    if winner_block do
+      {:ok, confirmed_block} = Blockchain.write_block(Map.to_list(winner_block))
+      Blockchain.propagate_block(confirmed_block)
 
       {:ok, confirmed_block}
     else

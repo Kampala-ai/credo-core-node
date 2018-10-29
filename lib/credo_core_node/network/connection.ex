@@ -1,3 +1,5 @@
 defmodule CredoCoreNode.Network.Connection do
-  use Mnesia.Schema, table_name: :connections, fields: [:ip, :is_active, :failed_attempts_count, :updated_at]
+  use Mnesia.Schema,
+    table_name: :connections,
+    fields: [:ip, :is_active, :failed_attempts_count, :socket_client_id, :updated_at]
 end
