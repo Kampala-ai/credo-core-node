@@ -40,10 +40,10 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def sign_vote(vote) do
-    address =
-      Accounts.get_address(vote.miner_address)
+    account =
+      Accounts.get_account(vote.miner_address)
 
-    Pool.sign_message(address.private_key, vote)
+    Pool.sign_message(account.private_key, vote)
   end
 
   def save_vote(vote) do

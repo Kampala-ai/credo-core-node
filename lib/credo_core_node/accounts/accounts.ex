@@ -3,7 +3,7 @@ defmodule CredoCoreNode.Accounts do
   The Accounts context.
   """
 
-  alias CredoCoreNode.Accounts.Address
+  alias CredoCoreNode.Accounts.Account
   alias CredoCoreNode.Pool.PendingTransaction
   alias CredoCoreNode.Mining.Vote
 
@@ -58,7 +58,7 @@ defmodule CredoCoreNode.Accounts do
     {:ok, public_key} =
       calculate_public_key(private_key)
 
-    write_address(%{
+    write_account(%{
       address: payment_address(public_key),
       private_key: private_key,
       public_key: public_key,
@@ -67,30 +67,30 @@ defmodule CredoCoreNode.Accounts do
   end
 
   @doc """
-  Returns the list of addresss.
+  Returns the list of accounts.
   """
-  def list_addresss() do
-    Repo.list(Address)
+  def list_accounts() do
+    Repo.list(Account)
   end
 
   @doc """
-  Gets a single address.
+  Gets a single account.
   """
-  def get_address(address) do
-    Repo.get(Address, address)
+  def get_account(account) do
+    Repo.get(Account, account)
   end
 
   @doc """
-  Creates/updates a address.
+  Creates/updates a account.
   """
-  def write_address(attrs) do
-    Repo.write(Address, attrs)
+  def write_account(attrs) do
+    Repo.write(Account, attrs)
   end
 
   @doc """
-  Deletes a address.
+  Deletes a account.
   """
-  def delete_address(%Address{} = address) do
-    Repo.delete(address)
+  def delete_account(%Account{} = account) do
+    Repo.delete(account)
   end
 end
