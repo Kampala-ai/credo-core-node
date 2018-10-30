@@ -23,6 +23,33 @@ defmodule CredoCoreNodeWeb do
       import Plug.Conn
       import CredoCoreNodeWeb.Router.Helpers
       import CredoCoreNodeWeb.Gettext
+
+      defp stream_binary(bin, chunk_size) do
+        Stream.unfold(bin, fn rest ->
+          case byte_size(rest) do
+            0 -> nil
+            size when size < chunk_size -> {rest, ""}
+            size ->
+              {binary_part(rest, 0, chunk_size), binary_part(rest, chunk_size, size - chunk_size)}
+          end
+        end)
+      end
+
+      defp send_chunks(conn, bin, chunk_size) do
+        stream = stream_binary(bin, chunk_size)
+        send_chunks(conn, stream)
+      end
+
+      defp send_chunks(conn, enumerable) do
+        Enum.reduce_while(enumerable, conn, fn (ch, conn) ->
+          case chunk(conn, ch) do
+            {:ok, conn} ->
+              {:cont, conn}
+            {:error, :closed} ->
+              {:halt, conn}
+          end
+        end)
+      end
     end
   end
 

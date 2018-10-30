@@ -10,6 +10,7 @@ defmodule CredoCoreNodeWeb.Router do
 
     resources("/known_nodes", KnownNodeController, only: [:index])
     resources("/connections", ConnectionController, only: [:create])
+    resources("/pending_block_bodies", PendingBlockBodyController, only: [:show])
 
     # Endpoints for temporary usage, to be replaced later with channels-based protocol
     scope "/temp", as: :temp, alias: Temp do

@@ -117,6 +117,17 @@ defmodule CredoCoreNode.Pool do
     |> List.first()
   end
 
+  def load_pending_block_body(%PendingBlock{} = pending_block) do
+    body =
+      "./leveldb/pending_blocks/#{pending_block.hash}"
+      |> MerklePatriciaTree.DB.LevelDB.init()
+      |> Trie.new()
+      |> MPT.Repo.list(PendingTransaction)
+      |> ExRLP.encode()
+
+    %{pending_block | body: body}
+  end
+
   @doc """
   Creates/updates a pending_block.
   """
