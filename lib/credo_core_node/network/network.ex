@@ -224,6 +224,7 @@ defmodule CredoCoreNode.Network do
     #   consider executing this code asynchronously
     list_connections()
     |> Enum.filter(& &1.is_active)
+    |> Enum.filter(& !is_nil(&1.socket_client_id))
     |> Enum.map(& &1.socket_client_id)
     |> Enum.map(&channel_client_module(&1))
     |> Enum.each(& &1.push("#{Mnesia.Table.name(record)}:#{event}", %{rlp: ExRLP.encode(record, encoding: :hex)}))
