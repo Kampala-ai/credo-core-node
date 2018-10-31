@@ -201,4 +201,15 @@ defmodule CredoCoreNode.Pool do
     |> elem(1)
     |> Accounts.payment_address()
   end
+
+  def is_tx_from_balance_sufficient?(tx) do
+    tx
+    |> get_transaction_from_address()
+    |> Accounts.get_account_balance()
+    |> D.cmp(D.new(tx.value)) == :gt
+  end
+
+  def is_tx_invalid?(tx) do
+    !is_tx_from_balance_sufficient?(tx)
+  end
 end

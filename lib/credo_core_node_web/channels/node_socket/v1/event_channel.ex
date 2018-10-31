@@ -14,7 +14,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
   def handle_in("pending_transactions:create", %{"rlp" => rlp}, socket) do
     {hash, tx} = decode_rlp(PendingTransaction, rlp)
 
-    unless Pool.get_pending_transaction(hash) do
+    unless Pool.get_pending_transaction(hash) or Pool.is_tx_invalid?(tx) do
       Pool.write_pending_transaction(tx)
       Pool.propagate_pending_transaction(tx)
     end
