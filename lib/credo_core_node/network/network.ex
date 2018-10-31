@@ -29,8 +29,8 @@ defmodule CredoCoreNode.Network do
 
   @doc """
   """
-  def request_url(ip) do
-    "http://#{ip}:#{node_connection_port()}"
+  def api_url(ip) do
+    "http://#{ip}:#{node_connection_port()}/node_api/v1"
   end
 
   @doc """
@@ -104,7 +104,7 @@ defmodule CredoCoreNode.Network do
   Retrieves the list of known_nodes from the given IP and merges into the local list
   """
   def retrieve_known_nodes(ip) do
-    url = "#{request_url(ip)}/node_api/v1/known_nodes"
+    url = "#{api_url(ip)}/known_nodes"
 
     case :hackney.request(:get, url, node_request_headers(), "", [:with_body, pool: false]) do
       {:ok, 200, _headers, body} ->

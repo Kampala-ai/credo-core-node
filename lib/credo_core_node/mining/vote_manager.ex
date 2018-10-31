@@ -56,7 +56,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
     headers = Network.node_request_headers()
 
     Mining.list_miners()
-    |> Enum.map(&("#{Network.request_url(&1.ip)}/node_api/v1/temp/votes"))
+    |> Enum.map(&("#{Network.api_url(&1.ip)}/temp/votes"))
     |> Enum.each(&(:hackney.request(:post, &1, headers, vote, [:with_body, pool: false])))
 
     {:ok, vote}

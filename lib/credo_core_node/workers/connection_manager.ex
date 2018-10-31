@@ -40,7 +40,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
         |> List.first()
 
       port = Application.get_env(:credo_core_node, CredoCoreNode.Network)[:node_connection_port]
-      url = "#{Network.request_url(known_node.ip)}/node_api/v1/connections"
+      url = "#{Network.api_url(known_node.ip)}/connections"
       headers = Network.node_request_headers()
 
       Logger.info(
