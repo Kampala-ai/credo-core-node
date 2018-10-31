@@ -3,7 +3,7 @@ defmodule CredoCoreNode.Pool do
   The Pool context.
   """
 
-  alias CredoCoreNode.{Blockchain, Network}
+  alias CredoCoreNode.{Accounts, Blockchain, Network}
   alias CredoCoreNode.Pool.{PendingBlock, PendingTransaction}
   alias MerklePatriciaTree.Trie
 

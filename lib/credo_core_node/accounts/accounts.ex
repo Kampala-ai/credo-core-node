@@ -41,6 +41,12 @@ defmodule CredoCoreNode.Accounts do
   @doc """
   Returns a payment address for a given public key.
   """
+  def payment_address(%Vote{} = vote) do
+    vote
+    |> calculate_public_key()
+    |> payment_address()
+  end
+
   def payment_address(public_key) do
     public_key
     |> :libsecp256k1.sha256()

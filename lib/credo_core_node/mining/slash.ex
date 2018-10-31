@@ -1,12 +1,9 @@
 defmodule CredoCoreNode.Mining.Slash do
-  alias CredoCoreNode.{Blockchain, Mining, Pool}
+  alias CredoCoreNode.{Accounts, Blockchain, Mining, Pool}
 
   @slash_penalty_percentage 20
 
-  def slash_miner(byzantine_behavior_proof, miner_address) do
-    byzantine_behavior_proof = "" #A byzantine behavior proof should be two or more votes signed by the allegedly-byzantine miner for a given block number and voting round.
-    private_key = "" # TODO: set actual private key
-
+  def slash_miner(private_key, byzantine_behavior_proof, miner_address) do #A byzantine behavior proof should be two or more votes signed by the allegedly-byzantine miner for a given block number and voting round.
     construct_miner_slash_tx(private_key, byzantine_behavior_proof, miner_address)
     |> Pool.propagate_pending_transaction()
   end
@@ -50,7 +47,16 @@ defmodule CredoCoreNode.Mining.Slash do
   end
 
   def slash_proof_is_valid?(proof) do
-    false #TODO: implement proof check.
+    if is_list(proof) && length(proof) > 1 do
+      [voteA, voteB | _] = proof
+
+      Accounts.payment_address(voteA) == Accounts.payment_address(voteB) &&
+        voteA.block_number == voteB.block_number &&
+        voteA.voting_round == voteB.voting_round &&
+        voteA.block_hash != voteB.block_hash # TODO check vote hashes
+    else
+      false
+    end
   end
 
   def slash_miners(slashes) do
