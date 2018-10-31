@@ -64,9 +64,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     res =
       Enum.map Pool.list_pending_transactions(block), fn tx ->
         tx
-        |> Accounts.calculate_public_key()
-        |> elem(1)
-        |> Accounts.payment_address()
+        |> Pool.get_transaction_from_address()
         |> Accounts.get_account_balance()
         |> D.cmp(D.new(tx.value)) == :gt
       end

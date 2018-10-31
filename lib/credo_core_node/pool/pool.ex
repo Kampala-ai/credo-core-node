@@ -195,7 +195,10 @@ defmodule CredoCoreNode.Pool do
     {:ok, block}
   end
 
-  def parse_tx_from(tx) do
-    nil # Stub for development pending actual implementation.
+  def get_transaction_from_address(tx) do
+    tx
+    |> Accounts.calculate_public_key()
+    |> elem(1)
+    |> Accounts.payment_address()
   end
 end

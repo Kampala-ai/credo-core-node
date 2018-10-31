@@ -15,7 +15,7 @@ defmodule CredoCoreNode.Mining.DepositWithdrawal do
   end
 
   def is_deposit_withdrawal(tx) do
-    Pool.parse_tx_from(tx)
+    Pool.get_transaction_from_address(tx)
     |> Mining.get_miner()
     |> is_nil
     |> Kernel.not
