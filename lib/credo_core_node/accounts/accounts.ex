@@ -93,4 +93,8 @@ defmodule CredoCoreNode.Accounts do
   def delete_account(%Account{} = account) do
     Repo.delete(account)
   end
+
+  def get_account_balance(address) do
+    Decimal.new(100) # Stub
+  end
 end

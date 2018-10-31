@@ -1,6 +1,8 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
-  alias CredoCoreNode.{Blockchain, Pool, Mining}
+  alias CredoCoreNode.{Accounts, Blockchain, Pool, Mining}
   alias CredoCoreNode.Mining.{Coinbase, DepositWithdrawal}
+
+  alias Decimal, as: D
 
   @min_txs_per_block 1
   @max_txs_per_block 250
@@ -12,6 +14,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       validate_format(block) &&
       validate_transaction_count(block) &&
       validate_transaction_data_length(block) &&
+      validate_transaction_amounts(block) &&
       validate_deposit_withdrawals(block) &&
       validate_block_finalization(block) &&
       validate_coinbase_transaction(block) &&
@@ -52,6 +55,20 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     res =
       Enum.map Pool.list_pending_transactions(block), fn tx ->
         String.length(tx.data) <= @max_data_length
+      end
+
+    Enum.reduce(res, true, &(&1 && &2))
+  end
+
+  def validate_transaction_amounts(block) do
+    res =
+      Enum.map Pool.list_pending_transactions(block), fn tx ->
+        tx
+        |> Accounts.calculate_public_key()
+        |> elem(1)
+        |> Accounts.payment_address()
+        |> Accounts.get_account_balance()
+        |> D.cmp(D.new(tx.value)) == :gt
       end
 
     Enum.reduce(res, true, &(&1 && &2))
