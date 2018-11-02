@@ -117,15 +117,44 @@ defmodule CredoCoreNode.Pool do
     |> List.first()
   end
 
+  def load_pending_block_body(nil), do: nil
+  def load_pending_block_body(%PendingBlock{hash: nil} = pending_block), do: pending_block
+
   def load_pending_block_body(%PendingBlock{} = pending_block) do
-    body =
-      "./leveldb/pending_blocks/#{pending_block.hash}"
+    db = MerklePatriciaTree.DB.LevelDB.init("./leveldb/pending_blocks/#{pending_block.hash}")
+
+    if db |> elem(1) |> Exleveldb.is_empty?() do
+      pending_block
+    else
+      body =
+        db
+        |> Trie.new()
+        |> MPT.Repo.list(PendingTransaction)
+        |> ExRLP.encode()
+
+      %{pending_block | body: body}
+    end
+  end
+
+  @doc """
+  Creates/updates a pending_block.
+  """
+  def write_pending_block(%PendingBlock{hash: hash, body: body} = pending_block)
+      when not is_nil(hash) and not is_nil(body) do
+    pending_transactions =
+      body
+      |> ExRLP.decode()
+      |> Enum.map(&PendingTransaction.from_rlp/1)
+
+    {:ok, _tx_trie, _pending_transactions} =
+      "./leveldb/pending_blocks/#{hash}"
       |> MerklePatriciaTree.DB.LevelDB.init()
       |> Trie.new()
-      |> MPT.Repo.list(PendingTransaction)
-      |> ExRLP.encode()
+      |> MPT.Repo.write_list(PendingTransaction, pending_transactions)
 
-    %{pending_block | body: body}
+    pending_block
+    |> Map.drop([:tx_trie, :body])
+    |> write_pending_block()
   end
 
   @doc """
@@ -138,7 +167,7 @@ defmodule CredoCoreNode.Pool do
     |> Trie.store()
 
     pending_block
-    |> Map.drop([:hash, :trie])
+    |> Map.drop([:tx_trie, :body])
     |> write_pending_block()
   end
 
@@ -159,7 +188,9 @@ defmodule CredoCoreNode.Pool do
   @doc """
   Generates a pending_block.
   """
-  def generate_pending_block(pending_transactions) when pending_transactions == [], do: {:error, :no_txs}
+  def generate_pending_block(pending_transactions) when pending_transactions == [],
+    do: {:error, :no_txs}
+
   def generate_pending_block(pending_transactions) do
     last_block =
       Blockchain.list_blocks()
@@ -187,6 +218,18 @@ defmodule CredoCoreNode.Pool do
     }
 
     {:ok, %PendingBlock{pending_block | hash: RLP.Hash.hex(pending_block), tx_trie: tx_trie}}
+  end
+
+  def fetch_pending_block_body(block, ip) do
+    url = "#{Network.api_url(ip)}/pending_block_bodies/#{block.hash}"
+    headers = Network.node_request_headers(:rlp)
+
+    case :hackney.request(:get, url, headers, "", [:with_body, pool: false]) do
+      {:ok, 200, _headers, body} -> write_pending_block(%{block | body: body})
+      {:ok, 204, _headers, _body} -> {:error, :no_content}
+      {:ok, 404, _headers, _body} -> {:error, :not_found}
+      _ -> {:error, :unknown}
+    end
   end
 
   def propagate_pending_block(block) do

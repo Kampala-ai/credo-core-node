@@ -9,9 +9,18 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.PendingBlockBodyController do
       |> Pool.get_pending_block()
       |> Pool.load_pending_block_body()
 
-    conn
-    |> put_resp_content_type("application/x-rlp")
-    |> send_chunked(:ok)
-    |> send_chunks(block.body, 4096)
+    case block do
+      nil ->
+        send_resp(conn, :not_found, "")
+
+      %{body: nil} ->
+        send_resp(conn, :no_content, "")
+
+      %{body: body} ->
+        conn
+        |> put_resp_content_type("application/x-rlp")
+        |> send_chunked(:ok)
+        |> send_chunks(body, 4096)
+    end
   end
 end

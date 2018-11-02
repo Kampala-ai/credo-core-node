@@ -20,9 +20,13 @@ defmodule CredoCoreNode.Network do
   @doc """
   Returns the request headers for cross-node requests.
   """
-  def node_request_headers() do
+  def node_request_headers(), do: node_request_headers(:json)
+  def node_request_headers(:json), do: do_node_request_headers("application/json")
+  def node_request_headers(:rlp), do: do_node_request_headers("application/x-rlp")
+
+  defp do_node_request_headers(content_type) do
     [
-      {"content-type", "application/json"},
+      {"content-type", content_type},
       {"user-agent", "CredoCoreNode/1.0"}
     ]
   end
@@ -166,7 +170,7 @@ defmodule CredoCoreNode.Network do
       |> Enum.filter(& &1.is_active)
       |> Enum.map(& &1.socket_client_id)
 
-    diff = Enum.to_list(0..max_active_connections() - 1) -- used_ids
+    diff = Enum.to_list(0..(max_active_connections() - 1)) -- used_ids
     List.first(diff)
   end
 
@@ -224,9 +228,13 @@ defmodule CredoCoreNode.Network do
     #   consider executing this code asynchronously
     list_connections()
     |> Enum.filter(& &1.is_active)
-    |> Enum.filter(& !is_nil(&1.socket_client_id))
+    |> Enum.filter(&(!is_nil(&1.socket_client_id)))
     |> Enum.map(& &1.socket_client_id)
     |> Enum.map(&channel_client_module(&1))
-    |> Enum.each(& &1.push("#{Mnesia.Table.name(record)}:#{event}", %{rlp: ExRLP.encode(record, encoding: :hex)}))
+    |> Enum.each(
+      & &1.push("#{Mnesia.Table.name(record)}:#{event}", %{
+        rlp: ExRLP.encode(record, encoding: :hex)
+      })
+    )
   end
 end
