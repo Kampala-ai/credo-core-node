@@ -5,6 +5,10 @@ defmodule Mnesia.Repo do
     :mnesia.create_schema([node()])
     :mnesia.start()
 
+    # HACK: we need this to let Mnesia enough time to start properly, otherwise accessing it on app
+    #   start will crash the app
+    :timer.sleep(1000)
+
     with {:ok, list} <- :application.get_key(:credo_core_node, :modules) do
       modules =
         list
