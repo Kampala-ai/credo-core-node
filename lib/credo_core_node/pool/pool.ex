@@ -244,10 +244,10 @@ defmodule CredoCoreNode.Pool do
     !is_tx_from_balance_sufficient?(tx)
   end
 
-  def pending_block_tx_trie(%PendingBlock{tx_root: nil}), do: nil
-  def pending_block_tx_trie(%PendingBlock{hash: nil}), do: nil
+  defp pending_block_tx_trie(%PendingBlock{tx_root: nil}), do: nil
+  defp pending_block_tx_trie(%PendingBlock{hash: nil}), do: nil
 
-  def pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}) do
+  defp pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}) do
     db = MerklePatriciaTree.DB.LevelDB.init("./leveldb/pending_blocks/#{hash}")
     if db |> elem(1) |> Exleveldb.is_empty?() do
       nil
