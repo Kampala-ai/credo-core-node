@@ -46,7 +46,8 @@ defmodule CredoCoreNode.Mixfile do
       {:timex, "~> 3.0"},
       {:merkle_patricia_tree, github: "turinginc/elixir-merkle-patricia-tree"},
       {:decimal, "~> 1.0"},
-      {:phoenix_channel_client, "~> 0.3.2"}
+      {:phoenix_channel_client, "~> 0.3.2"},
+      {:distillery, "~> 2.0"}
     ]
   end
 end
