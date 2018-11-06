@@ -20,6 +20,8 @@ defmodule MPT.Repo do
   Gets a single record.
   """
   def get(trie, schema, key) do
+    {:ok, key} = Base.decode16(key)
+
     case Trie.get(trie, key) do
       nil -> nil
       rlp -> schema.from_rlp(rlp)
@@ -36,7 +38,12 @@ defmodule MPT.Repo do
   """
   def write(trie, schema, attrs) do
     record = struct(schema, attrs)
-    trie = Trie.update(trie, Record.key(record), ExRLP.encode(record))
+    {:ok, key} =
+      record
+      |> Record.key()
+      |> Base.decode16()
+
+    trie = Trie.update(trie, key, ExRLP.encode(record))
     {:ok, trie, record}
   end
 
@@ -52,7 +59,12 @@ defmodule MPT.Repo do
   Deletes a record.
   """
   def delete(trie, record) do
-    trie = Trie.delete(trie, Record.key(record))
+    {:ok, key} =
+      record
+      |> Record.key()
+      |> Base.decode16()
+
+    trie = Trie.delete(trie, key)
     {:ok, trie, record}
   end
 
