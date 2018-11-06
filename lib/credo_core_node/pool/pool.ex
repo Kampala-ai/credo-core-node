@@ -16,8 +16,11 @@ defmodule CredoCoreNode.Pool do
     Mnesia.Repo.list(PendingTransaction)
   end
 
-  def list_pending_transactions(block) do
-    MPT.Repo.list(block.tx_trie, PendingTransaction)
+  def list_pending_transactions(%PendingBlock{} = pending_block) do
+    case pending_block_tx_trie(pending_block) do
+      nil -> []
+      tx_trie -> MPT.Repo.list(tx_trie, PendingTransaction)
+    end
   end
 
   @doc """
@@ -118,21 +121,17 @@ defmodule CredoCoreNode.Pool do
   end
 
   def load_pending_block_body(nil), do: nil
-  def load_pending_block_body(%PendingBlock{hash: nil} = pending_block), do: pending_block
 
   def load_pending_block_body(%PendingBlock{} = pending_block) do
-    db = MerklePatriciaTree.DB.LevelDB.init("./leveldb/pending_blocks/#{pending_block.hash}")
+    case pending_block_tx_trie(pending_block) do
+      nil -> pending_block
+      tx_trie ->
+        body =
+          tx_trie
+          |> MPT.Repo.list(PendingTransaction)
+          |> ExRLP.encode()
 
-    if db |> elem(1) |> Exleveldb.is_empty?() do
-      pending_block
-    else
-      body =
-        db
-        |> Trie.new(elem(Base.decode16(pending_block.tx_root), 1))
-        |> MPT.Repo.list(PendingTransaction)
-        |> ExRLP.encode()
-
-      %{pending_block | body: body}
+        %{pending_block | body: body}
     end
   end
 
@@ -258,4 +257,18 @@ defmodule CredoCoreNode.Pool do
   def is_tx_invalid?(tx) do
     !is_tx_from_balance_sufficient?(tx)
   end
+
+  defp pending_block_tx_trie(%PendingBlock{tx_trie: nil, tx_root: nil}), do: nil
+  defp pending_block_tx_trie(%PendingBlock{tx_trie: nil, hash: nil}), do: nil
+
+  defp pending_block_tx_trie(%PendingBlock{tx_trie: nil, tx_root: tx_root, hash: hash}) do
+    db = MerklePatriciaTree.DB.LevelDB.init("./leveldb/pending_blocks/#{hash}")
+    if db |> elem(1) |> Exleveldb.is_empty?() do
+      nil
+    else
+      Trie.new(db, elem(Base.decode16(tx_root), 1))
+    end
+  end
+
+  defp pending_block_tx_trie(%PendingBlock{tx_trie: tx_trie}), do: tx_trie
 end
