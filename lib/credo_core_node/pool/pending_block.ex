@@ -5,7 +5,7 @@ defmodule CredoCoreNode.Pool.PendingBlock do
   use Mnesia.Schema,
     table_name: :pending_blocks,
     fields: [:hash, :prev_hash, :number, :state_root, :receipt_root, :tx_root],
-    virtual_fields: [:body, :tx_trie]
+    virtual_fields: [:body]
 
   use RLP.Serializer
 

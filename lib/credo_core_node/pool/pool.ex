@@ -162,25 +162,6 @@ defmodule CredoCoreNode.Pool do
   @doc """
   Creates/updates a pending_block.
   """
-  def write_pending_block(%PendingBlock{hash: hash, tx_trie: tx_trie} = pending_block)
-      when not is_nil(hash) and not is_nil(tx_trie) do
-
-    tx_trie =
-      tx_trie
-      |> Map.put(:db, MerklePatriciaTree.DB.LevelDB.init("./leveldb/pending_blocks/#{hash}"))
-      |> Trie.store()
-
-    tx_root = Base.encode16(tx_trie.root_hash)
-
-    pending_block
-    |> Map.drop([:tx_trie, :body])
-    |> Map.put(:tx_root, tx_root)
-    |> write_pending_block()
-  end
-
-  @doc """
-  Creates/updates a pending_block.
-  """
   def write_pending_block(attrs) do
     Mnesia.Repo.write(PendingBlock, attrs)
   end
@@ -207,7 +188,7 @@ defmodule CredoCoreNode.Pool do
     {number, prev_hash} =
       if last_block, do: {last_block.number + 1, last_block.hash}, else: {0, ""}
 
-    # Temporary in-memory storage
+    # Temporary in-memory storage, need this only to properly calculate tx_root and hash
     {:ok, tx_trie, _pending_transactions} =
       MerklePatriciaTree.DB.ETS.random_ets_db()
       |> Trie.new()
@@ -221,10 +202,10 @@ defmodule CredoCoreNode.Pool do
       state_root: "",
       receipt_root: "",
       tx_root: tx_root,
-      body: nil
+      body: ExRLP.encode(pending_transactions)
     }
 
-    {:ok, %PendingBlock{pending_block | hash: RLP.Hash.hex(pending_block), tx_trie: tx_trie}}
+    {:ok, %PendingBlock{pending_block | hash: RLP.Hash.hex(pending_block)}}
   end
 
   def fetch_pending_block_body(block, ip) do
@@ -263,10 +244,10 @@ defmodule CredoCoreNode.Pool do
     !is_tx_from_balance_sufficient?(tx)
   end
 
-  defp pending_block_tx_trie(%PendingBlock{tx_trie: nil, tx_root: nil}), do: nil
-  defp pending_block_tx_trie(%PendingBlock{tx_trie: nil, hash: nil}), do: nil
+  def pending_block_tx_trie(%PendingBlock{tx_root: nil}), do: nil
+  def pending_block_tx_trie(%PendingBlock{hash: nil}), do: nil
 
-  defp pending_block_tx_trie(%PendingBlock{tx_trie: nil, tx_root: tx_root, hash: hash}) do
+  def pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}) do
     db = MerklePatriciaTree.DB.LevelDB.init("./leveldb/pending_blocks/#{hash}")
     if db |> elem(1) |> Exleveldb.is_empty?() do
       nil
@@ -274,6 +255,4 @@ defmodule CredoCoreNode.Pool do
       Trie.new(db, elem(Base.decode16(tx_root), 1))
     end
   end
-
-  defp pending_block_tx_trie(%PendingBlock{tx_trie: tx_trie}), do: tx_trie
 end
