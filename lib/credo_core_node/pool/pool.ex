@@ -128,7 +128,7 @@ defmodule CredoCoreNode.Pool do
     else
       body =
         db
-        |> Trie.new()
+        |> Trie.new(elem(Base.decode16(pending_block.tx_root), 1))
         |> MPT.Repo.list(PendingTransaction)
         |> ExRLP.encode()
 
@@ -144,7 +144,7 @@ defmodule CredoCoreNode.Pool do
     pending_transactions =
       body
       |> ExRLP.decode()
-      |> Enum.map(&PendingTransaction.from_rlp/1)
+      |> Enum.map(&PendingTransaction.from_list(&1, type: :rlp_default))
 
     {:ok, _tx_trie, _pending_transactions} =
       "./leveldb/pending_blocks/#{hash}"
