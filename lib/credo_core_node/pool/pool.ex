@@ -164,12 +164,17 @@ defmodule CredoCoreNode.Pool do
   """
   def write_pending_block(%PendingBlock{hash: hash, tx_trie: tx_trie} = pending_block)
       when not is_nil(hash) and not is_nil(tx_trie) do
-    tx_trie
-    |> Map.put(:db, MerklePatriciaTree.DB.LevelDB.init("./leveldb/pending_blocks/#{hash}"))
-    |> Trie.store()
+
+    tx_trie =
+      tx_trie
+      |> Map.put(:db, MerklePatriciaTree.DB.LevelDB.init("./leveldb/pending_blocks/#{hash}"))
+      |> Trie.store()
+
+    tx_root = Base.encode16(tx_trie.root_hash)
 
     pending_block
     |> Map.drop([:tx_trie, :body])
+    |> Map.put(:tx_root, tx_root)
     |> write_pending_block()
   end
 
