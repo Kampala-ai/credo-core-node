@@ -70,11 +70,16 @@ defmodule CredoCoreNode.Mining.VoteManager do
     winner_block =
       count_votes(block, voting_round)
       |> get_winner()
+      |> Pool.load_pending_block_body()
 
     update_participation_rates(block, voting_round)
 
     if winner_block do
-      {:ok, confirmed_block} = Blockchain.write_block(Map.to_list(winner_block))
+      {:ok, confirmed_block} =
+        CredoCoreNode.Blockchain.Block
+        |> struct(Map.to_list(winner_block))
+        |> Blockchain.write_block()
+
       Blockchain.propagate_block(confirmed_block)
 
       {:ok, confirmed_block}

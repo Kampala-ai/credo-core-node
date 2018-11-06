@@ -6,7 +6,7 @@ defmodule CredoCoreNode.Blockchain do
   alias CredoCoreNode.Blockchain.{Block, Transaction}
   alias CredoCoreNode.Pool
   alias CredoCoreNode.Network
-  alias Mnesia.Repo
+  alias MerklePatriciaTree.Trie
 
   @finalization_threshold 12
 
@@ -32,35 +32,45 @@ defmodule CredoCoreNode.Blockchain do
   Returns the list of transactions.
   """
   def list_transactions() do
-    Repo.list(Transaction)
+    Mnesia.Repo.list(Transaction)
+  end
+
+  @doc """
+  Returns the list of transactions.
+  """
+  def list_transactions(%Block{} = block) do
+    case block_tx_trie(block) do
+      nil -> []
+      tx_trie -> MPT.Repo.list(tx_trie, Transaction)
+    end
   end
 
   @doc """
   Gets a single transaction.
   """
   def get_transaction(hash) do
-    Repo.get(Transaction, hash)
+    Mnesia.Repo.get(Transaction, hash)
   end
 
   @doc """
   Creates/updates a transaction.
   """
   def write_transaction(attrs) do
-    Repo.write(Transaction, attrs)
+    Mnesia.Repo.write(Transaction, attrs)
   end
 
   @doc """
   Deletes a transaction.
   """
   def delete_transaction(%Transaction{} = transaction) do
-    Repo.delete(transaction)
+    Mnesia.Repo.delete(transaction)
   end
 
   @doc """
   Returns the list of blocks.
   """
   def list_blocks() do
-    Repo.list(Block)
+    Mnesia.Repo.list(Block)
   end
 
   @doc """
@@ -83,7 +93,7 @@ defmodule CredoCoreNode.Blockchain do
   Gets a single block.
   """
   def get_block(hash) do
-    Repo.get(Block, hash)
+    Mnesia.Repo.get(Block, hash)
   end
 
   def get_block_by_number(number) do
@@ -92,11 +102,50 @@ defmodule CredoCoreNode.Blockchain do
     |> List.first()
   end
 
+  def load_block_body(nil), do: nil
+
+  def load_block_body(%Block{} = block) do
+    case block_tx_trie(block) do
+      nil -> block
+      tx_trie ->
+        body =
+          tx_trie
+          |> MPT.Repo.list(Transaction)
+          |> ExRLP.encode()
+
+        %{block | body: body}
+    end
+  end
+
+  @doc """
+  Creates/updates a block.
+  """
+  def write_block(%Block{hash: hash, body: body} = block)
+      when not is_nil(hash) and not is_nil(body) do
+    transactions =
+      body
+      |> ExRLP.decode()
+      |> Enum.map(&Transaction.from_list(&1, type: :rlp_default))
+
+    {:ok, tx_trie, _transactions} =
+      "./leveldb/blocks/#{hash}"
+      |> MerklePatriciaTree.DB.LevelDB.init()
+      |> Trie.new()
+      |> MPT.Repo.write_list(Transaction, transactions)
+
+    tx_root = Base.encode16(tx_trie.root_hash)
+
+    block
+    |> Map.drop([:body])
+    |> Map.put(:tx_root, tx_root)
+    |> write_block()
+  end
+
   @doc """
   Creates/updates a block.
   """
   def write_block(attrs) do
-    Repo.write(Block, attrs)
+    Mnesia.Repo.write(Block, attrs)
   end
 
   @doc """
@@ -110,12 +159,24 @@ defmodule CredoCoreNode.Blockchain do
   Deletes a block.
   """
   def delete_block(%Block{} = block) do
-    Repo.delete(block)
+    Mnesia.Repo.delete(block)
   end
 
   def propagate_block(block) do
     Network.propagate_record(block)
 
     {:ok, block}
+  end
+
+  defp block_tx_trie(%Block{tx_root: nil}), do: nil
+  defp block_tx_trie(%Block{hash: nil}), do: nil
+
+  defp block_tx_trie(%Block{tx_root: tx_root, hash: hash}) do
+    db = MerklePatriciaTree.DB.LevelDB.init("./leveldb/blocks/#{hash}")
+    if db |> elem(1) |> Exleveldb.is_empty?() do
+      nil
+    else
+      Trie.new(db, elem(Base.decode16(tx_root), 1))
+    end
   end
 end
