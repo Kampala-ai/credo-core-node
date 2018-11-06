@@ -146,14 +146,17 @@ defmodule CredoCoreNode.Pool do
       |> ExRLP.decode()
       |> Enum.map(&PendingTransaction.from_list(&1, type: :rlp_default))
 
-    {:ok, _tx_trie, _pending_transactions} =
+    {:ok, tx_trie, _pending_transactions} =
       "./leveldb/pending_blocks/#{hash}"
       |> MerklePatriciaTree.DB.LevelDB.init()
       |> Trie.new()
       |> MPT.Repo.write_list(PendingTransaction, pending_transactions)
 
+    tx_root = Base.encode16(tx_trie.root_hash)
+
     pending_block
     |> Map.drop([:tx_trie, :body])
+    |> Map.put(:tx_root, tx_root)
     |> write_pending_block()
   end
 
