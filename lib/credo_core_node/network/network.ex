@@ -93,6 +93,12 @@ defmodule CredoCoreNode.Network do
   @doc """
   Deletes a known_node.
   """
+  def delete_known_node(nil), do: nil
+  def delete_known_node(ip) do
+    ip
+    |> get_known_node()
+    |> delete_known_node()
+  end
   def delete_known_node(%KnownNode{} = known_node) do
     Repo.delete(known_node)
   end
@@ -149,6 +155,12 @@ defmodule CredoCoreNode.Network do
   @doc """
   Deletes a connection.
   """
+  def delete_connection(nil), do: nil
+  def delete_connection(ip) do
+    ip
+    |> get_connection()
+    |> delete_connection()
+  end
   def delete_connection(%Connection{} = connection) do
     Repo.delete(connection)
   end
