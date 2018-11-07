@@ -2,6 +2,7 @@ defmodule Mnesia.Repo do
   defp table_suffix(), do: Application.get_env(:credo_core_node, Mnesia)[:table_suffix]
 
   def setup() do
+    :mnesia.stop()
     :mnesia.create_schema([node()])
     :mnesia.start()
 
