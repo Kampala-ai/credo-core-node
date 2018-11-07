@@ -168,6 +168,10 @@ defmodule CredoCoreNode.Blockchain do
     {:ok, block}
   end
 
+  def block_body_fetched?(%Block{} = block) do
+    !!block_tx_trie(block)
+  end
+
   defp block_tx_trie(%Block{tx_root: nil}), do: nil
   defp block_tx_trie(%Block{hash: nil}), do: nil
 

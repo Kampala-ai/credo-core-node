@@ -244,6 +244,10 @@ defmodule CredoCoreNode.Pool do
     !is_tx_from_balance_sufficient?(tx)
   end
 
+  def pending_block_body_fetched?(%PendingBlock{} = pending_block) do
+    !!pending_block_tx_trie(pending_block)
+  end
+
   defp pending_block_tx_trie(%PendingBlock{tx_root: nil}), do: nil
   defp pending_block_tx_trie(%PendingBlock{hash: nil}), do: nil
 
