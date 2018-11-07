@@ -21,24 +21,4 @@ pre_erlang_clean_compile() {
     cd deps/libsecp256k1
     rebar compile eunit
   "
-
-  status "Running phoenix.digest"
-  __sync_remote " # runs the commands on the build host
-    [ -f ~/.profile ] && source ~/.profile # load profile (optional)
-    set -e # fail if any command fails (recommended)
-    cd '$BUILD_AT' # enter the build directory on the build host (required)
-
-    # Fix libsecp256k1 compilation
-    cd deps/libsecp256k1
-    rebar compile eunit
-    cd ../..
-
-    # Compile static assets
-    cd assets
-    yarn install
-    brunch build --production
-    cd ..
-    mkdir -p priv/static # required by the phoenix.digest task
-    APP='$APP' MIX_ENV='$TARGET_MIX_ENV' $MIX_CMD phoenix.digest $SILENCE
-  "
 }
