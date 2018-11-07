@@ -6,6 +6,8 @@ defmodule CredoCoreNode.Application do
   def start(_type, _args) do
     import Supervisor.Spec
 
+    setup_leveldb()
+
     Mnesia.Repo.setup()
 
     # Define workers and child supervisors to be supervised
@@ -33,5 +35,11 @@ defmodule CredoCoreNode.Application do
   def config_change(changed, _new, removed) do
     CredoCoreNodeWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  defp setup_leveldb do
+    Enum.each ["/leveldb", "/leveldb/blocks", "/leveldb/pending_blocks"], fn path ->
+      File.mkdir("#{File.cwd!}#{path}")
+    end
   end
 end

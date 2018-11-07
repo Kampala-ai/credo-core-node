@@ -147,7 +147,7 @@ defmodule CredoCoreNode.Blockchain do
       |> Enum.map(&Transaction.from_list(&1, type: :rlp_default))
 
     {:ok, tx_trie, _transactions} =
-      "./leveldb/blocks/#{hash}"
+      "#{File.cwd!}/leveldb/blocks/#{hash}"
       |> MerklePatriciaTree.DB.LevelDB.init()
       |> Trie.new()
       |> MPT.Repo.write_list(Transaction, transactions)
@@ -207,7 +207,7 @@ defmodule CredoCoreNode.Blockchain do
   defp block_tx_trie(%Block{hash: nil}), do: nil
 
   defp block_tx_trie(%Block{tx_root: tx_root, hash: hash}) do
-    db = MerklePatriciaTree.DB.LevelDB.init("./leveldb/blocks/#{hash}")
+    db = MerklePatriciaTree.DB.LevelDB.init("#{File.cwd!}/leveldb/blocks/#{hash}")
     if db |> elem(1) |> Exleveldb.is_empty?() do
       nil
     else
