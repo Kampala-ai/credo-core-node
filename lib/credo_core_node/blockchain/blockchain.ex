@@ -83,10 +83,29 @@ defmodule CredoCoreNode.Blockchain do
   end
 
   def load_genesis_block() do
-    {:ok, block} = # TODO: load actual genesis block.
-      write_block(%{number: 0, hash: "0xe454d0d47a6e45ccd055dcc31e319d71da1063e5d2073aadb44e9d6e602b1916"})
+    if block = get_block_by_number(0) do
+      block
+    else
+      genesis_block_attrs =
+        [struct(CredoCoreNode.Pool.PendingTransaction, [
+          data: "",
+          fee: 1.1,
+          hash: "BECECBB9F25FBB46092BB8946473B11779B82B5F3DAFDC9D1AD91639C23D9CE4",
+          nonce: 0,
+          r: "0C74EAD2F40CEA4DEF589E2C2BDBFBD00256F89201AB88688D643FB1F665BB46",
+          s: "605B7B9DAFAE1D20C84BF77A7A7364BA4F3ECDBFBD07CE9D0C0BEFD92CDAD2C3",
+          to: "0xa7a5df6d79203f6e6f0fa9cd550366fc9067a350",
+          v: 0,
+          value: 1374729257.2286
+        ])]
+        |> CredoCoreNode.Pool.generate_pending_block()
+        |> elem(1)
+        |> Map.to_list()
 
-    block
+      struct(CredoCoreNode.Blockchain.Block, genesis_block_attrs)
+      |> CredoCoreNode.Blockchain.write_block()
+      |> elem(1)
+    end
   end
 
   @doc """
