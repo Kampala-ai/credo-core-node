@@ -17,8 +17,8 @@ config :credo_core_node, CredoCoreNodeWeb.Endpoint,
 config :credo_core_node, Mnesia, table_suffix: System.get_env("MNESIA_TABLE_SUFFIX") || Mix.env()
 
 config :credo_core_node, CredoCoreNode.Network,
-  seed_node_ips: String.split(System.get_env("SEED_NODE_IPS") || "localhost", ","),
-  node_connection_port: System.get_env("NODE_CONNECTION_PORT") || 4001
+  seed_node_ips: String.split(System.get_env("SEED_NODE_IPS") || "13.57.49.254",  ","),
+  node_connection_port: System.get_env("NODE_CONNECTION_PORT") || 4000
 
 # Configures Elixir's Logger
 config :logger, :console,
