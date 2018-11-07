@@ -162,6 +162,18 @@ defmodule CredoCoreNode.Blockchain do
     Mnesia.Repo.delete(block)
   end
 
+  def fetch_block_body(block, ip) do
+    url = "#{Network.api_url(ip)}/block_bodies/#{block.hash}"
+    headers = Network.node_request_headers(:rlp)
+
+    case :hackney.request(:get, url, headers, "", [:with_body, pool: false]) do
+      {:ok, 200, _headers, body} -> write_block(%{block | body: body})
+      {:ok, 204, _headers, _body} -> {:error, :no_content}
+      {:ok, 404, _headers, _body} -> {:error, :not_found}
+      _ -> {:error, :unknown}
+    end
+  end
+
   def propagate_block(block) do
     Network.propagate_record(block)
 
