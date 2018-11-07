@@ -28,7 +28,7 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
           miner.address
         end
       end
-      |> Enum.concat # TODO: implement a more memory-efficient weighting mechanism.
+      |> Enum.concat() # TODO: implement a more memory-efficient weighting mechanism.
 
     miner_addresses
     |> Enum.at(Enum.random(1..length(miner_addresses)))

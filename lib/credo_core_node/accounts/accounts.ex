@@ -3,11 +3,14 @@ defmodule CredoCoreNode.Accounts do
   The Accounts context.
   """
 
+  alias CredoCoreNode.{Blockchain, Pool}
   alias CredoCoreNode.Accounts.Account
   alias CredoCoreNode.Pool.PendingTransaction
   alias CredoCoreNode.Mining.Vote
 
   alias Mnesia.Repo
+
+  alias Decimal, as: D
 
   @doc """
   Calculates a public key for a given pending_transaction.
@@ -101,6 +104,26 @@ defmodule CredoCoreNode.Accounts do
   end
 
   def get_account_balance(address) do
-    Decimal.new(100) # Stub
+    for block <- Blockchain.list_blocks() do # TODO: replace with more efficient implementation.
+      for tx <- Blockchain.list_transactions(block) do
+        from = Pool.get_transaction_from_address(tx)
+        to = tx.to
+
+        unless to == address && from == address do
+          cond do
+            address == to ->
+              tx.value
+
+            address == from ->
+              D.minus(tx.value)
+
+            true ->
+              D.new(0)
+          end
+        end
+      end
+    end
+    |> Enum.concat()
+    |> Enum.reduce(fn x, acc -> D.add(x, acc) end)
   end
 end
