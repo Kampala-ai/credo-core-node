@@ -25,5 +25,6 @@ defmodule CredoCoreNodeWeb.Router do
     pipe_through(:api)
 
     resources("/accounts", AccountController, only: [:create, :show])
+    resources("/pending_transactions", PendingTransactionController, only: [:create])
   end
 end

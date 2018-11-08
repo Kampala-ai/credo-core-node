@@ -58,7 +58,14 @@ defmodule CredoCoreNode.Pool do
   def generate_pending_transaction(private_key, attrs) do
     tx = struct(PendingTransaction, attrs)
 
-    tx = sign_message(private_key, tx)
+    to =
+      case tx.to do
+        "0x" <> to -> String.downcase(to)
+        to -> String.downcase(to)
+      end
+
+    data = tx.data || ""
+    tx = sign_message(private_key, %{tx | to: to, data: data})
 
     {:ok, %{tx | hash: RLP.Hash.hex(tx)}}
   end
