@@ -20,4 +20,10 @@ defmodule CredoCoreNodeWeb.Router do
       resources("/votes", VoteController, only: [:create])
     end
   end
+
+  scope "/client_api/v1", as: :client_api_v1, alias: CredoCoreNodeWeb.ClientApi.V1 do
+    pipe_through(:api)
+
+    resources("/accounts", AccountController, only: [:create, :show])
+  end
 end
