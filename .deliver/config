@@ -1,0 +1,24 @@
+# .deliver/config
+
+APP="credo_core_node"
+
+BUILD_HOST="13.57.49.254"
+BUILD_USER="ubuntu"
+BUILD_AT="/tmp/edeliver/credo_core_node"
+
+STAGING_HOSTS="13.57.49.254"
+STAGING_USER="ubuntu"
+TEST_AT="/var/www/credo_core_node/"
+
+pre_erlang_clean_compile() {
+  status "Compiling libsecp256k1"
+  __sync_remote "
+    [ -f ~/.profile ] && source ~/.profile # load profile (optional)
+    set -e # fail if any command fails (recommended)
+    cd '$BUILD_AT' # enter the build directory on the build host (required)
+
+    # Fix for libsecp256k1 compilation
+    cd deps/libsecp256k1
+    rebar compile eunit
+  "
+}

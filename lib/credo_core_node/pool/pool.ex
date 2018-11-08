@@ -146,7 +146,7 @@ defmodule CredoCoreNode.Pool do
       |> Enum.map(&PendingTransaction.from_list(&1, type: :rlp_default))
 
     {:ok, tx_trie, _pending_transactions} =
-      "./leveldb/pending_blocks/#{hash}"
+      "#{File.cwd!}/leveldb/pending_blocks/#{hash}"
       |> MerklePatriciaTree.DB.LevelDB.init()
       |> Trie.new()
       |> MPT.Repo.write_list(PendingTransaction, pending_transactions)
@@ -266,7 +266,7 @@ defmodule CredoCoreNode.Pool do
   defp pending_block_tx_trie(%PendingBlock{hash: nil}), do: nil
 
   defp pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}) do
-    db = MerklePatriciaTree.DB.LevelDB.init("./leveldb/pending_blocks/#{hash}")
+    db = MerklePatriciaTree.DB.LevelDB.init("#{File.cwd!}/leveldb/pending_blocks/#{hash}")
     if db |> elem(1) |> Exleveldb.is_empty?() do
       nil
     else

@@ -13,10 +13,6 @@ config :credo_core_node, CredoCoreNodeWeb.Endpoint,
   check_origin: false,
   watchers: []
 
-config :credo_core_node, CredoCoreNode.Network,
-  seed_node_ips: String.split(System.get_env("SEED_NODE_IPS") || "localhost", ","),
-  node_connection_port: System.get_env("NODE_CONNECTION_PORT") || 4001
-
 # ## SSL Support
 #
 # In order to use HTTPS in development, a self-signed

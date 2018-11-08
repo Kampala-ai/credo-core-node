@@ -4,7 +4,7 @@ defmodule CredoCoreNode.Mixfile do
   def project do
     [
       app: :credo_core_node,
-      version: "0.0.1",
+      version: "0.1.1",
       elixir: "~> 1.4",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix, :gettext] ++ Mix.compilers(),
@@ -19,7 +19,7 @@ defmodule CredoCoreNode.Mixfile do
   def application do
     [
       mod: {CredoCoreNode.Application, []},
-      extra_applications: [:logger, :runtime_tools, :mnesia]
+      extra_applications: [:logger, :runtime_tools, :edeliver, :mnesia]
     ]
   end
 
@@ -47,6 +47,7 @@ defmodule CredoCoreNode.Mixfile do
       {:merkle_patricia_tree, github: "aeternity/elixir-merkle-patricia-tree"},
       {:decimal, "~> 1.0"},
       {:phoenix_channel_client, "~> 0.3.2"},
+      {:edeliver, ">= 1.6.0"},
       {:distillery, "~> 2.0"}
     ]
   end

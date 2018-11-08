@@ -7,6 +7,7 @@
   "crontab": {:hex, :crontab, "1.1.4", "eae8de759d60dec2352ca577890f4cac26bcb907088ffef958f42ebb9c4f4cff", [], [{:ecto, "~> 1.0 or ~> 2.0 or ~> 2.1", [hex: :ecto, repo: "hexpm", optional: true]}], "hexpm"},
   "decimal": {:hex, :decimal, "1.5.0", "b0433a36d0e2430e3d50291b1c65f53c37d56f83665b43d79963684865beab68", [:mix], [], "hexpm"},
   "distillery": {:hex, :distillery, "2.0.11", "9259399cb64c88e2df6bbaef29e09b0a81d16d0155203ebf65c6be7b95f7b744", [], [{:artificery, "~> 0.2", [hex: :artificery, repo: "hexpm", optional: false]}], "hexpm"},
+  "edeliver": {:hex, :edeliver, "1.6.0", "8bfdde1b7ff57deb12fa604c4087b4e15a7aa72d7b3d3d310602ca92c038f3ff", [], [{:distillery, "~> 2.0", [hex: :distillery, repo: "hexpm", optional: true]}], "hexpm"},
   "eleveldb": {:hex, :eleveldb, "2.2.20", "1fff63a5055bbf4bf821f797ef76065882b193f5e8095f95fcd9287187773b58", [:rebar3], [], "hexpm"},
   "enacl": {:git, "https://github.com/aeternity/enacl.git", "2f50ba6289f2f2d9fef05d22a396c0bab4f64149", [ref: "2f50ba6"]},
   "ex_rlp": {:hex, :ex_rlp, "0.3.0", "76eb293a743b17d6071693014c1a57eb0f3f71fbf560716046d62c8a14340628", [:mix], [], "hexpm"},
