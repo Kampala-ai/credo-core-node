@@ -6,7 +6,10 @@ BUILD_HOST="13.57.49.254"
 BUILD_USER="ubuntu"
 BUILD_AT="/tmp/edeliver/credo_core_node"
 
-STAGING_HOSTS="13.57.49.254"
+STAGING_HOSTS="13.57.49.254" # Seed node A
+# STAGING_HOSTS="54.183.115.239" # Seed node B
+# STAGING_HOSTS="13.56.165.188" # Seed node C
+
 STAGING_USER="ubuntu"
 TEST_AT="/var/www/credo_core_node/"
 
