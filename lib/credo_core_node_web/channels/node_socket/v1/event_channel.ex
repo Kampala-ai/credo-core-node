@@ -27,7 +27,10 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
 
     unless Pool.get_pending_block(hash) do
       Pool.write_pending_block(blk)
-      Pool.propagate_pending_block(blk)
+      case Pool.fetch_pending_block_body(blk) do
+        {:ok, _} -> Pool.propagate_pending_block(blk)
+        _ -> nil
+      end
     end
 
     {:noreply, socket}
