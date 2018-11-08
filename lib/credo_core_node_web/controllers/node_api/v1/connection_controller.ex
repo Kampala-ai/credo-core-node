@@ -4,6 +4,7 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.ConnectionController do
   require Logger
 
   alias CredoCoreNode.Network
+  alias CredoCoreNodeWeb.Endpoint
 
   def create(conn, _params) do
     remote_ip =
@@ -24,6 +25,9 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.ConnectionController do
 
       Network.fully_connected?() ->
         send_resp(conn, :conflict, "")
+
+      get_req_header(conn, "x-ccn-session-id") == Endpoint.config(:session_id) ->
+        send_resp(conn, :forbidden, "")
 
       true ->
         Network.connect_to(remote_ip)

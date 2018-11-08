@@ -52,6 +52,8 @@ defmodule CredoCoreNodeWeb.Endpoint do
   def init(_key, config) do
     CredoCoreNode.Mining.Ip.maybe_update_miner_ip()
 
+    config = Keyword.put(config, :session_id, 64 |> :crypto.strong_rand_bytes() |> Base.encode16())
+
     if config[:load_from_system_env] do
       port = System.get_env("PORT") || raise "expected the PORT environment variable to be set"
       {:ok, Keyword.put(config, :http, [:inet6, port: port])}

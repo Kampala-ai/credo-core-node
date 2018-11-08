@@ -6,6 +6,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
   import Process, only: [send_after: 3]
 
   alias CredoCoreNode.Network
+  alias CredoCoreNodeWeb.Endpoint
 
   def start_link(interval \\ 60_000) do
     GenServer.start_link(__MODULE__, interval, name: __MODULE__)
@@ -41,7 +42,8 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
 
       port = Application.get_env(:credo_core_node, CredoCoreNode.Network)[:node_connection_port]
       url = "#{Network.api_url(known_node.ip)}/connections"
-      headers = Network.node_request_headers()
+      headers =
+        Network.node_request_headers() ++ [{"x-ccn-session-id", Endpoint.config(:session_id)}]
 
       Logger.info(
         "Connection attempt ##{num_attempts + 1}. Trying to connect to #{known_node.ip}:#{port}"
@@ -57,6 +59,11 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
           Logger.info("Responded with `found` (already connected)")
           Network.write_connection(ip: known_node.ip, is_active: true, failed_attempts_count: 0)
           Network.retrieve_known_nodes(known_node.ip)
+
+        {:ok, 403, _headers, _body} ->
+          Logger.info("Responded with `forbidden` (trying to connect to self)")
+          Network.delete_known_node(known_node.ip)
+          Network.delete_connection(known_node.ip)
 
         {:ok, 409, _headers, _body} ->
           Logger.info("Responded with `conflict` (remote node doesn't accept new connections)")
