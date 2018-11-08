@@ -6,6 +6,7 @@ defmodule CredoCoreNode.Accounts do
   alias CredoCoreNode.{Blockchain, Pool}
   alias CredoCoreNode.Accounts.Account
   alias CredoCoreNode.Pool.PendingTransaction
+  alias CredoCoreNode.Blockchain.Transaction
   alias CredoCoreNode.Mining.Vote
 
   alias Mnesia.Repo
@@ -16,6 +17,7 @@ defmodule CredoCoreNode.Accounts do
   Calculates a public key for a given pending_transaction.
   """
   def calculate_public_key(%PendingTransaction{} = tx), do: calculate_public_key_from_signature(tx)
+  def calculate_public_key(%Transaction{} = tx), do: calculate_public_key_from_signature(tx)
   def calculate_public_key(%Vote{} = vote), do: calculate_public_key_from_signature(vote)
 
   def calculate_public_key_from_signature(tx) do
