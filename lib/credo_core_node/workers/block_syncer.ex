@@ -79,7 +79,7 @@ defmodule CredoCoreNode.Workers.BlockSyncer do
           end
         end)
 
-        if length(blocks) < limit, do: sync_headers(ip, offset + limit)
+        if length(blocks) == limit, do: sync_headers(ip, offset + limit)
       _ ->
         Logger.info("No response or incorrect response")
     end
