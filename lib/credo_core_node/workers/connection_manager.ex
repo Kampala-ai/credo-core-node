@@ -81,7 +81,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
               )
 
             connection ->
-              failed_attempts_count = connection.failed_attempts_count + 1
+              failed_attempts_count = (connection.failed_attempts_count || 0) + 1
 
               Network.write_connection(
                 ip: known_node.ip,
