@@ -181,6 +181,20 @@ defmodule CredoCoreNode.Blockchain do
     Mnesia.Repo.delete(block)
   end
 
+  def fetch_block_body(block) do
+    Network.list_connections()
+    |> Enum.filter(& &1.is_active)
+    |> Enum.each(fn connection ->
+      unless block_body_fetched?(block), do: fetch_block_body(block, connection.ip)
+    end)
+
+    if block_body_fetched?(block) do
+      {:ok, block}
+    else
+      {:error, :unknown}
+    end
+  end
+
   def fetch_block_body(block, ip) do
     url = "#{Network.api_url(ip)}/block_bodies/#{block.hash}"
     headers = Network.node_request_headers(:rlp)
