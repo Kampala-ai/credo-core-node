@@ -3,6 +3,8 @@ defmodule CredoCoreNode.Network do
   The Network context.
   """
 
+  require Logger
+
   alias CredoCoreNode.Network.{Connection, KnownNode}
   alias Mnesia.Repo
 
@@ -239,18 +241,23 @@ defmodule CredoCoreNode.Network do
     event = options[:event] || :create
     _recipients = options[:recipients] || :all
 
+    Logger.info("Propagating: #{inspect(record)}")
+
     # TODO: pushing notifications synchronously may cause delays,
     #   consider executing this code asynchronously
     list_connections()
-    |> Enum.filter(& &1.is_active)
-    |> Enum.filter(&(!is_nil(&1.socket_client_id)))
-    |> Enum.map(& &1.socket_client_id)
-    |> Enum.map(&channel_client_module(&1))
-    |> Enum.each(fn module ->
+    |> Enum.filter(&(&1.is_active && !is_nil(&1.socket_client_id)))
+    |> Enum.each(fn connection ->
+      module = channel_client_module(connection.socket_client_id)
+
       if GenServer.whereis(module) do
+        Logger.info("sending to #{connection.ip}")
         module.push("#{Mnesia.Table.name(record)}:#{event}", %{
           rlp: ExRLP.encode(record, encoding: :hex)
         })
+      else
+        Logger.info("closing connection to #{connection.ip}")
+        write_connection(%{connection | is_active: false})
       end
     end)
   end

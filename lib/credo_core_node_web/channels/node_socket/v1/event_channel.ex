@@ -1,6 +1,8 @@
 defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
   use Phoenix.Channel
 
+  require Logger
+
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Blockchain.Block
   alias CredoCoreNode.Pool
@@ -14,6 +16,8 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
   def handle_in("pending_transactions:create", %{"rlp" => rlp}, socket) do
     {hash, tx} = decode_rlp(PendingTransaction, rlp)
 
+    Logger.info("Received pending transaction: #{inspect(tx)}")
+
     unless Pool.get_pending_transaction(hash) or Pool.is_tx_invalid?(tx) do
       Pool.write_pending_transaction(tx)
       Pool.propagate_pending_transaction(tx)
@@ -24,6 +28,8 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
 
   def handle_in("pending_blocks:create", %{"rlp" => rlp}, socket) do
     {hash, blk} = decode_rlp(PendingBlock, rlp)
+
+    Logger.info("Received pending block: #{inspect(blk)}")
 
     unless Pool.get_pending_block(hash) do
       Pool.write_pending_block(blk)
@@ -38,6 +44,8 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
 
   def handle_in("blocks:create", %{"rlp" => rlp}, socket) do
     {hash, blk} = decode_rlp(Block, rlp)
+
+    Logger.info("Received block: #{inspect(blk)}")
 
     unless Blockchain.get_block(hash) do
       Blockchain.write_block(blk)
