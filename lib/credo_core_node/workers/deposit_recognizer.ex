@@ -42,7 +42,7 @@ defmodule CredoCoreNode.Workers.DepositRecognizer do
     state =
       %{state | last_processed_block: last_processed_block}
 
-    {:ok, state}
+    {:noreply, state}
   end
 
   defp schedule_recognize_deposits(interval) do

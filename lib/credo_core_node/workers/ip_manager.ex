@@ -42,7 +42,7 @@ defmodule CredoCoreNode.Workers.IpManager do
     state =
       %{state | last_processed_block: last_processed_block}
 
-    {:ok, state}
+    {:noreply, state}
   end
 
   defp schedule_update_miner_ips(interval) do
