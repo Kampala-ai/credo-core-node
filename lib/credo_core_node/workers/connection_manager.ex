@@ -61,7 +61,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
 
         {:ok, 302, _headers, _body} ->
           Logger.info("Responded with `found` (already connected)")
-          Network.write_connection(ip: known_node.ip, is_active: true, failed_attempts_count: 0)
+          Network.connect_to(known_node.ip)
           Network.retrieve_known_nodes(known_node.ip)
 
         {:ok, 403, _headers, _body} ->
