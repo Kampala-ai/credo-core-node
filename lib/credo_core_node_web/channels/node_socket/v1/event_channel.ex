@@ -18,7 +18,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
 
     Logger.info("Received pending transaction: #{inspect(tx)}")
 
-    unless Pool.get_pending_transaction(hash) or Pool.is_tx_invalid?(tx) do
+    unless Pool.get_pending_transaction(hash) || Pool.is_tx_invalid?(tx) do
       Pool.write_pending_transaction(tx)
       Pool.propagate_pending_transaction(tx)
     end
