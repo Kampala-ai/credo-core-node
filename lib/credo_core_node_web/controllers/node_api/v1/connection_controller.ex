@@ -12,6 +12,11 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.ConnectionController do
       |> :inet_parse.ntoa()
       |> to_string()
 
+    remote_session_id =
+      conn
+      |> get_req_header("x-ccn-session-id")
+      |> List.first()
+
     Logger.info("Incoming connection from #{remote_ip}")
 
     unless Network.get_known_node(remote_ip),
@@ -26,7 +31,7 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.ConnectionController do
       Network.fully_connected?() ->
         send_resp(conn, :conflict, "")
 
-      get_req_header(conn, "x-ccn-session-id") == Endpoint.config(:session_id) ->
+      remote_session_id == Endpoint.config(:session_id) ->
         send_resp(conn, :forbidden, "")
 
       true ->

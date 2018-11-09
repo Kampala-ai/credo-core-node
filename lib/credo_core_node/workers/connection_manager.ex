@@ -17,6 +17,10 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
 
     CredoCoreNode.Network.setup_seed_nodes()
 
+    Network.list_connections()
+    |> Enum.filter(& &1.is_active)
+    |> Enum.each(& Network.write_connection(%{&1 | is_active: false}))
+
     handle_info(:manage_connections, interval)
 
     {:ok, interval}

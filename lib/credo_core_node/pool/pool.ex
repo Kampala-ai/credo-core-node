@@ -60,8 +60,8 @@ defmodule CredoCoreNode.Pool do
 
     to =
       case tx.to do
-        "0x" <> to -> String.downcase(to)
-        to -> String.downcase(to)
+        "0x" <> to -> String.upcase(to)
+        to -> String.upcase(to)
       end
 
     data = tx.data || ""
