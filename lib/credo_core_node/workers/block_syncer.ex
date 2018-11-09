@@ -66,7 +66,7 @@ defmodule CredoCoreNode.Workers.BlockSyncer do
 
         blocks
         |> Enum.each(fn block ->
-          unless Blockhain.get_block(block["hash"]) do
+          unless Blockchain.get_block(block["hash"]) do
             Blockchain.write_block(
               %{
                 hash: block["hash"],
