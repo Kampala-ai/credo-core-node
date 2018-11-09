@@ -261,8 +261,10 @@ defmodule CredoCoreNode.Pool do
     |> D.cmp(D.new(tx.value)) == :gt
   end
 
+  # HACK: temporary disabled balance check to be able to generate pending transactions on testnet
   def is_tx_invalid?(tx) do
-    !is_tx_from_balance_sufficient?(tx)
+    # !is_tx_from_balance_sufficient?(tx)
+    false
   end
 
   def pending_block_body_fetched?(%PendingBlock{} = pending_block) do
