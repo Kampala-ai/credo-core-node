@@ -218,7 +218,7 @@ defmodule CredoCoreNode.Network do
       caller: self()
     )
 
-    channel_client_module(socket_client_id).push("phx_join", %{})
+    channel_client_module(socket_client_id).join(%{})
 
     write_connection(
       ip: ip,
@@ -246,10 +246,12 @@ defmodule CredoCoreNode.Network do
     |> Enum.filter(&(!is_nil(&1.socket_client_id)))
     |> Enum.map(& &1.socket_client_id)
     |> Enum.map(&channel_client_module(&1))
-    |> Enum.each(
-      & &1.push("#{Mnesia.Table.name(record)}:#{event}", %{
-        rlp: ExRLP.encode(record, encoding: :hex)
-      })
-    )
+    |> Enum.each(fn module ->
+      if GenServer.whereis(module) do
+        module.push("#{Mnesia.Table.name(record)}:#{event}", %{
+          rlp: ExRLP.encode(record, encoding: :hex)
+        })
+      end
+    end)
   end
 end
