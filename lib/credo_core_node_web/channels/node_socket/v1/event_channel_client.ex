@@ -7,10 +7,11 @@ Enum.each(0..CredoCoreNode.Network.max_active_connections() - 1, fn id ->
     def handle_close(_reason, state) do
       "Elixir.CredoCoreNodeWeb.NodeSocket.V1.EventChannelClient" <> id = Atom.to_string(__MODULE__)
 
-      Network.list_connections()
-      |> Enum.find(& &1.socket_client_id == id)
-      |> Map.put(:is_active, false)
-      |> Network.write_connection()
+      connection =
+        Network.list_connections()
+        |> Enum.find(& &1.socket_client_id == id)
+
+      if connection, do: Network.write_connection(%{connection | is_active: false})
 
       {:noreply, state}
     end
