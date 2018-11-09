@@ -220,7 +220,7 @@ defmodule CredoCoreNode.Network do
       caller: self()
     )
 
-    channel_client_module(socket_client_id).join(%{})
+    channel_client_module(socket_client_id).push("phx_join", %{})
 
     write_connection(
       ip: ip,
