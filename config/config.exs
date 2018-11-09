@@ -33,6 +33,9 @@ config :credo_core_node, CredoCoreNode.Scheduler,
     {"*/15 * * * *", {Ip, :maybe_update_miner_ip, []}} # Periodically check for an ip change on a running node.
   ]
 
+config :credo_core_node, CredoCoreNode.Workers,
+  enabled: System.get_env("DISABLE_WORKERS") != "yes"
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"
