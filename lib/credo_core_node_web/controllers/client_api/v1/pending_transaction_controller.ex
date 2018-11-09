@@ -19,7 +19,10 @@ defmodule CredoCoreNodeWeb.ClientApi.V1.PendingTransactionController do
     if Pool.is_tx_invalid?(tx) do
       send_resp(conn, :unprocessable_entity, "")
     else
-      Pool.propagate_pending_transaction(tx)
+      tx
+      |> Pool.write_pending_transaction()
+      |> elem(1)
+      |> Pool.propagate_pending_transaction()
 
       conn
       |> put_status(:created)
