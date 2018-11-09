@@ -17,13 +17,13 @@ defmodule CredoCoreNodeWeb.ClientApi.V1.PendingTransactionController do
     {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
 
     if Pool.is_tx_invalid?(tx) do
+      send_resp(conn, :unprocessable_entity, "")
+    else
       Pool.propagate_pending_transaction(tx)
 
       conn
       |> put_status(:created)
       |> render("show.json", pending_transaction: tx)
-    else
-      send_resp(conn, :unprocessable_entity, "")
     end
   end
 end
