@@ -5,7 +5,7 @@ Enum.each(0..CredoCoreNode.Network.max_active_connections() - 1, fn id ->
     alias CredoCoreNode.Network
 
     def handle_close(_reason, state) do
-      "Elixir.CredoCoreNodeWeb.NodeSocket.V1.EventsChannelClient" <> id = Atom.to_string(__MODULE__)
+      "Elixir.CredoCoreNodeWeb.NodeSocket.V1.EventChannelClient" <> id = Atom.to_string(__MODULE__)
 
       Network.list_connections()
       |> Enum.find(& &1.socket_client_id == id)
