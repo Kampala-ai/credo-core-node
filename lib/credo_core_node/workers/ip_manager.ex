@@ -26,9 +26,11 @@ defmodule CredoCoreNode.Workers.IpManager do
   def handle_info(:update_miner_ips, %{last_processed_block: last_processed_block, interval: interval} = state) do
     schedule_update_miner_ips(interval)
 
+    last_processed_block_number = if last_processed_block, do: last_processed_block.number, else: 0
+
     processable_blocks =
       Blockchain.list_blocks()
-      |> Enum.filter(&(&1.number > last_processed_block.number))
+      |> Enum.filter(&(&1.number > last_processed_block_number))
       |> Enum.filter(&(&1.number < Blockchain.last_finalized_block_number()))
 
     processable_blocks
