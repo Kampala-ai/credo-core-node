@@ -28,7 +28,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     end
   end
 
-  def validate_previous_hash(%{number: number} = block) when number == 0, do: true
+  def validate_previous_hash(%{number: number} = _block) when number == 0, do: true
   def validate_previous_hash(block) do
     prev_block = Blockchain.get_block(block.prev_hash)
 
@@ -71,7 +71,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   def validate_transaction_are_unmined(block) do
     res =
       Enum.map Pool.list_pending_transactions(block), fn tx -> # TODO: replace with more efficient implementation.
-        for block <- Blockchain.list_blocks() do # TODO: we only need to verify tx wasn't included in the block's preceding chain. It could be in orphans.
+        for block <- Blockchain.list_preceding_blocks(block) do
           for mined_tx <- Blockchain.list_transactions(block) do
             tx.hash != mined_tx.hash
           end

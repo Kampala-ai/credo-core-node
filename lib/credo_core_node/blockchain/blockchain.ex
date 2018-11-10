@@ -73,6 +73,12 @@ defmodule CredoCoreNode.Blockchain do
     Mnesia.Repo.list(Block)
   end
 
+  def list_preceding_blocks(nil), do: []
+  def list_preceding_blocks(block) do
+    prev_block = get_block(block.prev_hash)
+    [prev_block] ++ list_preceding_blocks(prev_block)
+  end
+
   @doc """
   Returns the last confirmed blocks.
   """
