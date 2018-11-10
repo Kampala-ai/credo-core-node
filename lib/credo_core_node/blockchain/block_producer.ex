@@ -18,6 +18,8 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
     |> Pool.generate_pending_block()
     |> elem(1)
     |> Pool.propagate_pending_block()
+    |> elem(1)
+    |> Pool.write_pending_block()
   end
 
   def get_next_block_producer(block, retry_count) do

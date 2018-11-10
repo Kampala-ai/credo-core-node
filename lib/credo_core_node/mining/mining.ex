@@ -3,7 +3,7 @@ defmodule CredoCoreNode.Mining do
   The Mining context.
   """
 
-  alias CredoCoreNode.Blockchain.BlockProducer
+  alias CredoCoreNode.Blockchain.{BlockProducer, BlockValidator}
   alias CredoCoreNode.Mining.{Deposit, Miner, Vote, VoteManager}
   alias CredoCoreNode.Pool
 
@@ -119,7 +119,10 @@ defmodule CredoCoreNode.Mining do
 
   def start_mining(block, retry_count \\ 0) do
     if BlockProducer.is_your_turn?(block, retry_count) do
-      BlockProducer.produce_block()
+      {:ok, block} =
+        BlockProducer.produce_block()
+
+      BlockValidator.validate_block(block)
     else
       BlockProducer.wait_for_block(block, retry_count)
     end
