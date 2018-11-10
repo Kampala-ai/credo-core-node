@@ -15,7 +15,7 @@ defmodule CredoCoreNode.Mining.Slash do
         to: to,
         value: 0,
         fee: Mining.default_tx_fee(),
-        data: "{\"tx_type\" : \"#{Blockchain.slash_tx_type()}\", \"byzantine_behavior_proof\" : \"#{byzantine_behavior_proof}\"}"
+        data: "{\"tx_type\" : \"#{Blockchain.slash_tx_type()}\", \"byzantine_behavior_proof\" : \"#{Poison.encode!(byzantine_behavior_proof)}\"}"
       })
 
     tx
@@ -47,16 +47,27 @@ defmodule CredoCoreNode.Mining.Slash do
   end
 
   def slash_proof_is_valid?(proof) do
-    if is_list(proof) && length(proof) > 1 do
-      [voteA, voteB | _] = proof
+    res = false
 
-      Accounts.payment_address(voteA) == Accounts.payment_address(voteB) &&
-        voteA.block_number == voteB.block_number &&
-        voteA.voting_round == voteB.voting_round &&
-        voteA.block_hash != voteB.block_hash # TODO check vote hashes
-    else
-      false
+    if is_list(proof) && length(proof) > 1 do
+      [voteAMap, voteBMap | _] = proof
+
+      if is_map(voteAMap) && is_map(voteBMap) do
+        voteAm = for {key, val} <- voteAMap, into: %{}, do: {String.to_atom(key), val}
+        voteA = struct(CredoCoreNode.Mining.Vote, voteAm)
+
+        voteBm = for {key, val} <- voteBMap, into: %{}, do: {String.to_atom(key), val}
+        voteB = struct(CredoCoreNode.Mining.Vote, voteBm)
+
+        res =
+          Accounts.payment_address(voteA) == Accounts.payment_address(voteB) &&
+            voteA.block_number == voteB.block_number &&
+            voteA.voting_round == voteB.voting_round &&
+            voteA.block_hash != voteB.block_hash # TODO check vote hashes
+      end
     end
+
+    res
   end
 
   def slash_miners(slashes) do
