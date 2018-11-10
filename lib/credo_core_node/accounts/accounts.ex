@@ -49,6 +49,7 @@ defmodule CredoCoreNode.Accounts do
   def payment_address(%Vote{} = vote) do
     vote
     |> calculate_public_key()
+    |> elem(1)
     |> payment_address()
   end
 
