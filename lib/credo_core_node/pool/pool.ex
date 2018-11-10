@@ -97,7 +97,8 @@ defmodule CredoCoreNode.Pool do
   def get_batch_of_pending_transactions do
     list_pending_transactions()
     |> Enum.sort(&(&1.fee > &2.fee))
-    |> Enum.take(200)
+    |> Enum.filter(&(is_tx_valid?(&1)))
+    |> Enum.take(2000)
   end
 
   @doc """
@@ -262,6 +263,7 @@ defmodule CredoCoreNode.Pool do
   end
 
   # HACK: temporary disabled balance check to be able to generate pending transactions on testnet
+  def is_tx_valid?(tx), do: !is_tx_invalid?(tx)
   def is_tx_invalid?(tx) do
     # !is_tx_from_balance_sufficient?(tx)
     false
