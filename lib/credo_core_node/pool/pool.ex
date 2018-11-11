@@ -64,8 +64,10 @@ defmodule CredoCoreNode.Pool do
         to -> String.upcase(to)
       end
 
+    value = D.new(tx.value)
+    fee = D.new(tx.fee)
     data = tx.data || ""
-    tx = sign_message(private_key, %{tx | to: to, data: data})
+    tx = sign_message(private_key, %{tx | to: to, data: data, value: value, fee: fee})
 
     {:ok, %{tx | hash: RLP.Hash.hex(tx)}}
   end
