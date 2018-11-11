@@ -215,7 +215,7 @@ defmodule CredoCoreNode.Blockchain do
     end
   end
 
-  def propagate_block(block, options) do
+  def propagate_block(block, options \\ []) do
     Network.propagate_record(block, options)
 
     {:ok, block}
