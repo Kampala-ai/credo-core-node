@@ -6,6 +6,7 @@ defmodule CredoCoreNode.Network do
   require Logger
 
   alias CredoCoreNode.Network.{Connection, KnownNode}
+  alias CredoCoreNodeWeb.Endpoint
   alias Mnesia.Repo
 
   defp seed_node_ips(),
@@ -239,6 +240,7 @@ defmodule CredoCoreNode.Network do
 
   def propagate_record(record, options \\ []) do
     event = options[:event] || :create
+    session_ids = options[:session_ids] || []
     _recipients = options[:recipients] || :all
 
     Logger.info("Propagating: #{inspect(record)}")
@@ -253,7 +255,8 @@ defmodule CredoCoreNode.Network do
       if GenServer.whereis(module) do
         Logger.info("sending to #{connection.ip}")
         module.push("#{Mnesia.Table.name(record)}:#{event}", %{
-          rlp: ExRLP.encode(record, encoding: :hex)
+          rlp: ExRLP.encode(record, encoding: :hex),
+          session_ids: session_ids ++ Endpoint.config(:session_id)
         })
       else
         Logger.info("closing connection to #{connection.ip}")
