@@ -29,7 +29,7 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.ConnectionController do
         Network.connect_to(remote_ip)
         send_resp(conn, :found, "")
 
-      Network.fully_connected?() ->
+      Network.all_nodes_connected?() ->
         send_resp(conn, :conflict, "")
 
       remote_session_id == Endpoint.config(:session_id) ->

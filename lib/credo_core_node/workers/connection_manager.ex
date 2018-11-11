@@ -37,7 +37,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
   defp connect(10), do: nil
 
   defp connect(num_attempts \\ 0) do
-    unless Network.fully_connected?() do
+    unless Network.half_nodes_connected?() do
       known_node =
         Network.list_known_nodes()
         |> Enum.filter(&(!Network.connected_to?(&1.ip)))

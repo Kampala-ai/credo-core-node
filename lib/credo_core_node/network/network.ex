@@ -172,9 +172,17 @@ defmodule CredoCoreNode.Network do
   end
 
   @doc """
-  Returns if the necessary number of active connections is reached.
+  Returns if half of the maximum number of active connections is reached.
   """
-  def fully_connected?() do
+  def half_nodes_connected?() do
+    length(Enum.filter(list_connections(), & &1.is_active)) >=
+      min(length(list_known_nodes()), (max_active_connections() / 2))
+  end
+
+  @doc """
+  Returns if the maximum number of active connections is reached.
+  """
+  def all_nodes_connected?() do
     length(Enum.filter(list_connections(), & &1.is_active)) >=
       min(length(list_known_nodes()), max_active_connections())
   end
