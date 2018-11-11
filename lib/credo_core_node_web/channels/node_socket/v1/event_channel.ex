@@ -27,7 +27,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
          !already_processed?(session_ids) do
       Logger.info("Writing pending transaction and propagating further...")
       Pool.write_pending_transaction(tx)
-      Pool.propagate_pending_transaction(tx)
+      Pool.propagate_pending_transaction(tx, session_ids: session_ids)
     end
 
     {:noreply, socket}
@@ -43,7 +43,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
       Pool.write_pending_block(blk)
 
       case Pool.fetch_pending_block_body(blk) do
-        {:ok, _} -> Pool.propagate_pending_block(blk)
+        {:ok, _} -> Pool.propagate_pending_block(blk, session_ids: session_ids)
         _ -> nil
       end
     end
@@ -61,7 +61,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
       Blockchain.write_block(blk)
 
       case Blockchain.fetch_block_body(blk) do
-        {:pk, _} -> Blockchain.propagate_block(blk)
+        {:pk, _} -> Blockchain.propagate_block(blk, session_ids: session_ids)
         _ -> nil
       end
     end

@@ -83,8 +83,8 @@ defmodule CredoCoreNode.Pool do
   @doc """
   Propagates a pending_transaction.
   """
-  def propagate_pending_transaction(tx) do
-    Network.propagate_record(tx)
+  def propagate_pending_transaction(tx, options \\ []) do
+    Network.propagate_record(tx, options)
 
     {:ok, tx}
   end
@@ -242,8 +242,8 @@ defmodule CredoCoreNode.Pool do
     end
   end
 
-  def propagate_pending_block(block) do
-    Network.propagate_record(block, recipients: :miners)
+  def propagate_pending_block(block, options \\ []) do
+    Network.propagate_record(block, options ++ [recipients: :miners])
 
     {:ok, block}
   end
