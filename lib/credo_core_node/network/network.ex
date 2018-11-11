@@ -256,7 +256,7 @@ defmodule CredoCoreNode.Network do
         Logger.info("sending to #{connection.ip}")
         module.push("#{Mnesia.Table.name(record)}:#{event}", %{
           rlp: ExRLP.encode(record, encoding: :hex),
-          session_ids: session_ids ++ Endpoint.config(:session_id)
+          session_ids: session_ids ++ [Endpoint.config(:session_id)]
         })
       else
         Logger.info("closing connection to #{connection.ip}")
