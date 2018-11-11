@@ -25,7 +25,15 @@ defmodule Mnesia.Repo do
 
       Enum.each(modules, fn module ->
         :mnesia.create_table(:"#{module.table_name()}_#{table_suffix()}",
-          attributes: module.fields(), disc_copies: [node()]
+          attributes: module.fields(),
+          disc_copies: [node()]
+        )
+
+        # HACK: using slower disc_only_copies type for now to fix the issue with saving data to disc
+        :mnesia.change_table_copy_type(
+          :"#{module.table_name()}_#{table_suffix()}",
+          node(),
+          :disc_only_copies
         )
       end)
     end
@@ -35,16 +43,21 @@ defmodule Mnesia.Repo do
   Returns the list of records.
   """
   def list(schema) do
-    :"#{schema.table_name()}_#{table_suffix()}"
-    |> :mnesia.dirty_all_keys()
-    |> Enum.map(fn key -> get(schema, key) end)
+    table_name = :"#{schema.table_name()}_#{table_suffix()}"
+
+    fn -> :mnesia.all_keys(table_name) end
+    |> :mnesia.sync_transaction()
+    |> elem(1)
+    |> Enum.map(&get(schema, &1))
   end
 
   @doc """
   Gets a single record.
   """
   def get(schema, key) do
-    found = :mnesia.dirty_read(:"#{schema.table_name()}_#{table_suffix()}", key)
+    {:atomic, found} =
+      fn -> :mnesia.read(:"#{schema.table_name()}_#{table_suffix()}", key) end
+      |> :mnesia.sync_transaction()
 
     if length(found) > 0 do
       found
@@ -91,12 +104,15 @@ defmodule Mnesia.Repo do
   Creates/updates a record.
   """
   def write(schema, attrs) do
-    :ok =
+    table_name = :"#{schema.table_name()}_#{table_suffix()}"
+
+    data =
       schema.fields
       |> Enum.map(fn field -> attrs[field] end)
-      |> List.insert_at(0, :"#{schema.table_name()}_#{table_suffix()}")
+      |> List.insert_at(0, table_name)
       |> List.to_tuple()
-      |> :mnesia.dirty_write()
+
+    {:atomic, :ok} = :mnesia.sync_transaction(fn -> :mnesia.write(data) end)
 
     {:ok, struct(schema, attrs)}
   end
@@ -105,13 +121,16 @@ defmodule Mnesia.Repo do
   Deletes a record.
   """
   def delete(record) do
-    :ok =
+    table_name =
       record
       |> Mnesia.Table.name()
       |> Atom.to_string()
       |> Kernel.<>("_#{table_suffix()}")
       |> String.to_atom()
-      |> :mnesia.dirty_delete(Mnesia.Record.key(record))
+
+    key = Mnesia.Record.key(record)
+
+    {:atomic, :ok} = :mnesia.sync_transaction(fn -> :mnesia.delete({table_name, key}) end)
 
     {:ok, record}
   end
