@@ -22,7 +22,8 @@ defmodule CredoCoreNode.Mining.Slash do
   end
 
   def maybe_slash_miners(block) do
-    block.transactions
+    block
+    |> Blockchain.list_transactions()
     |> get_slashes()
     |> validate_slashes()
     |> slash_miners()

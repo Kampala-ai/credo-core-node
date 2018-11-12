@@ -108,16 +108,32 @@ defmodule CredoCoreNode.Blockchain do
           r: "FC4B0BC83415F16F0EB92376B1CCBF9C095446E445DB7F8ED89C62BDC2E3A827",
           s: "4320E5EBDDB3016A5C9CAD44BE1B1B2DE5A69A5756D8D7208D47A21B31B714C6",
           to: "A7A5DF6D79203F6E6F0FA9CD550366FC9067A350",
-          v: 0,
+          v: 1,
           value: D.new(1374729257.2286)
+        ]),
+        struct(CredoCoreNode.Pool.PendingTransaction, [
+          data: "{\"tx_type\" : \"security_deposit\", \"node_ip\" : \"10.0.1.9\", \"timelock\": \"\"}",
+          fee: D.new(1.0),
+          hash: "33BEC7E0FDA9773707E224EC96EEA56F3D98F43AC87F01699B7B1EFAD09E9815",
+          nonce: 0,
+          r: "A995F54A804BD10F6F0E5C043D610B66DF91A25ABBCA8994D9C0377C83B40713",
+          s: "4D2F2C195406FABEEDCF1F5B922835CDB7DEA15C8E88E1FC3F068B9E2AABE136",
+          to: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340",
+          v: 1,
+          value: D.new(50000.0)
         ])]
         |> CredoCoreNode.Pool.generate_pending_block()
         |> elem(1)
         |> Map.to_list()
 
-      struct(CredoCoreNode.Blockchain.Block, genesis_block_attrs)
-      |> CredoCoreNode.Blockchain.write_block()
-      |> elem(1)
+      block =
+        struct(CredoCoreNode.Blockchain.Block, genesis_block_attrs)
+        |> CredoCoreNode.Blockchain.write_block()
+        |> elem(1)
+
+      CredoCoreNode.Mining.Deposit.maybe_recognize_deposits(block)
+
+      block
     end
   end
 

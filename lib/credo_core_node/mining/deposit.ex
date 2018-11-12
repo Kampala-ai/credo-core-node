@@ -1,6 +1,8 @@
 defmodule CredoCoreNode.Mining.Deposit do
   alias CredoCoreNode.{Blockchain, Network, Pool, Mining}
 
+  alias Decimal, as: D
+
   @min_timelock 1 # TODO: specify actual timelock limits.
   @max_timelock 100
 
@@ -17,7 +19,8 @@ defmodule CredoCoreNode.Mining.Deposit do
   end
 
   def maybe_recognize_deposits(block) do
-    block.transactions
+    block
+    |> Blockchain.list_transactions()
     |> parse_deposits()
     |> validate_deposits()
     |> recognize_deposits()
@@ -28,7 +31,8 @@ defmodule CredoCoreNode.Mining.Deposit do
   end
 
   def is_deposit(tx) do
-    Poison.decode!(tx.data)["tx_type"] == Blockchain.security_deposit_tx_type()
+    String.length(tx.data) > 1 &&
+      Poison.decode!(tx.data)["tx_type"] == Blockchain.security_deposit_tx_type()
   end
 
   def validate_deposits(deposits) do
@@ -38,17 +42,19 @@ defmodule CredoCoreNode.Mining.Deposit do
   end
 
   def validate_deposit_size(tx) do
-    tx.value >= Mining.min_stake_size()
+    D.cmp(tx.value, D.new(Mining.min_stake_size())) != :lt
   end
 
   def validate_deposit_timelock(tx) do
     timelock = Poison.decode!(tx.data)["timelock"]
 
-    timelock >= @min_timelock && timelock <= @max_timelock
+    # use emtpy string for default timelock
+    String.length(timelock) == 0 || (timelock >= @min_timelock && timelock <= @max_timelock)
   end
 
   def miner_already_exists?(deposit) do
-    deposit.from
+    deposit
+    |> Pool.get_transaction_from_address()
     |> Mining.get_miner()
     |> is_nil
     |> Kernel.not
@@ -62,7 +68,7 @@ defmodule CredoCoreNode.Mining.Deposit do
           address: deposit.to,
           stake_amount: deposit.value,
           participation_rate: 1,
-          is_self: false
+          is_self: Poison.decode!(deposit.data)["node_ip"] == Network.get_current_ip()
         })
       end
     end

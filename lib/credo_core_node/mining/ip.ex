@@ -24,7 +24,8 @@ defmodule CredoCoreNode.Mining.Ip do
   end
 
   def maybe_update_miner_ips(block) do
-    block.transactions
+    block
+    |> Blockchain.list_transactions()
     |> get_miner_ip_updates()
     |> validate_miner_ip_updates()
     |> update_miner_ips()
