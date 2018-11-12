@@ -8,6 +8,8 @@ defmodule CredoCoreNode.Blockchain do
   alias CredoCoreNode.Network
   alias MerklePatriciaTree.Trie
 
+  alias Decimal, as: D
+
   @finalization_threshold 12
 
   def coinbase_tx_type, do: "coinbase"
@@ -100,14 +102,14 @@ defmodule CredoCoreNode.Blockchain do
       genesis_block_attrs =
         [struct(CredoCoreNode.Pool.PendingTransaction, [
           data: "",
-          fee: 1.1,
-          hash: "BECECBB9F25FBB46092BB8946473B11779B82B5F3DAFDC9D1AD91639C23D9CE4",
+          fee: D.new(1.1),
+          hash: "C7934046DFACDDCF2855F8B3F5D18FFAC91C8A5B4C2435D8E7CA611802C5BAC8",
           nonce: 0,
-          r: "0C74EAD2F40CEA4DEF589E2C2BDBFBD00256F89201AB88688D643FB1F665BB46",
-          s: "605B7B9DAFAE1D20C84BF77A7A7364BA4F3ECDBFBD07CE9D0C0BEFD92CDAD2C3",
-          to: "0xa7a5df6d79203f6e6f0fa9cd550366fc9067a350",
+          r: "FC4B0BC83415F16F0EB92376B1CCBF9C095446E445DB7F8ED89C62BDC2E3A827",
+          s: "4320E5EBDDB3016A5C9CAD44BE1B1B2DE5A69A5756D8D7208D47A21B31B714C6",
+          to: "A7A5DF6D79203F6E6F0FA9CD550366FC9067A350",
           v: 0,
-          value: 1374729257.2286
+          value: D.new(1374729257.2286)
         ])]
         |> CredoCoreNode.Pool.generate_pending_block()
         |> elem(1)
