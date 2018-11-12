@@ -54,10 +54,11 @@ defmodule CredoCoreNode.Mining.VoteManager do
 
   def propagate_vote(vote) do
     headers = Network.node_request_headers()
+    body = Poison.encode!(vote)
 
     Mining.list_miners()
     |> Enum.map(&("#{Network.api_url(&1.ip)}/temp/votes"))
-    |> Enum.each(&(:hackney.request(:post, &1, headers, vote, [:with_body, pool: false])))
+    |> Enum.each(&(:hackney.request(:post, &1, headers, body, [:with_body, pool: false])))
 
     {:ok, vote}
   end
@@ -98,7 +99,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
         votes
         |> Enum.filter(& &1.block_hash == vote.block_hash)
         |> Enum.map(& Mining.get_miner(&1.miner_address).stake_amount)
-        |> Enum.sum()
+        |> Enum.reduce(fn x, acc -> D.add(x, acc) end)
 
       %{hash: vote.block_hash, count: count}
     end
@@ -124,7 +125,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def has_supermajority?(num_votes) do
-    num_votes >= 2/3 * total_voting_power()
+    D.cmp(num_votes, D.mult(D.new(2/3), total_voting_power())) != :lt
   end
 
   def get_winner(results) do
