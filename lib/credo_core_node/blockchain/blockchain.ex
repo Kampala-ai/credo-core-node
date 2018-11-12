@@ -230,7 +230,12 @@ defmodule CredoCoreNode.Blockchain do
   end
 
   def block_body_fetched?(%Block{} = block) do
-    !!block_tx_trie(block)
+    tx_trie =
+      block_tx_trie(block)
+
+    Exleveldb.close(elem(tx_trie.db, 1))
+
+    !!tx_trie
   end
 
   defp block_tx_trie(%Block{tx_root: nil}), do: nil
