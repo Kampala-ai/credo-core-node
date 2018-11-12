@@ -3,6 +3,8 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
   alias CredoCoreNode.Blockchain.BlockValidator
   alias CredoCoreNode.Mining.Coinbase
 
+  alias Decimal, as: D
+
   require Logger
 
   @block_production_timeout 10000
@@ -13,13 +15,20 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
   end
 
   def produce_block() do
-    Pool.get_batch_of_pending_transactions()
-    |> Coinbase.add_coinbase_tx()
-    |> Pool.generate_pending_block()
-    |> elem(1)
-    |> Pool.propagate_pending_block()
-    |> elem(1)
-    |> Pool.write_pending_block()
+    batch =
+      Pool.get_batch_of_pending_transactions()
+
+    if length(batch) > 0 do
+      batch
+      |> Coinbase.add_coinbase_tx()
+      |> Pool.generate_pending_block()
+      |> elem(1)
+      |> Pool.propagate_pending_block()
+      |> elem(1)
+      |> Pool.write_pending_block()
+    else
+      {:error, :no_pending_txs}
+    end
   end
 
   def get_next_block_producer(block, retry_count) do
@@ -27,7 +36,7 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
 
     miner_addresses =
       for miner <- Mining.list_miners() do
-        for _ <- 0..round(miner.stake_amount * miner.participation_rate) do
+        for _ <- 0..round(D.to_float(miner.stake_amount) * miner.participation_rate) do
           miner.address
         end
       end

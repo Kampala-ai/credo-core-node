@@ -119,10 +119,14 @@ defmodule CredoCoreNode.Mining do
 
   def start_mining(block, retry_count \\ 0) do
     if BlockProducer.is_your_turn?(block, retry_count) do
-      {:ok, block} =
-        BlockProducer.produce_block()
 
-      BlockValidator.validate_block(block)
+      case BlockProducer.produce_block() do
+        {:ok, block} ->
+          BlockValidator.validate_block(block)
+
+        {:error, :no_pending_txs} ->
+          Logger.info("No pending txs...")
+      end
     else
       BlockProducer.wait_for_block(block, retry_count)
     end
