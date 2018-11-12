@@ -245,14 +245,11 @@ defmodule CredoCoreNode.Blockchain do
     {:ok, block}
   end
 
-  def block_body_fetched?(%Block{} = block) do
-    tx_trie =
-      block_tx_trie(block)
+  def block_body_fetched?(%Block{tx_root: nil}), do: false
+  def block_body_fetched?(%Block{hash: nil}), do: false
 
-    Exleveldb.close(elem(tx_trie.db, 1))
-
-    !!tx_trie
-  end
+  def block_body_fetched?(%Block{hash: hash}),
+    do: File.exists?("#{File.cwd!}/leveldb/blocks/#{hash}")
 
   defp block_tx_trie(%Block{tx_root: nil}), do: nil
   defp block_tx_trie(%Block{hash: nil}), do: nil

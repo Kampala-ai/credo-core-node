@@ -277,9 +277,11 @@ defmodule CredoCoreNode.Pool do
     false
   end
 
-  def pending_block_body_fetched?(%PendingBlock{} = pending_block) do
-    !!pending_block_tx_trie(pending_block)
-  end
+  def pending_block_body_fetched?(%PendingBlock{tx_root: nil}), do: false
+  def pending_block_body_fetched?(%PendingBlock{hash: nil}), do: false
+
+  def pending_block_body_fetched?(%PendingBlock{hash: hash}),
+    do: File.exists?("#{File.cwd!}/leveldb/pending_blocks/#{hash}")
 
   defp pending_block_tx_trie(%PendingBlock{tx_root: nil}), do: nil
   defp pending_block_tx_trie(%PendingBlock{hash: nil}), do: nil
