@@ -41,7 +41,10 @@ defmodule CredoCoreNode.Blockchain do
   def list_transactions(%Block{} = block) do
     case block_tx_trie(block) do
       nil -> []
-      tx_trie -> MPT.Repo.list(tx_trie, Transaction)
+      tx_trie ->
+        txs = MPT.Repo.list(tx_trie, Transaction)
+        Exleveldb.close(elem(tx_trie.db, 1))
+        txs
     end
   end
 
@@ -140,6 +143,8 @@ defmodule CredoCoreNode.Blockchain do
           |> MPT.Repo.list(Transaction)
           |> ExRLP.encode()
 
+        Exleveldb.close(elem(tx_trie.db, 1))
+
         %{block | body: body}
     end
   end
@@ -161,6 +166,7 @@ defmodule CredoCoreNode.Blockchain do
       |> MPT.Repo.write_list(Transaction, transactions)
 
     tx_root = Base.encode16(tx_trie.root_hash)
+    Exleveldb.close(elem(tx_trie.db, 1))
 
     block
     |> Map.drop([:body])
@@ -229,11 +235,13 @@ defmodule CredoCoreNode.Blockchain do
   defp block_tx_trie(%Block{hash: nil}), do: nil
 
   defp block_tx_trie(%Block{tx_root: tx_root, hash: hash}) do
-    db = MerklePatriciaTree.DB.LevelDB.init("#{File.cwd!}/leveldb/blocks/#{hash}")
-    if db |> elem(1) |> Exleveldb.is_empty?() do
-      nil
-    else
-      Trie.new(db, elem(Base.decode16(tx_root), 1))
+    path = "#{File.cwd!}/leveldb/blocks/#{hash}"
+    {:ok, tx_root} = Base.decode16(tx_root)
+
+    if File.exists?(path) do
+      path
+      |> MerklePatriciaTree.DB.LevelDB.init()
+      |> Trie.new(tx_root)
     end
   end
 end

@@ -19,7 +19,10 @@ defmodule CredoCoreNode.Pool do
   def list_pending_transactions(%PendingBlock{} = pending_block) do
     case pending_block_tx_trie(pending_block) do
       nil -> []
-      tx_trie -> MPT.Repo.list(tx_trie, PendingTransaction)
+      tx_trie ->
+        txs = MPT.Repo.list(tx_trie, PendingTransaction)
+        Exleveldb.close(elem(tx_trie.db, 1))
+        txs
     end
   end
 
@@ -141,6 +144,8 @@ defmodule CredoCoreNode.Pool do
           |> MPT.Repo.list(PendingTransaction)
           |> ExRLP.encode()
 
+        Exleveldb.close(elem(tx_trie.db, 1))
+
         %{pending_block | body: body}
     end
   end
@@ -162,6 +167,7 @@ defmodule CredoCoreNode.Pool do
       |> MPT.Repo.write_list(PendingTransaction, pending_transactions)
 
     tx_root = Base.encode16(tx_trie.root_hash)
+    Exleveldb.close(elem(tx_trie.db, 1))
 
     pending_block
     |> Map.drop([:tx_trie, :body])
@@ -279,11 +285,13 @@ defmodule CredoCoreNode.Pool do
   defp pending_block_tx_trie(%PendingBlock{hash: nil}), do: nil
 
   defp pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}) do
-    db = MerklePatriciaTree.DB.LevelDB.init("#{File.cwd!}/leveldb/pending_blocks/#{hash}")
-    if db |> elem(1) |> Exleveldb.is_empty?() do
-      nil
-    else
-      Trie.new(db, elem(Base.decode16(tx_root), 1))
+    path = "#{File.cwd!}/leveldb/pending_blocks/#{hash}"
+    {:ok, tx_root} = Base.decode16(tx_root)
+
+    if File.exists?(path) do
+      path
+      |> MerklePatriciaTree.DB.LevelDB.init()
+      |> Trie.new(tx_root)
     end
   end
 end
