@@ -62,7 +62,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   def validate_transaction_amounts(block) do
     res =
       Enum.map Pool.list_pending_transactions(block), fn tx ->
-        Pool.is_tx_from_balance_sufficient?(tx)
+        Pool.is_tx_from_balance_sufficient?(tx) || Coinbase.is_coinbase_tx(tx)
       end
 
     Enum.reduce(res, true, &(&1 && &2))

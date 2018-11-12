@@ -34,7 +34,8 @@ defmodule CredoCoreNode.Mining.Slash do
   end
 
   def is_slash(tx) do
-    Poison.decode!(tx.data)["tx_type"] == Blockchain.slash_tx_type()
+    String.length(tx.data) > 1 &&
+      Poison.decode!(tx.data)["tx_type"] == Blockchain.slash_tx_type()
   end
 
   def validate_slashes(slashes) do

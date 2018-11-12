@@ -23,9 +23,9 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
       |> Coinbase.add_coinbase_tx()
       |> Pool.generate_pending_block()
       |> elem(1)
-      |> Pool.propagate_pending_block()
-      |> elem(1)
       |> Pool.write_pending_block()
+      |> elem(1)
+      |> Pool.propagate_pending_block()
     else
       {:error, :no_pending_txs}
     end

@@ -3,6 +3,8 @@ defmodule CredoCoreNode.Mining.Coinbase do
   alias CredoCoreNode.Mining
   alias CredoCoreNode.Pool
 
+  alias Decimal, as: D
+
   def add_coinbase_tx(txs) when txs == [], do: []
   def add_coinbase_tx(txs) do
     {:ok, tx} =
@@ -24,15 +26,20 @@ defmodule CredoCoreNode.Mining.Coinbase do
   end
 
   def is_coinbase_tx(tx) do
-    Poison.decode!(tx.data)["tx_type"] == Blockchain.coinbase_tx_type()
+    String.length(tx.data) > 1 &&
+      Poison.decode!(tx.data)["tx_type"] == Blockchain.coinbase_tx_type()
   end
 
   def tx_fee_sums_match(block, coinbase_txs) do
     [coinbase_tx] = coinbase_txs
 
-    non_coinbase_tx_fees_sum =
-      Pool.sum_pending_transaction_fees(Pool.list_pending_transactions(block) -- coinbase_tx)
+    txs_minus_coinbase_tx =
+      Pool.list_pending_transactions(block)
+      |> Enum.filter(& !is_coinbase_tx(&1))
 
-    coinbase_tx.fee == non_coinbase_tx_fees_sum
+    non_coinbase_tx_fees_sum =
+      Pool.sum_pending_transaction_fees(txs_minus_coinbase_tx)
+
+    D.cmp(coinbase_tx.value, non_coinbase_tx_fees_sum) == :eq
   end
 end
