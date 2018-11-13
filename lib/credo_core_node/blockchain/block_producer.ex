@@ -16,7 +16,7 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
 
   def produce_block() do
     batch =
-      Pool.get_batch_of_pending_transactions()
+      Pool.get_batch_of_valid_pending_transactions()
 
     if length(batch) > 0 do
       batch

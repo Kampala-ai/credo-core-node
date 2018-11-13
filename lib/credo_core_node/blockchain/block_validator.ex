@@ -71,13 +71,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   def validate_transaction_are_unmined(block) do
     res =
       Enum.map Pool.list_pending_transactions(block), fn tx -> # TODO: replace with more efficient implementation.
-        for block <- Blockchain.list_preceding_blocks(block) do
-          for mined_tx <- Blockchain.list_transactions(block) do
-            tx.hash != mined_tx.hash
-          end
-        end
-        |> Enum.concat()
-        |> Enum.reduce(true, &(&1 && &2))
+        Pool.is_tx_unmined?(tx, block)
       end
 
     Enum.reduce(res, true, &(&1 && &2))

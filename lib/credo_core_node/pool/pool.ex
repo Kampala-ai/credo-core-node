@@ -5,6 +5,7 @@ defmodule CredoCoreNode.Pool do
 
   alias CredoCoreNode.{Accounts, Blockchain, Network}
   alias CredoCoreNode.Pool.{PendingBlock, PendingTransaction}
+  alias CredoCoreNode.Blockchain.Block
   alias MerklePatriciaTree.Trie
 
   alias Decimal, as: D
@@ -99,7 +100,7 @@ defmodule CredoCoreNode.Pool do
 
   To be called when constructing a block.
   """
-  def get_batch_of_pending_transactions do
+  def get_batch_of_valid_pending_transactions() do
     list_pending_transactions()
     |> Enum.sort(&(&1.fee > &2.fee))
     |> Enum.filter(&(is_tx_valid?(&1)))
@@ -263,6 +264,17 @@ defmodule CredoCoreNode.Pool do
     |> Accounts.payment_address()
   end
 
+  def is_tx_unmined?(tx), do: is_tx_unmined?(tx, %Block{prev_hash: Blockchain.last_block().hash})
+  def is_tx_unmined?(tx, block) do
+    for block <- Blockchain.list_preceding_blocks(block) do
+      for mined_tx <- Blockchain.list_transactions(block) do
+        tx.hash != mined_tx.hash
+      end
+    end
+    |> Enum.concat()
+    |> Enum.reduce(true, &(&1 && &2))
+  end
+
   def is_tx_from_balance_sufficient?(tx) do
     tx
     |> get_transaction_from_address()
@@ -270,8 +282,11 @@ defmodule CredoCoreNode.Pool do
     |> D.cmp(D.new(tx.value)) == :gt
   end
 
+  def is_tx_valid?(tx) do
+    !is_tx_invalid?(tx) && is_tx_unmined?(tx)
+  end
+
   # HACK: temporary disabled balance check to be able to generate pending transactions on testnet
-  def is_tx_valid?(tx), do: !is_tx_invalid?(tx)
   def is_tx_invalid?(tx) do
     # !is_tx_from_balance_sufficient?(tx)
     false
