@@ -29,17 +29,13 @@ defmodule CredoCoreNode.Workers.DepositRecognizer do
     last_processed_block_number = if last_processed_block, do: last_processed_block.number, else: 0
 
     processable_blocks =
-      Blockchain.list_blocks()
-      |> Enum.filter(&(&1.number > last_processed_block_number))
-      |> Enum.filter(&(&1.number < Blockchain.last_finalized_block_number()))
+      Blockchain.list_processable_blocks(last_processed_block_number)
 
     processable_blocks
     |> Enum.each(fn block -> Deposit.maybe_recognize_deposits(block) end)
 
     last_processed_block =
-      processable_blocks
-      |> Enum.sort(&(&1.number > &2.number))
-      |> List.first()
+      Blockchain.last_processed_block(processable_blocks)
 
     state =
       %{state | last_processed_block: last_processed_block}

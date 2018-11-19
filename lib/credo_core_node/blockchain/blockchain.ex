@@ -86,6 +86,18 @@ defmodule CredoCoreNode.Blockchain do
     end
   end
 
+  def list_processable_blocks(last_processed_block_number) do
+    Enum.filter(list_blocks(),
+      &(&1.number > last_processed_block_number &&
+      &1.number < last_finalized_block_number()))
+  end
+
+  def last_processed_block(processable_blocks) do
+    processable_blocks
+    |> Enum.sort(&(&1.number > &2.number))
+    |> List.first()
+  end
+
   @doc """
   Returns the last confirmed blocks.
   """
