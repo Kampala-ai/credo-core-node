@@ -9,6 +9,8 @@ defmodule CredoCoreNode.Network do
   alias CredoCoreNodeWeb.Endpoint
   alias Mnesia.Repo
 
+  @localhost_ips [{127, 0, 0, 1}, {0, 0, 0, 0}]
+
   defp seed_node_ips(),
     do: Application.get_env(:credo_core_node, CredoCoreNode.Network)[:seed_node_ips]
 
@@ -60,16 +62,27 @@ defmodule CredoCoreNode.Network do
     :"Elixir.CredoCoreNodeWeb.NodeSocket.V1.EventChannelClient#{id}"
   end
 
+  def is_localhost?(ip) do
+    Enum.member?(@localhost_ips, ip)
+  end
+
+  def format_ip(nil), do: nil
+  def format_ip(ip) when is_tuple(ip) do
+    ip
+    |> Tuple.to_list()
+    |> Enum.join(".")
+  end
+
   @doc """
   Returns the current node's ip
   """
   def get_current_ip do
-    {:ok, ifs} = :inet.getif()
-    [ip | _] = Enum.map(ifs, fn {ip, _broadaddr, _mask} -> ip end)
-
-    ip
-    |> Tuple.to_list()
-    |> Enum.join(".")
+    :inet.getif()
+    |> elem(1)
+    |> Enum.map(fn {ip, _broadaddr, _mask} -> ip end)
+    |> Enum.reject(&is_localhost?(&1))
+    |> List.first()
+    |> format_ip()
   end
 
   @doc """
