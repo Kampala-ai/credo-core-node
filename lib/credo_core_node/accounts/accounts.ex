@@ -78,6 +78,21 @@ defmodule CredoCoreNode.Accounts do
     })
   end
 
+  def save_account(base16_private_key, label \\ nil) do
+    {:ok, private_key} =
+      Base.decode16(base16_private_key)
+
+    {:ok, public_key} =
+      calculate_public_key(private_key)
+
+    write_account(%{
+      address: payment_address(public_key),
+      private_key: private_key,
+      public_key: public_key,
+      label: label
+    })
+  end
+
   @doc """
   Returns the list of accounts.
   """
