@@ -52,13 +52,8 @@ defmodule CredoCoreNode.Mining.VoteManager do
     vote
   end
 
-  def propagate_vote(vote) do
-    headers = Network.node_request_headers()
-    body = Poison.encode!(vote)
-
-    Mining.list_miners()
-    |> Enum.map(&("#{Network.api_url(&1.ip)}/temp/votes"))
-    |> Enum.each(&(:hackney.request(:post, &1, headers, body, [:with_body, pool: false])))
+  def propagate_vote(vote, options \\ []) do
+    Network.propagate_record(vote, options)
 
     {:ok, vote}
   end

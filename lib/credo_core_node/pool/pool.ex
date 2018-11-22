@@ -283,7 +283,7 @@ defmodule CredoCoreNode.Pool do
   end
 
   def is_tx_valid?(tx) do
-    !is_tx_invalid?(tx) && is_tx_unmined?(tx)
+    is_tx_from_balance_sufficient?(tx) && is_tx_unmined?(tx)
   end
 
   # HACK: temporary disabled balance check to be able to generate pending transactions on testnet

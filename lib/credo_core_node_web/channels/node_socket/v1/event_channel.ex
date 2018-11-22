@@ -6,9 +6,10 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Blockchain.Block
   alias CredoCoreNode.Pool
-  alias CredoCoreNode.Pool.PendingTransaction
-  alias CredoCoreNode.Pool.PendingBlock
+  alias CredoCoreNode.Pool.{PendingBlock, PendingTransaction}
   alias CredoCoreNodeWeb.Endpoint
+  alias CredoCoreNode.Mining
+  alias CredoCoreNode.Mining.{Vote, VoteManager}
 
   def join("events:all", _message, socket) do
     {:ok, socket}
@@ -64,6 +65,20 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
         {:pk, _} -> Blockchain.propagate_block(blk, session_ids: session_ids)
         _ -> nil
       end
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_in("votes:create", %{"rlp" => rlp, "session_ids" => session_ids}, socket) do
+    {hash, vote} = decode_rlp(Vote, rlp)
+
+    Logger.info("Received vote: #{inspect(vote)}")
+
+    if !Mining.get_vote(hash) && !already_processed?(session_ids) do
+      Logger.info("Writing vote and propagating further...")
+      Mining.write_vote(vote)
+      VoteManager.propagate_vote(vote, session_ids: session_ids)
     end
 
     {:noreply, socket}
