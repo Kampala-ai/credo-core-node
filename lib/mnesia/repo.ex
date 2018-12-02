@@ -24,17 +24,21 @@ defmodule Mnesia.Repo do
         )
 
       Enum.each(modules, fn module ->
-        :mnesia.create_table(:"#{module.table_name()}_#{table_suffix()}",
-          attributes: module.fields(),
-          disc_copies: [node()]
-        )
+        table_name = :"#{module.table_name()}_#{table_suffix()}"
+        module_fields = module.fields()
+        :mnesia.create_table(table_name, attributes: module_fields, disc_copies: [node()])
+        table_fields = :mnesia.table_info(table_name, :attributes)
+
+        if table_fields != module_fields do
+          :mnesia.transform_table(
+            table_name,
+            & transform_mnesia_record(&1, table_fields, module_fields),
+            module_fields
+          )
+        end
 
         # HACK: using slower disc_only_copies type for now to fix the issue with saving data to disc
-        :mnesia.change_table_copy_type(
-          :"#{module.table_name()}_#{table_suffix()}",
-          node(),
-          :disc_only_copies
-        )
+        :mnesia.change_table_copy_type(table_name, node(), :disc_only_copies)
       end)
     end
   end
@@ -133,5 +137,17 @@ defmodule Mnesia.Repo do
     {:atomic, :ok} = :mnesia.sync_transaction(fn -> :mnesia.delete({table_name, key}) end)
 
     {:ok, record}
+  end
+
+  defp transform_mnesia_record(data, table_fields, module_fields) do
+    [table_name | field_values] = Tuple.to_list(data)
+
+    record =
+      table_fields
+      |> Enum.with_index()
+      |> Enum.map(fn {fld_name, fld_idx} = _fld -> {fld_name, Enum.at(field_values, fld_idx)} end)
+
+    transformed_field_values = Enum.map(module_fields, & record[&1])
+    List.to_tuple([table_name] ++ transformed_field_values)
   end
 end
