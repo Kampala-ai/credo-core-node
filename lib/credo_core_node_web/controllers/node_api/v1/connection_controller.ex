@@ -25,18 +25,16 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.ConnectionController do
     Network.retrieve_known_nodes(remote_ip)
 
     cond do
-      Network.connected_to?(remote_ip) ->
-        Network.connect_to(remote_ip)
+      Network.connected_to?(remote_ip, :outgoing) ->
         send_resp(conn, :found, "")
 
-      Network.all_nodes_connected?() ->
+      Network.active_connections_limit_reached?(:incoming) ->
         send_resp(conn, :conflict, "")
 
       remote_session_id == Endpoint.config(:session_id) ->
         send_resp(conn, :forbidden, "")
 
       true ->
-        Network.connect_to(remote_ip)
         send_resp(conn, :created, "")
     end
   end

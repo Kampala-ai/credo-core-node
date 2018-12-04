@@ -18,9 +18,14 @@ defmodule CredoCoreNode.Network do
     do: Application.get_env(:credo_core_node, CredoCoreNode.Network)[:node_connection_port]
 
   @doc """
-  Returns the maximum allowed number of active connections.
+  Returns the maximum allowed number of active outgoing connections.
   """
-  def max_active_connections, do: 6
+  def active_connections_limit(:outgoing), do: 3
+
+  @doc """
+  Returns the maximum allowed number of active incoming connections.
+  """
+  def active_connections_limit(:incoming), do: 3
 
   @doc """
   Returns the request headers for cross-node requests.
@@ -67,6 +72,7 @@ defmodule CredoCoreNode.Network do
   end
 
   def format_ip(nil), do: nil
+
   def format_ip(ip) when is_tuple(ip) do
     ip
     |> Tuple.to_list()
@@ -110,6 +116,7 @@ defmodule CredoCoreNode.Network do
   Deletes a known_node.
   """
   def delete_known_node(nil), do: nil
+
   def delete_known_node(%KnownNode{} = known_node) do
     Repo.delete(known_node)
   end
@@ -166,6 +173,7 @@ defmodule CredoCoreNode.Network do
   Creates/updates a connection.
   """
   def write_connection(%Connection{} = connection), do: write_connection(Map.to_list(connection))
+
   def write_connection(attrs) do
     Repo.write(Connection, attrs ++ [updated_at: :os.system_time(:millisecond)])
   end
@@ -174,6 +182,7 @@ defmodule CredoCoreNode.Network do
   Deletes a connection.
   """
   def delete_connection(nil), do: nil
+
   def delete_connection(%Connection{} = connection) do
     Repo.delete(connection)
   end
@@ -185,19 +194,19 @@ defmodule CredoCoreNode.Network do
   end
 
   @doc """
-  Returns if half of the maximum number of active connections is reached.
+  Returns if the maximum allowed number of active outgoing connections is reached.
   """
-  def half_nodes_connected?() do
-    length(Enum.filter(list_connections(), & &1.is_active)) >=
-      min(length(list_known_nodes()), (max_active_connections() / 2))
+  def active_connections_limit_reached?(:outgoing) do
+    length(Enum.filter(list_connections(), & &1.is_active && &1.is_outgoing)) >=
+      min(length(list_known_nodes()), active_connections_limit(:outgoing))
   end
 
   @doc """
-  Returns if the maximum number of active connections is reached.
+  Returns if the maximum allowed number of active incoming connections is reached.
   """
-  def all_nodes_connected?() do
-    length(Enum.filter(list_connections(), & &1.is_active)) >=
-      min(length(list_known_nodes()), max_active_connections())
+  def active_connections_limit_reached?(:incoming) do
+    length(Enum.filter(list_connections(), & &1.is_active && !&1.is_outgoing)) >=
+      min(length(list_known_nodes()), active_connections_limit(:incoming))
   end
 
   @doc """
@@ -206,25 +215,35 @@ defmodule CredoCoreNode.Network do
   def available_socket_client_id() do
     used_ids =
       list_connections()
-      |> Enum.filter(& &1.is_active)
+      |> Enum.filter(& &1.is_active && &1.is_outgoing)
       |> Enum.map(& &1.socket_client_id)
 
-    diff = Enum.to_list(0..(max_active_connections() - 1)) -- used_ids
+    diff = Enum.to_list(0..(active_connections_limit(:outgoing) - 1)) -- used_ids
     List.first(diff)
   end
 
   @doc """
-  Returns if the current node is connected to the given IP.
+  Returns if the current node has active outgoing connection to the given IP.
   """
-  def connected_to?(ip) do
+  def connected_to?(ip, :outgoing) do
     case get_connection(ip) do
       nil -> false
-      connection -> connection.is_active
+      connection -> connection.is_active && connection.is_outgoing
     end
   end
 
   @doc """
-  Establishes socket connection to the given IP and writes the `Connection` record
+  Returns if the current node has active incoming connection from the given IP.
+  """
+  def connected_to?(ip, :incoming) do
+    case get_connection(ip) do
+      nil -> false
+      connection -> connection.is_active && !connection.is_outgoing
+    end
+  end
+
+  @doc """
+  Establishes outgoing socket connection to the given IP and writes the `Connection` record
   """
   def connect_to(ip) do
     socket_client_id = available_socket_client_id()
@@ -247,6 +266,7 @@ defmodule CredoCoreNode.Network do
     write_connection(
       ip: ip,
       is_active: true,
+      is_outgoing: true,
       failed_attempts_count: 0,
       socket_client_id: socket_client_id
     )
@@ -271,17 +291,25 @@ defmodule CredoCoreNode.Network do
     list_connections()
     |> Enum.filter(&(&1.is_active && !is_nil(&1.socket_client_id)))
     |> Enum.each(fn connection ->
-      module = channel_client_module(connection.socket_client_id)
+      if connection.is_outgoing do
+        module = channel_client_module(connection.socket_client_id)
 
-      if GenServer.whereis(module) do
-        Logger.info("sending to #{connection.ip}")
-        module.push("#{Mnesia.Table.name(record)}:#{event}", %{
+        if GenServer.whereis(module) do
+          Logger.info("sending to #{connection.ip}")
+
+          module.push("#{Mnesia.Table.name(record)}:#{event}", %{
+            rlp: ExRLP.encode(record, encoding: :hex),
+            session_ids: session_ids ++ [Endpoint.config(:session_id)]
+          })
+        else
+          Logger.info("closing connection to #{connection.ip}")
+          write_connection(%{connection | is_active: false})
+        end
+      else
+        Endpoint.broadcast!("events:all", "#{Mnesia.Table.name(record)}:#{event}", %{
           rlp: ExRLP.encode(record, encoding: :hex),
           session_ids: session_ids ++ [Endpoint.config(:session_id)]
         })
-      else
-        Logger.info("closing connection to #{connection.ip}")
-        write_connection(%{connection | is_active: false})
       end
     end)
   end

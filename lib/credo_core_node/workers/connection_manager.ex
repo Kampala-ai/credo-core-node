@@ -37,10 +37,10 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
   defp connect(10), do: nil
 
   defp connect(num_attempts \\ 0) do
-    unless Network.half_nodes_connected?() do
+    unless Network.active_connections_limit_reached?(:outgoing) do
       known_node =
         Network.list_known_nodes()
-        |> Enum.filter(&(!Network.connected_to?(&1.ip)))
+        |> Enum.filter(&(!Network.connected_to?(&1.ip, :outgoing)))
         |> Enum.sort(&(Network.updated_at(&1.ip) <= Network.updated_at(&2.ip)))
         |> List.first()
 
@@ -60,8 +60,16 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
           Network.retrieve_known_nodes(known_node.ip)
 
         {:ok, 302, _headers, _body} ->
-          Logger.info("Responded with `found` (already connected)")
-          Network.connect_to(known_node.ip)
+          Logger.info("Responded with `found` (already connected as outgoing on remote node side)")
+
+          Network.write_connection(
+            ip: known_node.ip,
+            is_active: true,
+            is_outgoing: false,
+            failed_attempts_count: 0,
+            socket_client_id: nil
+          )
+
           Network.retrieve_known_nodes(known_node.ip)
 
         {:ok, 403, _headers, _body} ->
