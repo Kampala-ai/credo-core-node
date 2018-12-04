@@ -20,6 +20,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
     |> select_candidate(voting_round)
     |> construct_vote(voting_round)
     |> sign_vote()
+    |> hash_vote()
     |> save_vote()
     |> propagate_vote()
   end
@@ -45,6 +46,8 @@ defmodule CredoCoreNode.Mining.VoteManager do
 
     Pool.sign_message(account.private_key, vote)
   end
+
+  def hash_vote(vote), do: %Vote{vote | hash: RLP.Hash.hex(vote)}
 
   def save_vote(vote) do
     {:ok, vote} = Mining.write_vote(vote)

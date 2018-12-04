@@ -99,8 +99,8 @@ defmodule CredoCoreNode.Mining do
   @doc """
   Gets a single vote.
   """
-  def get_vote(block_hash) do
-    Repo.get(Vote, block_hash)
+  def get_vote(hash) do
+    Repo.get(Vote, hash)
   end
 
   @doc """
