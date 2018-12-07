@@ -8,7 +8,7 @@ defmodule CredoCoreNodeWeb.ClientApi.V1.PendingTransactionController do
       conn
       |> get_req_header("x-ccn-private-key")
       |> hd()
-      |> Base.decode64()
+      |> Base.decode16()
 
     # TODO: params store keys as strings and building structure expects passing them as atoms;
     #   converting keys from string to atom is a common task, probably should be somehow generalized
