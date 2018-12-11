@@ -5,6 +5,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
   alias Decimal, as: D
 
   @vote_collection_timeout 10000
+  @quorum_size 1
 
   def already_voted?(block, voting_round) do
     Mining.list_votes()
@@ -66,10 +67,18 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def consensus_reached?(block, voting_round) do
+    valid_votes =
+      block
+      |> Mining.list_votes_for_round(voting_round)
+      |> get_valid_votes()
+
     winner_block =
-      count_votes(block, voting_round)
-      |> get_winner()
-      |> Pool.load_pending_block_body()
+      if length(valid_votes) >= @quorum_size do
+        valid_votes
+        |> count_votes()
+        |> get_winner()
+        |> Pool.load_pending_block_body()
+      end
 
     update_participation_rates(block, voting_round)
 
@@ -87,11 +96,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
     end
   end
 
-  def count_votes(block, voting_round) do
-    votes =
-      Mining.list_votes_for_round(block, voting_round)
-      |> get_valid_votes()
-
+  def count_votes(votes) do
     Enum.map votes, fn vote ->
       count =
         votes
