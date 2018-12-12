@@ -10,15 +10,15 @@ defmodule CredoCoreNode.Blockchain do
 
   alias Decimal, as: D
 
-  @finalization_threshold 12
+  @irreversibility_threshold 12
 
   def coinbase_tx_type, do: "coinbase"
   def security_deposit_tx_type, do: "security_deposit"
   def slash_tx_type, do: "slash"
   def update_miner_ip_tx_type, do: "update_miner_ip"
-  def finalization_threshold, do: @finalization_threshold
+  def irreversibility_threshold, do: @irreversibility_threshold
 
-  def last_finalized_block_number, do: max(last_confirmed_block_number() - finalization_threshold(), 0)
+  def last_irreversible_block_number, do: max(last_confirmed_block_number() - irreversibility_threshold(), 0)
 
   def last_confirmed_block_number() do
     case last_block() do
@@ -89,7 +89,7 @@ defmodule CredoCoreNode.Blockchain do
   def list_processable_blocks(last_processed_block_number) do
     Enum.filter(list_blocks(),
       &(&1.number > last_processed_block_number &&
-      &1.number < last_finalized_block_number()))
+      &1.number < last_irreversible_block_number()))
   end
 
   def last_processed_block(processable_blocks) do

@@ -23,7 +23,7 @@ defmodule CredoCoreNode.Workers.GarbageCollector do
     schedule_collect_garbage(interval)
 
     Pool.list_pending_blocks()
-    |> Enum.filter(&(&1.number < Blockchain.last_finalized_block_number()))
+    |> Enum.filter(&(&1.number < Blockchain.last_irreversible_block_number()))
     |> Enum.each(fn block -> Pool.delete_pending_block(block) end)
 
     {:noreply, interval}

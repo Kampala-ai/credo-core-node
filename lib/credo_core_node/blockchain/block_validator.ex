@@ -15,7 +15,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
       validate_transaction_amounts(block) &&
       validate_transaction_are_unmined(block) &&
       validate_deposit_withdrawals(block) &&
-      validate_block_finalization(block) &&
+      validate_block_irreversibility(block) &&
       validate_coinbase_transaction(block) &&
       validate_network_consensus(block)
 
@@ -81,13 +81,13 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     DepositWithdrawal.validate_deposit_withdrawals(block)
   end
 
-  def validate_block_finalization(block) do
-    _last_finalized_block =
+  def validate_block_irreversibility(block) do
+    _last_irreversible_block =
       Blockchain.list_blocks()
-      |> Enum.filter(&(&1.number == block.number - Blockchain.finalization_threshold()))
+      |> Enum.filter(&(&1.number == block.number - Blockchain.irreversibility_threshold()))
       |> List.first()
 
-    true # Check that the current block is in a chain of blocks containing the last finalized block.
+    true # Check that the current block is in a chain of blocks containing the last irreversible block.
   end
 
   def validate_coinbase_transaction(block) do
