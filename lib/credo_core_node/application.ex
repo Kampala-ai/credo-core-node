@@ -11,11 +11,12 @@ defmodule CredoCoreNode.Application do
     Mnesia.Repo.setup()
 
     # Define workers and child supervisors to be supervised
-    children = [
-      # Start the endpoint when the application starts
-      supervisor(CredoCoreNodeWeb.Endpoint, [])
-    ]
-    |> background_workers()
+    children =
+      [
+        # Start the endpoint when the application starts
+        supervisor(CredoCoreNodeWeb.Endpoint, [])
+      ]
+      |> background_workers()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -32,9 +33,9 @@ defmodule CredoCoreNode.Application do
   end
 
   defp setup_leveldb do
-    Enum.each ["/leveldb", "/leveldb/blocks", "/leveldb/pending_blocks"], fn path ->
-      File.mkdir("#{File.cwd!}#{path}")
-    end
+    Enum.each(["/leveldb", "/leveldb/blocks", "/leveldb/pending_blocks"], fn path ->
+      File.mkdir("#{File.cwd!()}#{path}")
+    end)
   end
 
   defp background_workers(children) do

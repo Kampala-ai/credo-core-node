@@ -67,6 +67,7 @@ defmodule CredoCoreNode.Network do
   end
 
   def format_ip(nil), do: nil
+
   def format_ip(ip) when is_tuple(ip) do
     ip
     |> Tuple.to_list()
@@ -110,6 +111,7 @@ defmodule CredoCoreNode.Network do
   Deletes a known_node.
   """
   def delete_known_node(nil), do: nil
+
   def delete_known_node(%KnownNode{} = known_node) do
     Repo.delete(known_node)
   end
@@ -166,6 +168,7 @@ defmodule CredoCoreNode.Network do
   Creates/updates a connection.
   """
   def write_connection(%Connection{} = connection), do: write_connection(Map.to_list(connection))
+
   def write_connection(attrs) do
     Repo.write(Connection, attrs ++ [updated_at: :os.system_time(:millisecond)])
   end
@@ -174,6 +177,7 @@ defmodule CredoCoreNode.Network do
   Deletes a connection.
   """
   def delete_connection(nil), do: nil
+
   def delete_connection(%Connection{} = connection) do
     Repo.delete(connection)
   end
@@ -189,7 +193,7 @@ defmodule CredoCoreNode.Network do
   """
   def half_nodes_connected?() do
     length(Enum.filter(list_connections(), & &1.is_active)) >=
-      min(length(list_known_nodes()), (max_active_connections() / 2))
+      min(length(list_known_nodes()), max_active_connections() / 2)
   end
 
   @doc """
@@ -275,6 +279,7 @@ defmodule CredoCoreNode.Network do
 
       if GenServer.whereis(module) do
         Logger.info("sending to #{connection.ip}")
+
         module.push("#{Mnesia.Table.name(record)}:#{event}", %{
           rlp: ExRLP.encode(record, encoding: :hex),
           session_ids: session_ids ++ [Endpoint.config(:session_id)]

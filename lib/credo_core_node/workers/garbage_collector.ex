@@ -40,24 +40,29 @@ defmodule CredoCoreNode.Workers.GarbageCollector do
   end
 
   defp collect_pending_transaction_garbage do
-    Enum.each recent_finalized_blocks(), fn block ->
-      Enum.each Blockchain.list_transactions(block), fn transaction ->
+    Enum.each(recent_finalized_blocks(), fn block ->
+      Enum.each(Blockchain.list_transactions(block), fn transaction ->
         case Pool.get_pending_transaction(transaction.hash) do
-          nil -> :ok
+          nil ->
+            :ok
 
           pending_transaction ->
             Pool.delete_pending_transaction(pending_transaction)
         end
-      end
-    end
+      end)
+    end)
   end
 
   defp recent_finalized_blocks do
-    Enum.filter(Blockchain.list_blocks(), &(&1.number < Blockchain.last_irreversible_block_number() &&
-      &1.number > last_recent_irreversible_block_number()))
+    Enum.filter(
+      Blockchain.list_blocks(),
+      &(&1.number < Blockchain.last_irreversible_block_number() &&
+          &1.number > last_recent_irreversible_block_number())
+    )
   end
 
-  defp last_recent_irreversible_block_number(), do: Blockchain.last_irreversible_block_number() - @recency_length
+  defp last_recent_irreversible_block_number(),
+    do: Blockchain.last_irreversible_block_number() - @recency_length
 
   defp schedule_collect_garbage(interval) do
     send_after(self(), :collect_garbage, interval)

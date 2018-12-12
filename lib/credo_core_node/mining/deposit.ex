@@ -3,17 +3,22 @@ defmodule CredoCoreNode.Mining.Deposit do
 
   alias Decimal, as: D
 
-  @min_timelock 1 # TODO: specify actual timelock limits.
+  # TODO: specify actual timelock limits.
+  @min_timelock 1
   @max_timelock 100
 
   def construct_deposit(amount, private_key, to, timelock \\ nil) do
-    {:ok, tx} = Pool.generate_pending_transaction(private_key, %{
-      nonce: Mining.default_nonce(),
-      to: to,
-      value: amount,
-      fee: Mining.default_tx_fee(),
-      data: "{\"tx_type\" : \"#{Blockchain.security_deposit_tx_type()}\", \"node_ip\" : \"#{Network.get_current_ip()}\", \"timelock\": \"#{timelock}\"}"
-    })
+    {:ok, tx} =
+      Pool.generate_pending_transaction(private_key, %{
+        nonce: Mining.default_nonce(),
+        to: to,
+        value: amount,
+        fee: Mining.default_tx_fee(),
+        data:
+          "{\"tx_type\" : \"#{Blockchain.security_deposit_tx_type()}\", \"node_ip\" : \"#{
+            Network.get_current_ip()
+          }\", \"timelock\": \"#{timelock}\"}"
+      })
 
     tx
   end
@@ -27,7 +32,7 @@ defmodule CredoCoreNode.Mining.Deposit do
   end
 
   def parse_deposits(txs) do
-    Enum.filter(txs, & is_deposit(&1))
+    Enum.filter(txs, &is_deposit(&1))
   end
 
   def is_deposit(tx) do
@@ -37,8 +42,8 @@ defmodule CredoCoreNode.Mining.Deposit do
 
   def validate_deposits(deposits) do
     deposits
-    |> Enum.filter(& validate_deposit_size(&1))
-    |> Enum.filter(& validate_deposit_timelock(&1))
+    |> Enum.filter(&validate_deposit_size(&1))
+    |> Enum.filter(&validate_deposit_timelock(&1))
   end
 
   def validate_deposit_size(tx) do
@@ -57,11 +62,11 @@ defmodule CredoCoreNode.Mining.Deposit do
     |> Pool.get_transaction_from_address()
     |> Mining.get_miner()
     |> is_nil
-    |> Kernel.not
+    |> Kernel.not()
   end
 
   def recognize_deposits(deposits) do
-    Enum.each deposits, fn deposit ->
+    Enum.each(deposits, fn deposit ->
       unless miner_already_exists?(deposit) do
         Mining.write_miner(%{
           ip: Poison.decode!(deposit.data)["node_ip"],
@@ -71,6 +76,6 @@ defmodule CredoCoreNode.Mining.Deposit do
           is_self: Poison.decode!(deposit.data)["node_ip"] == Network.get_current_ip()
         })
       end
-    end
+    end)
   end
 end

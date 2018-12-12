@@ -16,7 +16,9 @@ defmodule CredoCoreNode.Accounts do
   @doc """
   Calculates a public key for a given pending_transaction.
   """
-  def calculate_public_key(%PendingTransaction{} = tx), do: calculate_public_key_from_signature(tx)
+  def calculate_public_key(%PendingTransaction{} = tx),
+    do: calculate_public_key_from_signature(tx)
+
   def calculate_public_key(%Transaction{} = tx), do: calculate_public_key_from_signature(tx)
   def calculate_public_key(%Vote{} = vote), do: calculate_public_key_from_signature(vote)
 
@@ -38,8 +40,11 @@ defmodule CredoCoreNode.Accounts do
   def calculate_public_key(private_key) when is_binary(private_key) do
     case :libsecp256k1.ec_pubkey_create(private_key, :uncompressed) do
       # HACK: the version of libsecp256k1 we use adds `4` byte value to the beginning of public key
-      {:ok, <<4>> <> public_key} -> {:ok, public_key}
-      result -> result
+      {:ok, <<4>> <> public_key} ->
+        {:ok, public_key}
+
+      result ->
+        result
     end
   end
 
@@ -64,11 +69,9 @@ defmodule CredoCoreNode.Accounts do
   Generates a new address.
   """
   def generate_address(label \\ nil) do
-    private_key =
-      :crypto.strong_rand_bytes(32)
+    private_key = :crypto.strong_rand_bytes(32)
 
-    {:ok, public_key} =
-      calculate_public_key(private_key)
+    {:ok, public_key} = calculate_public_key(private_key)
 
     write_account(%{
       address: payment_address(public_key),
@@ -79,11 +82,9 @@ defmodule CredoCoreNode.Accounts do
   end
 
   def save_account(base16_private_key, label \\ nil) do
-    {:ok, private_key} =
-      Base.decode16(base16_private_key)
+    {:ok, private_key} = Base.decode16(base16_private_key)
 
-    {:ok, public_key} =
-      calculate_public_key(private_key)
+    {:ok, public_key} = calculate_public_key(private_key)
 
     write_account(%{
       address: payment_address(public_key),
@@ -122,7 +123,8 @@ defmodule CredoCoreNode.Accounts do
   end
 
   def get_account_balance(address) do
-    for block <- Blockchain.list_blocks() do # TODO: replace with more efficient implementation.
+    # TODO: replace with more efficient implementation.
+    for block <- Blockchain.list_blocks() do
       for tx <- Blockchain.list_transactions(block) do
         from = Pool.get_transaction_from_address(tx)
         to = tx.to

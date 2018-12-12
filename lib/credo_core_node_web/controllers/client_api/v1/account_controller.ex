@@ -13,6 +13,10 @@ defmodule CredoCoreNodeWeb.ClientApi.V1.AccountController do
   end
 
   def show(conn, %{"id" => id}) do
-    render(conn, "show.json", account: %{address: id, balance: D.to_float(Accounts.get_account_balance(id))})
+    render(
+      conn,
+      "show.json",
+      account: %{address: id, balance: D.to_float(Accounts.get_account_balance(id))}
+    )
   end
 end

@@ -42,7 +42,7 @@ defmodule CredoCoreNode.Mining do
   def is_miner?() do
     list_miners()
     |> Enum.filter(& &1.is_self)
-    |> Enum.any?
+    |> Enum.any?()
   end
 
   @doc """
@@ -92,8 +92,8 @@ defmodule CredoCoreNode.Mining do
   """
   def list_votes_for_round(block, voting_round) do
     list_votes()
-    |> Enum.filter(& &1.block_number == block.number)
-    |> Enum.filter(& &1.voting_round == voting_round)
+    |> Enum.filter(&(&1.block_number == block.number))
+    |> Enum.filter(&(&1.voting_round == voting_round))
   end
 
   @doc """
@@ -119,7 +119,6 @@ defmodule CredoCoreNode.Mining do
 
   def start_mining(block, retry_count \\ 0) do
     if BlockProducer.is_your_turn?(block, retry_count) do
-
       case BlockProducer.produce_block() do
         {:ok, block} ->
           BlockValidator.validate_block(block)
@@ -132,7 +131,7 @@ defmodule CredoCoreNode.Mining do
     end
   end
 
-   def start_voting(block, voting_round \\ 0) do
+  def start_voting(block, voting_round \\ 0) do
     Logger.info("Started voting at block height #{block.number} in round #{voting_round}.")
 
     unless VoteManager.already_voted?(block, voting_round) do

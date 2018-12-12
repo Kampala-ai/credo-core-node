@@ -9,16 +9,22 @@ defmodule CredoCoreNode.Mining.Ip do
   end
 
   def miner_ip_changed? do
-    Network.get_current_ip != Mining.my_miner().ip # TODO: Make this check more robust. :inet.getif may return ips in a different order, but we're just selecting the first once.
+    # TODO: Make this check more robust. :inet.getif may return ips in a different order, but we're just selecting the first once.
+    Network.get_current_ip() != Mining.my_miner().ip
   end
 
   def construct_miner_ip_update_transaction(private_key, to) do
-    {:ok, tx} = Pool.generate_pending_transaction(private_key, %{
-      nonce: Mining.default_nonce(),
-      to: to,
-      value: 1.0,
-      fee: Mining.default_tx_fee(),
-      data: "{\"tx_type\" : \"#{Blockchain.update_miner_ip_tx_type()}\", \"node_ip\" : \"#{Network.get_current_ip()}\"}"})
+    {:ok, tx} =
+      Pool.generate_pending_transaction(private_key, %{
+        nonce: Mining.default_nonce(),
+        to: to,
+        value: 1.0,
+        fee: Mining.default_tx_fee(),
+        data:
+          "{\"tx_type\" : \"#{Blockchain.update_miner_ip_tx_type()}\", \"node_ip\" : \"#{
+            Network.get_current_ip()
+          }\"}"
+      })
 
     tx
   end
@@ -32,7 +38,7 @@ defmodule CredoCoreNode.Mining.Ip do
   end
 
   def get_miner_ip_updates(txs) do
-    Enum.filter(txs, & is_miner_ip_update(&1))
+    Enum.filter(txs, &is_miner_ip_update(&1))
   end
 
   def is_miner_ip_update(tx) do
@@ -40,15 +46,16 @@ defmodule CredoCoreNode.Mining.Ip do
   end
 
   def validate_miner_ip_updates(miner_ip_updates) do
-    miner_ip_updates #TODO implement signature check.
+    # TODO implement signature check.
+    miner_ip_updates
   end
 
   def update_miner_ips(miner_ip_updates) do
-    Enum.each miner_ip_updates, fn miner_ip_update ->
+    Enum.each(miner_ip_updates, fn miner_ip_update ->
       miner_ip_update.to
       |> Mining.get_miner()
       |> Map.merge(%{ip: Poison.decode!(miner_ip_update.data)["node_ip"]})
       |> Mining.write_miner()
-    end
+    end)
   end
 end

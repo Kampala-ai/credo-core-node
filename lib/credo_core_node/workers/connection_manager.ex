@@ -19,7 +19,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
 
     Network.list_connections()
     |> Enum.filter(& &1.is_active)
-    |> Enum.each(& Network.write_connection(%{&1 | is_active: false}))
+    |> Enum.each(&Network.write_connection(%{&1 | is_active: false}))
 
     handle_info(:manage_connections, interval)
 
@@ -46,6 +46,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
 
       port = Application.get_env(:credo_core_node, CredoCoreNode.Network)[:node_connection_port]
       url = "#{Network.api_url(known_node.ip)}/connections"
+
       headers =
         Network.node_request_headers() ++ [{"x-ccn-session-id", Endpoint.config(:session_id)}]
 

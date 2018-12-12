@@ -17,11 +17,15 @@ defmodule RLP.Serializer do
         unquote(fields)
         |> Enum.map(fn {field_name, field_type} = _field ->
           field_value = Map.get(record, field_name)
+
           case field_type do
             {:decimal, decimal_places} ->
               field_value = D.new(field_value)
+
               if D.cmp(field_value, 0) == :gt do
-                precision = :math.floor(:math.log10(D.to_integer(D.round(field_value)))) + decimal_places
+                precision =
+                  :math.floor(:math.log10(D.to_integer(D.round(field_value)))) + decimal_places
+
                 D.with_context(%D.Context{precision: trunc(precision)}, fn ->
                   field_value
                   |> D.new()
@@ -31,7 +35,9 @@ defmodule RLP.Serializer do
               else
                 0
               end
-            _ -> field_value
+
+            _ ->
+              field_value
           end
         end)
       end
@@ -50,13 +56,18 @@ defmodule RLP.Serializer do
                 {:decimal, decimal_places} ->
                   unsigned_value = :binary.decode_unsigned(raw_field_value)
                   precision = :math.floor(:math.log10(unsigned_value)) + decimal_places
+
                   D.with_context(%D.Context{precision: trunc(precision)}, fn ->
                     unsigned_value
                     |> D.new()
                     |> D.div(D.new(:math.pow(10, decimal_places)))
                   end)
-                :unsigned -> :binary.decode_unsigned(raw_field_value)
-                _ -> raw_field_value
+
+                :unsigned ->
+                  :binary.decode_unsigned(raw_field_value)
+
+                _ ->
+                  raw_field_value
               end
 
             {field_name, field_value}

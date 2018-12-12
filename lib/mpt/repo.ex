@@ -38,6 +38,7 @@ defmodule MPT.Repo do
   """
   def write(trie, schema, attrs) do
     record = struct(schema, attrs)
+
     {:ok, key} =
       record
       |> Record.key()

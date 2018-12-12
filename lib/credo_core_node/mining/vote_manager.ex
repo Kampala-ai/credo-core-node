@@ -9,11 +9,11 @@ defmodule CredoCoreNode.Mining.VoteManager do
 
   def already_voted?(block, voting_round) do
     Mining.list_votes()
-    |> Enum.filter(&
-      &1.block_number == block.number &&
-      &1.voting_round == voting_round &&
-      &1.miner_address == Mining.my_miner().address)
-    |> Enum.any?
+    |> Enum.filter(
+      &(&1.block_number == block.number && &1.voting_round == voting_round &&
+          &1.miner_address == Mining.my_miner().address)
+    )
+    |> Enum.any?()
   end
 
   def cast_vote(block, voting_round) do
@@ -27,9 +27,11 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def select_candidate(block, voting_round) when voting_round == 0, do: block
+
   def select_candidate(block, voting_round) do
+    # TODO: weight selection based on votes from prior round.
     Pool.list_pending_blocks(block.number)
-    |> Enum.random() # TODO: weight selection based on votes from prior round.
+    |> Enum.random()
   end
 
   def construct_vote(candidate, voting_round) do
@@ -42,8 +44,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def sign_vote(vote) do
-    account =
-      Accounts.get_account(vote.miner_address)
+    account = Accounts.get_account(vote.miner_address)
 
     Pool.sign_message(account.private_key, vote)
   end
@@ -97,27 +98,25 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def count_votes(votes) do
-    Enum.map votes, fn vote ->
+    Enum.map(votes, fn vote ->
       count =
         votes
-        |> Enum.filter(& &1.block_hash == vote.block_hash)
-        |> Enum.map(& Mining.get_miner(&1.miner_address).stake_amount)
+        |> Enum.filter(&(&1.block_hash == vote.block_hash))
+        |> Enum.map(&Mining.get_miner(&1.miner_address).stake_amount)
         |> Enum.reduce(fn x, acc -> D.add(x, acc) end)
 
       %{hash: vote.block_hash, count: count}
-    end
+    end)
   end
 
   def get_valid_votes(votes) do
-    Enum.filter(votes, & is_valid_vote(&1))
+    Enum.filter(votes, &is_valid_vote(&1))
   end
 
   def is_valid_vote(vote) do
-    {:ok, public_key} =
-      Accounts.calculate_public_key(vote)
+    {:ok, public_key} = Accounts.calculate_public_key(vote)
 
-    address =
-      Accounts.payment_address(public_key)
+    address = Accounts.payment_address(public_key)
 
     address == vote.miner_address && !is_nil(Mining.get_miner(vote.miner_address))
   end
@@ -128,7 +127,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def has_supermajority?(num_votes) do
-    D.cmp(num_votes, D.mult(D.new(2/3), total_voting_power())) != :lt
+    D.cmp(num_votes, D.mult(D.new(2 / 3), total_voting_power())) != :lt
   end
 
   def get_winner(results) do
@@ -145,21 +144,23 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def update_participation_rates(block, voting_round) do
-    votes =
-      Mining.list_votes_for_round(block, voting_round)
+    votes = Mining.list_votes_for_round(block, voting_round)
 
-    Enum.each Mining.list_miners(), fn miner ->
-      rate = if miner_voted?(votes, miner), do: max(miner.participation_rate + 0.01, 1), else: min(miner.participation_rate - 0.01, 0)
+    Enum.each(Mining.list_miners(), fn miner ->
+      rate =
+        if miner_voted?(votes, miner),
+          do: max(miner.participation_rate + 0.01, 1),
+          else: min(miner.participation_rate - 0.01, 0)
 
       miner
-      |> Map.merge( %{participation_rate: rate})
+      |> Map.merge(%{participation_rate: rate})
       |> Mining.write_miner()
-    end
+    end)
   end
 
   def miner_voted?(votes, miner) do
     votes
-    |> Enum.filter(& &1.miner_address == miner.address)
-    |> Enum.any?
+    |> Enum.filter(&(&1.miner_address == miner.address))
+    |> Enum.any?()
   end
 end
