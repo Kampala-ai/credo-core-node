@@ -8,6 +8,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventHandler do
   alias CredoCoreNodeWeb.Endpoint
   alias CredoCoreNode.Mining
   alias CredoCoreNode.Mining.{Vote, VoteManager}
+  alias CredoCoreNode.Network
 
   def handle_in(
         "pending_transactions:create",
@@ -51,14 +52,15 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventHandler do
 
     Logger.info("Received block: #{inspect(blk)}")
 
-    if !Blockchain.get_block(hash) && !already_processed?(session_ids) do
-      Logger.info("Writing block and propagating further...")
-      Blockchain.write_block(blk)
+    connection =
+      Network.list_connections()
+      |> Enum.find(& &1.session_id == List.last(session_ids))
 
-      case Blockchain.fetch_block_body(blk) do
-        {:pk, _} -> Blockchain.propagate_block(blk, session_ids: session_ids)
-        _ -> nil
-      end
+    if !Blockchain.get_block(hash) && !already_processed?(session_ids) && connection do
+      Logger.info("Writing block and fetching body...")
+
+      Blockchain.write_block(blk)
+      Blockchain.fetch_block_body(blk, connection.ip)
     end
 
     {:noreply, state}

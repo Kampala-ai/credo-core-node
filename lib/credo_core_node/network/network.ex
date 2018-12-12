@@ -67,6 +67,17 @@ defmodule CredoCoreNode.Network do
     :"Elixir.CredoCoreNodeWeb.NodeSocket.V1.EventChannelClient#{id}"
   end
 
+  @doc """
+  Returns `:incoming` if an active incoming connection from the given IP exists, otherwise returns
+  `:outgoing`
+  """
+  def connection_type(ip) do
+    case get_connection(ip) do
+      %{is_active: true, is_outgoing: false} -> :incoming
+      _ -> :outgoing
+    end
+  end
+
   def is_localhost?(ip) do
     Enum.member?(@localhost_ips, ip)
   end
@@ -137,7 +148,12 @@ defmodule CredoCoreNode.Network do
   @doc """
   Retrieves the list of known_nodes from the given IP and merges into the local list
   """
-  def retrieve_known_nodes(ip) do
+  def retrieve_known_nodes(ip), do: retrieve_known_nodes(ip, connection_type(ip))
+
+  @doc """
+  Retrieves the list of known_nodes from the given IP and merges into the local list
+  """
+  def retrieve_known_nodes(ip, :outgoing) do
     url = "#{api_url(ip)}/known_nodes"
 
     case :hackney.request(:get, url, node_request_headers(), "", [:with_body, pool: false]) do
@@ -153,6 +169,18 @@ defmodule CredoCoreNode.Network do
       _ ->
         write_connection(ip: ip, is_active: false)
     end
+  end
+
+  @doc """
+  Retrieves the list of known_nodes from the given IP and merges into the local list
+  """
+  def retrieve_known_nodes(ip, :incoming) do
+    # TODO: handler for this request is not implemented yet
+    Endpoint.broadcast!(
+      "node_socket:#{get_connection(ip).session_id}",
+      "known_nodes:list_request",
+      %{session_id: Endpoint.config(:session_id)}
+    )
   end
 
   @doc """
@@ -245,14 +273,15 @@ defmodule CredoCoreNode.Network do
   @doc """
   Establishes outgoing socket connection to the given IP and writes the `Connection` record
   """
-  def connect_to(ip) do
+  def connect_to(ip, session_id) do
     socket_client_id = available_socket_client_id()
 
     # TODO: using Poison encoding/decoding upper-level `Phoenix.Socket.Message` struct;
     #   to be replaced with RLP serializer later to reduce the payload size
     socket_client_module(socket_client_id).start_link(
       url: socket_url(ip),
-      serializer: Poison
+      serializer: Poison,
+      params: %{session_id: Endpoint.config(:session_id)}
     )
 
     channel_client_module(socket_client_id).start_link(
@@ -268,7 +297,8 @@ defmodule CredoCoreNode.Network do
       is_active: true,
       is_outgoing: true,
       failed_attempts_count: 0,
-      socket_client_id: socket_client_id
+      socket_client_id: socket_client_id,
+      session_id: session_id
     )
   end
 

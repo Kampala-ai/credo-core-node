@@ -54,10 +54,11 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
       )
 
       case :hackney.request(:post, url, headers, "", [:with_body, pool: false]) do
-        {:ok, 201, _headers, _body} ->
+        {:ok, 201, _headers, body} ->
           Logger.info("Responded with `created` (successfully connected)")
-          Network.connect_to(known_node.ip)
-          Network.retrieve_known_nodes(known_node.ip)
+          %{"session_id" => session_id} = Poison.decode!(body)
+          Network.connect_to(known_node.ip, session_id)
+          Network.retrieve_known_nodes(known_node.ip, :outgoing)
 
         {:ok, 302, _headers, _body} ->
           Logger.info("Responded with `found` (already connected as outgoing on remote node side)")
@@ -70,7 +71,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
             socket_client_id: nil
           )
 
-          Network.retrieve_known_nodes(known_node.ip)
+          Network.retrieve_known_nodes(known_node.ip, :outgoing)
 
         {:ok, 403, _headers, _body} ->
           Logger.info("Responded with `forbidden` (trying to connect to self)")
@@ -79,7 +80,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
 
         {:ok, 409, _headers, _body} ->
           Logger.info("Responded with `conflict` (remote node doesn't accept new connections)")
-          Network.retrieve_known_nodes(known_node.ip)
+          Network.retrieve_known_nodes(known_node.ip, :outgoing)
 
         _ ->
           Logger.info("No response or incorrect response")

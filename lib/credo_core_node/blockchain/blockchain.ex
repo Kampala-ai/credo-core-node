@@ -3,9 +3,10 @@ defmodule CredoCoreNode.Blockchain do
   The Blockchain context.
   """
 
-  alias CredoCoreNode.Blockchain.{Block, Transaction}
+  alias CredoCoreNode.Blockchain.{Block, BlockFragment, Transaction}
   alias CredoCoreNode.Pool
   alias CredoCoreNode.Network
+  alias CredoCoreNodeWeb.Endpoint
   alias MerklePatriciaTree.Trie
 
   alias Decimal, as: D
@@ -69,6 +70,34 @@ defmodule CredoCoreNode.Blockchain do
   """
   def delete_transaction(%Transaction{} = transaction) do
     Mnesia.Repo.delete(transaction)
+  end
+
+  @doc """
+  Returns the list of block_fragments.
+  """
+  def list_block_fragments() do
+    Mnesia.Repo.list(BlockFragment)
+  end
+
+  @doc """
+  Gets a single block_fragment.
+  """
+  def get_block_fragment(hash) do
+    Mnesia.Repo.get(BlockFragment, hash)
+  end
+
+  @doc """
+  Creates/updates a block_fragment.
+  """
+  def write_block_fragment(attrs) do
+    Mnesia.Repo.write(BlockFragment, attrs)
+  end
+
+  @doc """
+  Deletes a block_fragment.
+  """
+  def delete_block_fragment(%BlockFragment{} = block_fragment) do
+    Mnesia.Repo.delete(block_fragment)
   end
 
   @doc """
@@ -225,6 +254,11 @@ defmodule CredoCoreNode.Blockchain do
     Mnesia.Repo.delete(block)
   end
 
+  # TODO: obsolete method which shouldn't be used currently (still used in `BlockSyncer`).
+  #   Fetching bodies from incoming connections occurs asynchronously which means that
+  #   `block_body_fetched?` will return false while syncing is in process, hence
+  #   the method will send more requests than needed which will result in receiving
+  #   more block bodies (i.e. huge and unnecessary traffic)
   def fetch_block_body(block) do
     Network.list_connections()
     |> Enum.filter(& &1.is_active)
@@ -239,16 +273,27 @@ defmodule CredoCoreNode.Blockchain do
     end
   end
 
-  def fetch_block_body(block, ip) do
+  def fetch_block_body(block, ip), do: fetch_block_body(block, ip, Network.connection_type(ip))
+
+  def fetch_block_body(block, ip, :outgoing) do
     url = "#{Network.api_url(ip)}/block_bodies/#{block.hash}"
     headers = Network.node_request_headers(:rlp)
 
     case :hackney.request(:get, url, headers, "", [:with_body, pool: false]) do
-      {:ok, 200, _headers, body} -> write_block(%{block | body: body})
-      {:ok, 204, _headers, _body} -> {:error, :no_content}
-      {:ok, 404, _headers, _body} -> {:error, :not_found}
-      _ -> {:error, :unknown}
+      {:ok, 200, _headers, body} ->
+        write_block(%{block | body: body})
+        propagate_block(block)
+      _ -> nil
     end
+  end
+
+  def fetch_block_body(block, ip, :incoming) do
+    write_block_fragment(hash: block.hash, body: "")
+    Endpoint.broadcast!(
+      "node_socket:#{Network.get_connection(ip).session_id}",
+      "blocks:body_request",
+      %{hash: block.hash, session_id: Endpoint.config(:session_id)}
+    )
   end
 
   def propagate_block(block, options \\ []) do
