@@ -4,7 +4,7 @@ defmodule CredoCoreNode.Mining do
   """
 
   alias CredoCoreNode.Blockchain.{BlockProducer, BlockValidator}
-  alias CredoCoreNode.Mining.{Deposit, Miner, Vote, VoteManager}
+  alias CredoCoreNode.Mining.{Deposit, Miner, Slash, Vote, VoteManager}
   alias CredoCoreNode.Pool
 
   alias Mnesia.Repo
@@ -115,6 +115,34 @@ defmodule CredoCoreNode.Mining do
   """
   def delete_vote(%Vote{} = vote) do
     Repo.delete(vote)
+  end
+
+  @doc """
+  Returns the list of slashes.
+  """
+  def list_slashes() do
+    Repo.list(Slash)
+  end
+
+  @doc """
+  Gets a single slash.
+  """
+  def get_slash(hash) do
+    Repo.get(Slash, hash)
+  end
+
+  @doc """
+  Creates/updates a slash.
+  """
+  def write_slash(attrs) do
+    Repo.write(Slash, attrs)
+  end
+
+  @doc """
+  Deletes a slash.
+  """
+  def delete_slash(%Slash{} = slash) do
+    Repo.delete(slash)
   end
 
   def start_mining(block, retry_count \\ 0) do
