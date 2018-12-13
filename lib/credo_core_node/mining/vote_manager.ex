@@ -4,8 +4,9 @@ defmodule CredoCoreNode.Mining.VoteManager do
 
   alias Decimal, as: D
 
-  @vote_collection_timeout 10000
+  @vote_collection_timeout 500
   @quorum_size 1
+  @early_vote_counting_threshold 50
 
   def already_voted?(block, voting_round) do
     Mining.list_votes()
@@ -63,15 +64,23 @@ defmodule CredoCoreNode.Mining.VoteManager do
     {:ok, vote}
   end
 
-  def wait_for_votes do
-    :timer.sleep(@vote_collection_timeout)
+  def wait_for_votes(_, _, intervals) when intervals == 0, do: :ok
+
+  def wait_for_votes(block, voting_round, intervals) do
+    unless can_count_votes_early?(block, voting_round) do
+      :timer.sleep(@vote_collection_timeout)
+
+      wait_for_votes(block, voting_round, intervals - 1)
+    end
+  end
+
+  def can_count_votes_early?(block, voting_round) do
+    length(get_valid_votes_for_block_and_round(block, voting_round)) >=
+      @early_vote_counting_threshold
   end
 
   def consensus_reached?(block, voting_round) do
-    valid_votes =
-      block
-      |> Mining.list_votes_for_round(voting_round)
-      |> get_valid_votes()
+    valid_votes = get_valid_votes_for_block_and_round(block, voting_round)
 
     winner_block =
       if length(valid_votes) >= @quorum_size do
@@ -107,6 +116,12 @@ defmodule CredoCoreNode.Mining.VoteManager do
 
       %{hash: vote.block_hash, count: count}
     end)
+  end
+
+  def get_valid_votes_for_block_and_round(block, voting_round) do
+    block
+    |> Mining.list_votes_for_round(voting_round)
+    |> get_valid_votes()
   end
 
   def get_valid_votes(votes) do

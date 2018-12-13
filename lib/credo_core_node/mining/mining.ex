@@ -14,6 +14,7 @@ defmodule CredoCoreNode.Mining do
   @default_nonce 0
   @default_tx_fee 1.0
   @min_stake_size 10000
+  @vote_waiting_intervals 50
 
   def default_nonce, do: @default_nonce
   def default_tx_fee, do: @default_tx_fee
@@ -164,7 +165,7 @@ defmodule CredoCoreNode.Mining do
 
     unless VoteManager.already_voted?(block, voting_round) do
       VoteManager.cast_vote(block, voting_round)
-      VoteManager.wait_for_votes()
+      VoteManager.wait_for_votes(block, voting_round, @vote_waiting_intervals)
     end
 
     VoteManager.consensus_reached?(block, voting_round)
