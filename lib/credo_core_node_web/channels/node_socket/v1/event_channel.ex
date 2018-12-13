@@ -6,6 +6,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
   import CredoCoreNodeWeb.NodeSocket.V1.EventHandler
 
   alias CredoCoreNode.Blockchain
+  alias CredoCoreNode.Blockchain.BlockFragment
 
   def join("events:all", _message, socket) do
     {:ok, socket}
@@ -16,12 +17,25 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
         %{"hash" => hash, "body_fragment" => nil},
         socket
       ) do
-    frg = Blockchain.get_block_fragment(hash)
+    Logger.info("Received empty (final) body fragment for block #{hash}")
 
-    hash
-    |> Blockchain.get_block()
-    |> Map.put(:body, frg.body)
-    |> Blockchain.write_block()
+    frg = Blockchain.get_block_fragment(hash) || %BlockFragment{hash: hash, body: ""}
+
+    case Base.decode64(frg.body) do
+      {:ok, ""} ->
+        Logger.warn("Empty body for block #{hash} received, ignoring")
+
+      {:ok, body} ->
+        Logger.info("Body for block #{hash} decoded, writing block")
+
+        hash
+        |> Blockchain.get_block()
+        |> Map.put(:body, body)
+        |> Blockchain.write_block()
+
+      _ ->
+        Logger.warn("Uprocessable body for block #{hash} received, ignoring")
+    end
 
     Blockchain.delete_block_fragment(frg)
 
@@ -33,8 +47,9 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
         %{"hash" => hash, "body_fragment" => body_fragment},
         socket
       ) do
-    Logger.info("Received block body fragment for: #{hash}")
-    frg = Blockchain.get_block_fragment(hash)
+    Logger.info("Received body fragment for block #{hash}")
+
+    frg = Blockchain.get_block_fragment(hash) || %BlockFragment{hash: hash, body: ""}
     Blockchain.write_block_fragment(%{frg | body: frg.body <> body_fragment})
 
     {:noreply, socket}

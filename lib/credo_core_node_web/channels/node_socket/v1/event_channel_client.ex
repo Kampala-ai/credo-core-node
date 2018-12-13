@@ -17,11 +17,22 @@ Enum.each(0..(CredoCoreNode.Network.active_connections_limit(:outgoing) - 1), fn
            %{body: body} = Blockchain.load_block_body(blk) do
         Logger.info("Sending block body in chunks...")
 
-        body
-        |> StreamHelper.stream_binary(4096)
-        |> Enum.each(& push("blocks:body_fragment_transfer", %{hash: hash, body_fragment: &1}))
+        # HACK: `phoenix_channel_client` doesn't allow to push messages directly from handlers,
+        #   using a separate process for that
+        module = __MODULE__
 
-        push("blocks:body_fragment_transfer", %{hash: hash, body_fragment: nil})
+        spawn(fn ->
+          body
+          |> Base.encode64()
+          |> StreamHelper.stream_binary(4096)
+          |> Enum.each(
+            &module.push("blocks:body_fragment_transfer", %{hash: hash, body_fragment: &1})
+          )
+
+          module.push("blocks:body_fragment_transfer", %{hash: hash, body_fragment: nil})
+
+          Logger.info("Finished sending block body")
+        end)
       end
 
       {:noreply, state}

@@ -288,11 +288,10 @@ defmodule CredoCoreNode.Blockchain do
   end
 
   def fetch_block_body(block, ip, :incoming) do
-    write_block_fragment(hash: block.hash, body: "")
     Endpoint.broadcast!(
       "node_socket:#{Network.get_connection(ip).session_id}",
       "blocks:body_request",
-      %{hash: block.hash, session_id: Endpoint.config(:session_id)}
+      %{hash: block.hash}
     )
   end
 
