@@ -40,7 +40,7 @@ defmodule CredoCoreNode.Workers.GarbageCollector do
   end
 
   defp collect_pending_transaction_garbage do
-    Enum.each(recent_finalized_blocks(), fn block ->
+    Enum.each(recent_irreversible_blocks(), fn block ->
       Enum.each(Blockchain.list_transactions(block), fn transaction ->
         case Pool.get_pending_transaction(transaction.hash) do
           nil ->
@@ -53,7 +53,7 @@ defmodule CredoCoreNode.Workers.GarbageCollector do
     end)
   end
 
-  defp recent_finalized_blocks do
+  defp recent_irreversible_blocks do
     Enum.filter(
       Blockchain.list_blocks(),
       &(&1.number < Blockchain.last_irreversible_block_number() &&

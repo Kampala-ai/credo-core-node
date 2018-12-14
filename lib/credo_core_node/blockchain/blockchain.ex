@@ -53,6 +53,17 @@ defmodule CredoCoreNode.Blockchain do
     end
   end
 
+  def sum_transaction_values(%Block{} = block) do
+    block
+    |> list_transactions()
+    |> sum_transaction_values()
+  end
+
+  def sum_transaction_values(txs) do
+    fees = for %{value: value} <- txs, do: D.new(value)
+    Enum.reduce(fees, fn x, acc -> D.add(x, acc) end)
+  end
+
   @doc """
   Gets a single transaction.
   """
