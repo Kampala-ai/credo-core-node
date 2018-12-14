@@ -50,8 +50,12 @@ defmodule CredoCoreNode.Mining.Deposit do
     D.cmp(tx.value, D.new(Mining.min_stake_size())) != :lt
   end
 
+  def parse_timelock(tx) do
+    Poison.decode!(tx.data)["timelock"]
+  end
+
   def validate_deposit_timelock(tx) do
-    timelock = Poison.decode!(tx.data)["timelock"]
+    timelock = parse_timelock(tx)
 
     # use emtpy string for default timelock
     String.length(timelock) == 0 || (timelock >= @min_timelock && timelock <= @max_timelock)
@@ -73,6 +77,7 @@ defmodule CredoCoreNode.Mining.Deposit do
           address: deposit.to,
           stake_amount: deposit.value,
           participation_rate: 1,
+          timelock: parse_timelock(deposit),
           is_self: Poison.decode!(deposit.data)["node_ip"] == Network.get_current_ip()
         })
       end
