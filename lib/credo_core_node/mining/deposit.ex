@@ -1,4 +1,8 @@
 defmodule CredoCoreNode.Mining.Deposit do
+  use Mnesia.Schema,
+    table_name: :deposits,
+    fields: [:tx_hash, :miner_address, :amount, :timelock]
+
   alias CredoCoreNode.{Blockchain, Network, Pool, Mining}
 
   alias Decimal, as: D
@@ -81,6 +85,13 @@ defmodule CredoCoreNode.Mining.Deposit do
           is_self: Poison.decode!(deposit.data)["node_ip"] == Network.get_current_ip()
         })
       end
+
+      Mining.write_deposit(%{
+        tx_hash: deposit.hash,
+        miner_address: deposit.to,
+        amount: deposit.value,
+        timelock: parse_timelock(deposit)
+      })
     end)
   end
 end

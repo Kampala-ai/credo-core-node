@@ -35,10 +35,10 @@ defmodule CredoCoreNode.Mining.DepositWithdrawal do
     deposit_withdrawal.value <= miner.stake_amount
   end
 
-  def timelock_is_block_height(timelock),
+  def timelock_is_block_height?(timelock),
     do: timelock > 0 && timelock < @max_timelock_block_height
 
-  def withdrawal_is_before_timelock(block, timelock) do
+  def withdrawal_is_before_timelock?(block, timelock) do
     if timelock_is_block_height(timelock) do
       block.number >= timelock
     else

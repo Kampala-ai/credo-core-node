@@ -3,6 +3,7 @@ defmodule CredoCoreNode.Mining do
   The Mining context.
   """
 
+  alias CredoCoreNode.Accounts
   alias CredoCoreNode.Blockchain.{BlockProducer, BlockValidator}
   alias CredoCoreNode.Mining.{Deposit, Miner, Slash, Vote, VoteManager}
   alias CredoCoreNode.Pool
@@ -35,6 +36,16 @@ defmodule CredoCoreNode.Mining do
     list_miners()
     |> Enum.filter(& &1.is_self)
     |> List.first()
+  end
+
+  def withdrawable_deposit_value(miner, block) do
+    list_deposits()
+    |> Enum.filter(&(&1.miner_address == miner.address))
+    |> Enum.filter(&deposit_is_withdrawable?(&1, block))
+    |> Enum.reduce(fn deposit, acc ->
+      D.add(deposit.value, acc)
+    end)
+    |> Decimal.min(Accounts.get_account_balance(miner.address))
   end
 
   @doc """
@@ -144,6 +155,42 @@ defmodule CredoCoreNode.Mining do
   """
   def delete_slash(%Slash{} = slash) do
     Repo.delete(slash)
+  end
+
+  @doc """
+  Returns the list of deposits.
+  """
+  def list_deposits() do
+    Repo.list(Deposit)
+  end
+
+  @doc """
+  Gets a single deposit.
+  """
+  def get_deposit(hash) do
+    Repo.get(Deposit, hash)
+  end
+
+  def deposit_is_withdrawable?(deposit, block) do
+    if DepositWithdrawal.timelock_is_block_height?(deposit.timelock) do
+      block.number >= timelock
+    else
+      DateTime.compare(DateTime.utc_now(), DateTime.from_unix!(deposit.timelock)) != :lt
+    end
+  end
+
+  @doc """
+  Creates/updates a deposit.
+  """
+  def write_deposit(attrs) do
+    Repo.write(Deposit, attrs)
+  end
+
+  @doc """
+  Deletes a deposit.
+  """
+  def delete_deposit(%Deposit{} = deposit) do
+    Repo.delete(deposit)
   end
 
   def start_mining(block, retry_count \\ 0) do
