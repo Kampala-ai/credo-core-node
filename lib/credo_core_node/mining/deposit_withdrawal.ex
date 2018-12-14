@@ -17,20 +17,26 @@ defmodule CredoCoreNode.Mining.DepositWithdrawal do
   end
 
   def is_deposit_withdrawal(tx) do
-    Pool.get_transaction_from_address(tx)
-    |> Mining.get_miner()
+    tx
+    |> get_miner_for_deposit_withdrawal()
     |> is_nil
     |> Kernel.not()
   end
 
-  def get_invalid_deposit_withdrawals(deposit_withdrawals, block) do
-    deposit_withdrawals
-    |> Enum.filter(
-      &(!validate_deposit_withdrawal_amount(&1, Mining.get_miner(&1.address), block))
-    )
+  def get_miner_for_deposit_withdrawal(deposit_withdrawal) do
+    deposit_withdrawal
+    |> Pool.get_transaction_from_address()
+    |> Mining.get_miner()
   end
 
-  def validate_deposit_withdrawal_amount(deposit_withdrawal, miner, block) do
+  def get_invalid_deposit_withdrawals(deposit_withdrawals, block) do
+    deposit_withdrawals
+    |> Enum.filter(&(!validate_deposit_withdrawal_amount(&1, block)))
+  end
+
+  def validate_deposit_withdrawal_amount(deposit_withdrawal, block) do
+    miner = get_miner_for_deposit_withdrawal(deposit_withdrawal)
+
     D.cmp(deposit_withdrawal.value, Mining.withdrawable_deposit_value(miner, block)) != :gt
   end
 end
