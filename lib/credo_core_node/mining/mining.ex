@@ -16,6 +16,7 @@ defmodule CredoCoreNode.Mining do
   @default_tx_fee 1.0
   @min_stake_size 10000
   @vote_waiting_intervals 50
+  @max_timelock_block_height 500_000_000
 
   def default_nonce, do: @default_nonce
   def default_tx_fee, do: @default_tx_fee
@@ -41,7 +42,7 @@ defmodule CredoCoreNode.Mining do
   def withdrawable_deposit_value(miner, block) do
     list_deposits()
     |> Enum.filter(&(&1.miner_address == miner.address))
-    |> Enum.filter(&deposit_is_withdrawable?(&1, block))
+    |> Enum.filter(&timelock_has_expired?(&1, block))
     |> Enum.reduce(fn deposit, acc ->
       D.add(deposit.value, acc)
     end)
@@ -171,11 +172,14 @@ defmodule CredoCoreNode.Mining do
     Repo.get(Deposit, hash)
   end
 
-  def deposit_is_withdrawable?(deposit, block) do
-    if DepositWithdrawal.timelock_is_block_height?(deposit.timelock) do
+  def timelock_is_block_height?(timelock),
+    do: timelock > 0 && timelock < @max_timelock_block_height
+
+  def timelock_has_expired?(timelock, block) do
+    if timelock_is_block_height?(timelock) do
       block.number >= timelock
     else
-      DateTime.compare(DateTime.utc_now(), DateTime.from_unix!(deposit.timelock)) != :lt
+      DateTime.compare(DateTime.utc_now(), DateTime.from_unix!(timelock)) != :lt
     end
   end
 
