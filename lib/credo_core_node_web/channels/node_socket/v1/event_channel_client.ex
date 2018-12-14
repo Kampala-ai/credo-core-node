@@ -8,6 +8,7 @@ Enum.each(0..(CredoCoreNode.Network.active_connections_limit(:outgoing) - 1), fn
 
     alias CredoCoreNode.Network
     alias CredoCoreNode.Blockchain
+    alias CredoCoreNode.Pool
 
     def handle_in("blocks:body_request", %{"hash" => hash}, state) do
       Logger.info("Received block body request: #{hash}")
@@ -32,6 +33,35 @@ Enum.each(0..(CredoCoreNode.Network.active_connections_limit(:outgoing) - 1), fn
           module.push("blocks:body_fragment_transfer", %{hash: hash, body_fragment: nil})
 
           Logger.info("Finished sending block body")
+        end)
+      end
+
+      {:noreply, state}
+    end
+
+    def handle_in("pending_blocks:body_request", %{"hash" => hash}, state) do
+      Logger.info("Received pending block body request: #{hash}")
+
+      with blk = Pool.get_pending_block(hash),
+           Pool.pending_block_body_fetched?(blk),
+           %{body: body} = Pool.load_pending_block_body(blk) do
+        Logger.info("Sending pending block body in chunks...")
+
+        # HACK: `phoenix_channel_client` doesn't allow to push messages directly from handlers,
+        #   using a separate process for that
+        module = __MODULE__
+
+        spawn(fn ->
+          body
+          |> Base.encode64()
+          |> StreamHelper.stream_binary(4096)
+          |> Enum.each(
+            &module.push("pending_blocks:body_fragment_transfer", %{hash: hash, body_fragment: &1})
+          )
+
+          module.push("pending_blocks:body_fragment_transfer", %{hash: hash, body_fragment: nil})
+
+          Logger.info("Finished sending pending block body")
         end)
       end
 

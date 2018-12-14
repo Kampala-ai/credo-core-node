@@ -34,14 +34,15 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventHandler do
 
     Logger.info("Received pending block: #{inspect(blk)}")
 
-    if !Pool.get_pending_block(hash) && !already_processed?(session_ids) do
-      Logger.info("Writing pending block and propagating further...")
-      Pool.write_pending_block(blk)
+    connection =
+      Network.list_connections()
+      |> Enum.find(& &1.session_id == List.last(session_ids))
 
-      case Pool.fetch_pending_block_body(blk) do
-        {:ok, _} -> Pool.propagate_pending_block(blk, session_ids: session_ids)
-        _ -> nil
-      end
+    if !Pool.get_pending_block(hash) && !already_processed?(session_ids) && connection do
+      Logger.info("Writing pending block and fetching body...")
+
+      Pool.write_pending_block(blk)
+      Pool.fetch_pending_block_body(blk, connection.ip)
     end
 
     {:noreply, state}

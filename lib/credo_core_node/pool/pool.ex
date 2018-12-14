@@ -4,8 +4,9 @@ defmodule CredoCoreNode.Pool do
   """
 
   alias CredoCoreNode.{Accounts, Blockchain, Network}
-  alias CredoCoreNode.Pool.{PendingBlock, PendingTransaction}
+  alias CredoCoreNode.Pool.{PendingBlock, PendingBlockFragment, PendingTransaction}
   alias CredoCoreNode.Blockchain.Block
+  alias CredoCoreNodeWeb.Endpoint
   alias MerklePatriciaTree.Trie
 
   alias Decimal, as: D
@@ -105,6 +106,34 @@ defmodule CredoCoreNode.Pool do
     |> Enum.sort(&(&1.fee > &2.fee))
     |> Enum.filter(&(is_tx_valid?(&1)))
     |> Enum.take(2000)
+  end
+
+  @doc """
+  Returns the list of pending_block_fragments.
+  """
+  def list_pending_block_fragments() do
+    Mnesia.Repo.list(PendingBlockFragment)
+  end
+
+  @doc """
+  Gets a single pending_block_fragment.
+  """
+  def get_pending_block_fragment(hash) do
+    Mnesia.Repo.get(PendingBlockFragment, hash)
+  end
+
+  @doc """
+  Creates/updates a pending_block_fragment.
+  """
+  def write_pending_block_fragment(attrs) do
+    Mnesia.Repo.write(PendingBlockFragment, attrs)
+  end
+
+  @doc """
+  Deletes a pending_block_fragment.
+  """
+  def delete_pending_block_fragment(%PendingBlockFragment{} = pending_block_fragment) do
+    Mnesia.Repo.delete(pending_block_fragment)
   end
 
   @doc """
@@ -225,30 +254,27 @@ defmodule CredoCoreNode.Pool do
     {:ok, %PendingBlock{pending_block | hash: RLP.Hash.hex(pending_block)}}
   end
 
-  def fetch_pending_block_body(block) do
-    Network.list_connections()
-    |> Enum.filter(& &1.is_active)
-    |> Enum.each(fn connection ->
-      unless pending_block_body_fetched?(block), do: fetch_pending_block_body(block, connection.ip)
-    end)
+  def fetch_pending_block_body(pending_block, ip),
+    do: fetch_pending_block_body(pending_block, ip, Network.connection_type(ip))
 
-    if pending_block_body_fetched?(block) do
-      {:ok, block}
-    else
-      {:error, :unknown}
-    end
-  end
-
-  def fetch_pending_block_body(block, ip) do
-    url = "#{Network.api_url(ip)}/pending_block_bodies/#{block.hash}"
+  def fetch_pending_block_body(pending_block, ip, :outgoing) do
+    url = "#{Network.api_url(ip)}/pending_block_bodies/#{pending_block.hash}"
     headers = Network.node_request_headers(:rlp)
 
     case :hackney.request(:get, url, headers, "", [:with_body, pool: false]) do
-      {:ok, 200, _headers, body} -> write_pending_block(%{block | body: body})
-      {:ok, 204, _headers, _body} -> {:error, :no_content}
-      {:ok, 404, _headers, _body} -> {:error, :not_found}
-      _ -> {:error, :unknown}
+      {:ok, 200, _headers, body} ->
+        write_pending_block(%{pending_block | body: body})
+        propagate_pending_block(pending_block)
+      _ -> nil
     end
+  end
+
+  def fetch_pending_block_body(pending_block, ip, :incoming) do
+    Endpoint.broadcast!(
+      "node_socket:#{Network.get_connection(ip).session_id}",
+      "pending_blocks:body_request",
+      %{hash: pending_block.hash}
+    )
   end
 
   def propagate_pending_block(block, options \\ []) do
