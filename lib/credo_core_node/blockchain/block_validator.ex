@@ -2,9 +2,14 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.{Blockchain, Pool, Mining}
   alias CredoCoreNode.Mining.{Coinbase, DepositWithdrawal}
 
+  alias Decimal, as: D
+
   @min_txs_per_block 1
   @max_txs_per_block 250
   @max_data_length 50000
+  @max_value_transfer_per_tx D.new(1_000_000)
+  @max_value_transfer_per_block D.new(10_000_000)
+  @max_value_transfer_per_block_chain_segment D.new(50_000_000)
 
   def validate_block(block) do
     is_valid =
@@ -12,7 +17,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
         validate_transaction_data_length(block) && validate_transaction_amounts(block) &&
         validate_transaction_are_unmined(block) && validate_deposit_withdrawals(block) &&
         validate_block_irreversibility(block) && validate_coinbase_transaction(block) &&
-        validate_network_consensus(block)
+        validate_value_transfer_limits(block) && validate_network_consensus(block)
 
     if is_valid do
       {:ok, block}
@@ -88,6 +93,19 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     coinbase_txs = Coinbase.get_coinbase_txs(block)
 
     length(coinbase_txs) == 1 && Coinbase.tx_fee_sums_match(block, coinbase_txs)
+  end
+
+  def validate_value_transfer_limits(block) do
+    validate_per_tx_value_transfer_limits(block)
+  end
+
+  def validate_per_tx_value_transfer_limits(block) do
+    res =
+      Enum.map(Pool.list_pending_transactions(block), fn tx ->
+        D.cmp(tx.value, @max_value_transfer_per_tx) != :gt
+      end)
+
+    Enum.reduce(res, true, &(&1 && &2))
   end
 
   def validate_network_consensus(block) do
