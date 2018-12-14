@@ -44,6 +44,12 @@ defmodule CredoCoreNode.Pool do
     Enum.reduce(fees, fn x, acc -> D.add(x, acc) end)
   end
 
+  def sum_pending_transaction_values(%PendingBlock{} = block) do
+    block
+    |> list_pending_transactions()
+    |> sum_pending_transaction_values()
+  end
+
   def sum_pending_transaction_values(txs) do
     fees = for %{value: value} <- txs, do: D.new(value)
     Enum.reduce(fees, fn x, acc -> D.add(x, acc) end)

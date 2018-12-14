@@ -10,6 +10,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   @max_value_transfer_per_tx D.new(1_000_000)
   @max_value_transfer_per_block D.new(10_000_000)
   @max_value_transfer_per_block_chain_segment D.new(50_000_000)
+  @block_chain_segment_length 12
 
   def validate_block(block) do
     is_valid =
@@ -98,7 +99,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   def validate_value_transfer_limits(block) do
     txs = Pool.list_pending_transactions(block)
 
-    validate_per_tx_value_transfer_limits(block) && validate_per_block_value_transfer_limits(txs)
+    validate_per_tx_value_transfer_limits(txs) && validate_per_block_value_transfer_limits(txs)
   end
 
   def validate_per_tx_value_transfer_limits(txs) do
@@ -112,6 +113,17 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
   def validate_per_block_value_transfer_limits(txs) do
     D.cmp(Pool.sum_pending_transaction_values(txs), @max_value_transfer_per_block) != :gt
+  end
+
+  def validate_per_block_chain_segment_value_transfer_limits(block) do
+    pending_block_value = Pool.sum_pending_transaction_values(block)
+
+    Blockchain.list_preceding_blocks(block)
+    |> Enum.take(@block_chain_segment_length)
+    |> Enum.reduce(pending_block_value, fn b, acc ->
+      D.add(Blockchain.sum_transaction_values(b), acc)
+    end)
+    |> D.cmp(@max_value_transfer_per_block_chain_segment) != :gt
   end
 
   def validate_network_consensus(block) do
