@@ -254,25 +254,6 @@ defmodule CredoCoreNode.Blockchain do
     Mnesia.Repo.delete(block)
   end
 
-  # TODO: obsolete method which shouldn't be used currently (still used in `BlockSyncer`).
-  #   Fetching bodies from incoming connections occurs asynchronously which means that
-  #   `block_body_fetched?` will return false while syncing is in process, hence
-  #   the method will send more requests than needed which will result in receiving
-  #   more block bodies (i.e. huge and unnecessary traffic)
-  def fetch_block_body(block) do
-    Network.list_connections()
-    |> Enum.filter(& &1.is_active)
-    |> Enum.each(fn connection ->
-      unless block_body_fetched?(block), do: fetch_block_body(block, connection.ip)
-    end)
-
-    if block_body_fetched?(block) do
-      {:ok, block}
-    else
-      {:error, :unknown}
-    end
-  end
-
   def fetch_block_body(block, ip), do: fetch_block_body(block, ip, Network.connection_type(ip))
 
   def fetch_block_body(block, ip, :outgoing) do
