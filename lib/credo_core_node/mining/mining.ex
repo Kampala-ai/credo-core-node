@@ -10,6 +10,8 @@ defmodule CredoCoreNode.Mining do
 
   alias Mnesia.Repo
 
+  alias Decimal, as: D
+
   require Logger
 
   @default_nonce 0

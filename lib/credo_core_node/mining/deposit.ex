@@ -65,26 +65,35 @@ defmodule CredoCoreNode.Mining.Deposit do
     String.length(timelock) == 0 || (timelock >= @min_timelock && timelock <= @max_timelock)
   end
 
-  def miner_already_exists?(deposit) do
+  def get_miner_for_deposit(deposit) do
     deposit
     |> Pool.get_transaction_from_address()
     |> Mining.get_miner()
+  end
+
+  def miner_already_exists?(deposit) do
+    deposit
+    |> get_miner_for_deposit()
     |> is_nil
     |> Kernel.not()
   end
 
   def recognize_deposits(deposits) do
     Enum.each(deposits, fn deposit ->
-      unless miner_already_exists?(deposit) do
-        Mining.write_miner(%{
-          ip: Poison.decode!(deposit.data)["node_ip"],
-          address: deposit.to,
-          stake_amount: deposit.value,
-          participation_rate: 1,
-          timelock: parse_timelock(deposit),
-          is_self: Poison.decode!(deposit.data)["node_ip"] == Network.get_current_ip()
-        })
+      case get_miner_for_deposit(deposit) do
+        nil ->
+          %{
+            ip: Poison.decode!(deposit.data)["node_ip"],
+            address: deposit.to,
+            stake_amount: deposit.value,
+            participation_rate: 1,
+            is_self: Poison.decode!(deposit.data)["node_ip"] == Network.get_current_ip()
+          }
+
+        miner ->
+          %{miner | stake_amount: Decimal.add(miner.stake_amount, deposit.value)}
       end
+      |> CredoCoreNode.Mining.write_miner()
 
       Mining.write_deposit(%{
         tx_hash: deposit.hash,
