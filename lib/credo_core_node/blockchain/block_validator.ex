@@ -96,16 +96,22 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   def validate_value_transfer_limits(block) do
-    validate_per_tx_value_transfer_limits(block)
+    txs = Pool.list_pending_transactions(block)
+
+    validate_per_tx_value_transfer_limits(block) && validate_per_block_value_transfer_limits(txs)
   end
 
-  def validate_per_tx_value_transfer_limits(block) do
+  def validate_per_tx_value_transfer_limits(txs) do
     res =
-      Enum.map(Pool.list_pending_transactions(block), fn tx ->
+      Enum.map(txs, fn tx ->
         D.cmp(tx.value, @max_value_transfer_per_tx) != :gt
       end)
 
     Enum.reduce(res, true, &(&1 && &2))
+  end
+
+  def validate_per_block_value_transfer_limits(txs) do
+    D.cmp(Pool.sum_pending_transaction_values(txs), @max_value_transfer_per_block) != :gt
   end
 
   def validate_network_consensus(block) do
