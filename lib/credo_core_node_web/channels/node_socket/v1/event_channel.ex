@@ -5,6 +5,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
 
   import CredoCoreNodeWeb.NodeSocket.V1.EventHandler
 
+  alias CredoCoreNode.Network
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Blockchain.BlockFragment
   alias CredoCoreNode.Pool
@@ -96,6 +97,18 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
 
     frg = Pool.get_pending_block_fragment(hash) || %PendingBlockFragment{hash: hash, body: ""}
     Pool.write_pending_block_fragment(%{frg | body: frg.body <> body_fragment})
+
+    {:noreply, socket}
+  end
+
+  def handle_in(
+        "known_nodes:list_fragment_transfer",
+        %{"list_fragment" => list_fragment},
+        socket
+      ) do
+    Logger.info("Received known nodes list fragment")
+
+    Network.merge_known_nodes(list_fragment)
 
     {:noreply, socket}
   end

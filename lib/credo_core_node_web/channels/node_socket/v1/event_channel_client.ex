@@ -68,6 +68,26 @@ Enum.each(0..(CredoCoreNode.Network.active_connections_limit(:outgoing) - 1), fn
       {:noreply, state}
     end
 
+    def handle_in("known_nodes:list_request", _params, state) do
+      Logger.info("Received known nodes list request")
+
+      known_nodes = Network.list_known_nodes()
+
+      # HACK: `phoenix_channel_client` doesn't allow to push messages directly from handlers,
+      #   using a separate process for that
+      module = __MODULE__
+
+      spawn(fn ->
+        known_nodes
+        |> Enum.chunk_every(25)
+        |> Enum.each(
+          &module.push("known_nodes:list_fragment_transfer", %{list_fragment: &1})
+        )
+      end)
+
+      {:noreply, state}
+    end
+
     def handle_close(_reason, state) do
       "Elixir.CredoCoreNodeWeb.NodeSocket.V1.EventChannelClient" <> id =
         Atom.to_string(__MODULE__)

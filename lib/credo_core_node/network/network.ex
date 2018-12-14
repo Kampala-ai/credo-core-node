@@ -145,6 +145,18 @@ defmodule CredoCoreNode.Network do
     Enum.each(seed_node_ips(), &write_known_node(ip: &1, is_seed: true))
   end
 
+
+  @doc """
+  Merges given known_nodes list into the local list
+  """
+  def merge_known_nodes(known_nodes) do
+    Enum.each(known_nodes, fn known_node ->
+      unless get_known_node(known_node["ip"]) do
+        write_known_node(ip: known_node["ip"], is_seed: false)
+      end
+    end)
+  end
+
   @doc """
   Retrieves the list of known_nodes from the given IP and merges into the local list
   """
@@ -158,13 +170,10 @@ defmodule CredoCoreNode.Network do
 
     case :hackney.request(:get, url, node_request_headers(), "", [:with_body, pool: false]) do
       {:ok, 200, _headers, body} ->
-        known_nodes = Poison.decode!(body)["data"]
-
-        Enum.each(known_nodes, fn known_node ->
-          unless get_known_node(known_node["ip"]) do
-            write_known_node(ip: known_node["ip"], is_seed: false)
-          end
-        end)
+        body
+        |> Poison.decode!()
+        |> Map.get("data")
+        |> merge_known_nodes()
 
       _ ->
         write_connection(ip: ip, is_active: false)
@@ -175,7 +184,6 @@ defmodule CredoCoreNode.Network do
   Retrieves the list of known_nodes from the given IP and merges into the local list
   """
   def retrieve_known_nodes(ip, :incoming) do
-    # TODO: handler for this request is not implemented yet
     Endpoint.broadcast!(
       "node_socket:#{get_connection(ip).session_id}",
       "known_nodes:list_request",
