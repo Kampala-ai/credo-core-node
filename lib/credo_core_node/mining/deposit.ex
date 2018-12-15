@@ -87,6 +87,7 @@ defmodule CredoCoreNode.Mining.Deposit do
             address: deposit.to,
             stake_amount: deposit.value,
             participation_rate: 1,
+            inserted_at: DateTime.utc_now(),
             is_self: Poison.decode!(deposit.data)["node_ip"] == Network.get_current_ip()
           }
 
