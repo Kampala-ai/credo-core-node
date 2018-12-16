@@ -3,10 +3,12 @@ defmodule CredoCoreNode.PoolTest do
 
   alias CredoCoreNode.Pool
 
+  alias Decimal, as: D
+
   describe "pending_transactions" do
     @describetag table_name: :pending_transactions
     @private_key :crypto.strong_rand_bytes(32)
-    @attrs [nonce: 0, to: "abc", value: 1, fee: 1, data: ""]
+    @attrs [nonce: 0, to: "ABC", value: D.new(1), fee: D.new(1), data: ""]
 
     def pending_transaction_fixture(private_key \\ @private_key, attrs \\ @attrs) do
       {:ok, pending_transaction} =
