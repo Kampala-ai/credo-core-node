@@ -5,10 +5,12 @@ defmodule CredoCoreNode.MiningTest do
 
   describe "deposits" do
     @describetag table_name: :deposits
-    @attrs [tx_hash: "F2039CE37BDAAAD848BC8BF1B85560C7F05D7BD90DA89A90A61DF1AD001235BD",
+    @attrs [
+      tx_hash: "F2039CE37BDAAAD848BC8BF1B85560C7F05D7BD90DA89A90A61DF1AD001235BD",
       miner_address: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340",
       amount: Decimal.new(100),
-      timelock: 25_000]
+      timelock: 25_000
+    ]
 
     def deposit_fixture(attrs \\ @attrs) do
       {:ok, deposit} =
@@ -42,12 +44,14 @@ defmodule CredoCoreNode.MiningTest do
 
   describe "miners" do
     @describetag table_name: :miners
-    @attrs [address: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340",
+    @attrs [
+      address: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340",
       inserted_at: DateTime.utc_now(),
       ip: "10.0.1.4",
       is_self: true,
       participation_rate: 0.729999999999964,
-      stake_amount: Decimal.new(10004)]
+      stake_amount: Decimal.new(10004)
+    ]
 
     def miner_fixture(attrs \\ @attrs) do
       {:ok, miner} =
@@ -81,9 +85,11 @@ defmodule CredoCoreNode.MiningTest do
 
   describe "slashes" do
     @describetag table_name: :slashes
-    @attrs [tx_hash: "E088372C04686D74B851F6D8D12F926569C4DB477E968E2FB84BB74FADBCA28E",
+    @attrs [
+      tx_hash: "E088372C04686D74B851F6D8D12F926569C4DB477E968E2FB84BB74FADBCA28E",
       target_miner_address: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340",
-      infraction_block_number: 51]
+      infraction_block_number: 51
+    ]
 
     def slash_fixture(attrs \\ @attrs) do
       {:ok, slash} =
@@ -117,14 +123,16 @@ defmodule CredoCoreNode.MiningTest do
 
   describe "votes" do
     @describetag table_name: :votes
-    @attrs [block_hash: "3DBAE5255E9172A5B8FD0ACE8AEC70D9F378AA85095B8F6959A92941BDA0EFBB",
+    @attrs [
+      block_hash: "3DBAE5255E9172A5B8FD0ACE8AEC70D9F378AA85095B8F6959A92941BDA0EFBB",
       block_number: 42,
       hash: "C28E460947E9F14426E05648838ABE34B75288C720B72C2611FA52513D2E7B99",
       miner_address: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340",
       r: "D30EE21F929E564A6A675BC40F29D22B54C1C1FAC5C001702B34D077D4C897A7",
       s: "4ACBEAA13DEE5CE3E34C4789FC58531C50D24BA9CD4B9B7B9DB14695E3889390",
       v: 1,
-      voting_round: 52]
+      voting_round: 52
+    ]
 
     def vote_fixture(attrs \\ @attrs) do
       {:ok, vote} =
