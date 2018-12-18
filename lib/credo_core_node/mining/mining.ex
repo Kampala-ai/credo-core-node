@@ -44,9 +44,9 @@ defmodule CredoCoreNode.Mining do
   def withdrawable_deposit_value(miner, block) do
     list_deposits()
     |> Enum.filter(&(&1.miner_address == miner.address))
-    |> Enum.filter(&timelock_has_expired?(&1, block))
-    |> Enum.reduce(fn deposit, acc ->
-      D.add(deposit.value, acc)
+    |> Enum.filter(&timelock_has_expired?(&1.timelock, block))
+    |> Enum.reduce(D.new(0), fn deposit, acc ->
+      D.add(deposit.amount, acc)
     end)
     |> Decimal.min(Accounts.get_account_balance(miner.address))
   end
@@ -176,6 +176,8 @@ defmodule CredoCoreNode.Mining do
 
   def timelock_is_block_height?(timelock),
     do: timelock > 0 && timelock < @max_timelock_block_height
+
+  def timelock_has_expired?(timelock, block) when is_bitstring(timelock), do: true
 
   def timelock_has_expired?(timelock, block) do
     if timelock_is_block_height?(timelock) do

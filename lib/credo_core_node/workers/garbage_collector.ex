@@ -33,13 +33,13 @@ defmodule CredoCoreNode.Workers.GarbageCollector do
     {:noreply, interval}
   end
 
-  defp collect_pending_block_garbage do
+  def collect_pending_block_garbage do
     Pool.list_pending_blocks()
     |> Enum.filter(&(&1.number < Blockchain.last_irreversible_block_number()))
     |> Enum.each(fn block -> Pool.delete_pending_block(block) end)
   end
 
-  defp collect_pending_transaction_garbage do
+  def collect_pending_transaction_garbage do
     Enum.each(recent_irreversible_blocks(), fn block ->
       Enum.each(Blockchain.list_transactions(block), fn transaction ->
         case Pool.get_pending_transaction(transaction.hash) do
