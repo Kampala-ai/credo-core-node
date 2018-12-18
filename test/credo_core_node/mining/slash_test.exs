@@ -16,7 +16,7 @@ defmodule CredoCoreNode.SlashTest do
       Mining.write_miner(%{
         address: account.address,
         ip: "1.1.1.1",
-        stake_amount: Decimal.new(1_000),
+        stake_amount: D.new(1_000),
         participation_rate: 1.0,
         inserted_at: DateTime.utc_now(),
         is_self: false

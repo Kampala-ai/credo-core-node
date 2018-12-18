@@ -3,12 +3,14 @@ defmodule CredoCoreNode.MiningTest do
 
   alias CredoCoreNode.Mining
 
+  alias Decimal, as: D
+
   describe "deposits" do
     @describetag table_name: :deposits
     @attrs [
       tx_hash: "F2039CE37BDAAAD848BC8BF1B85560C7F05D7BD90DA89A90A61DF1AD001235BD",
       miner_address: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340",
-      amount: Decimal.new(100),
+      amount: D.new(100),
       timelock: 25_000
     ]
 
@@ -50,7 +52,7 @@ defmodule CredoCoreNode.MiningTest do
       ip: "10.0.1.4",
       is_self: true,
       participation_rate: 0.729999999999964,
-      stake_amount: Decimal.new(10004)
+      stake_amount: D.new(10004)
     ]
 
     def miner_fixture(attrs \\ @attrs) do

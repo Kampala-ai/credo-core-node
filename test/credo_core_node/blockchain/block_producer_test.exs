@@ -14,14 +14,14 @@ defmodule CredoCoreNode.BlockProducerTest do
     def pending_transaction_fixture do
       %CredoCoreNode.Pool.PendingTransaction{
         data: "",
-        fee: Decimal.new(1.100000000000000000),
+        fee: D.new(1.100000000000000000),
         hash: "34F97321DDC0E56E67CC0AECE02053E64393390730AFDB6F63FB546CB7FA9B46",
         nonce: 0,
         r: "8DBF9628AB59AB7E28418B3D58EE696B744624041BF955075FDD3A2653173905",
         s: "7A4A73877604F44BC673D46CEF6E267283215FCF6CE7AF82C18BFEEBD8053468",
         to: "AF24738B406DB6387D05EB7CE1E90D420B25798F",
         v: 0,
-        value: Decimal.new(1_000_000)
+        value: D.new(1_000_000)
       }
       |> CredoCoreNode.Pool.write_pending_transaction()
       |> elem(1)
@@ -33,7 +33,7 @@ defmodule CredoCoreNode.BlockProducerTest do
       Mining.write_miner(%{
         address: account.address,
         ip: "1.1.1.1",
-        stake_amount: Decimal.new(1_000),
+        stake_amount: D.new(1_000),
         participation_rate: 1.0,
         inserted_at: DateTime.utc_now(),
         is_self: true
