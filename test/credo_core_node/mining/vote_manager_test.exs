@@ -104,5 +104,31 @@ defmodule CredoCoreNode.VoteManagerTest do
 
       assert winner == pending_block
     end
+
+    test "returns nil when no block hash has a supermajority vote votes" do
+      pending_block = pending_block_fixture()
+
+      tear_down_miners()
+
+      minerA = miner_fixture(2500)
+      minerB = miner_fixture(2500)
+      minerC = miner_fixture(5500)
+
+      blockHashA = pending_block.hash
+      blockHashB = "EBA692825740B1C2FE4F0AC106B32B6F41A2DA6B638CB7302C2C98F9B91C96A6"
+
+      votes = [
+        vote_fixture(minerA, blockHashA),
+        vote_fixture(minerB, blockHashA),
+        vote_fixture(minerC, blockHashB)
+      ]
+
+      winner =
+        votes
+        |> VoteManager.count_votes()
+        |> VoteManager.get_winner()
+
+      assert is_nil(winner)
+    end
   end
 end
