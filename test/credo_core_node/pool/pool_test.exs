@@ -137,4 +137,44 @@ defmodule CredoCoreNode.PoolTest do
       assert Pool.is_tx_unmined?(tx)
     end
   end
+
+  describe "validating that a transaction has a sufficient balance" do
+    @describetag table_name: :pending_transactions
+
+    test "is_tx_from_balance_sufficient?/1 returns true for a transaction from an account with enough credos" do
+      tx =
+        struct(
+          CredoCoreNode.Pool.PendingTransaction,
+          data: "",
+          fee: Decimal.new(1.100000000000000000),
+          hash: "34F97321DDC0E56E67CC0AECE02053E64393390730AFDB6F63FB546CB7FA9B46",
+          nonce: 0,
+          r: "8DBF9628AB59AB7E28418B3D58EE696B744624041BF955075FDD3A2653173905",
+          s: "7A4A73877604F44BC673D46CEF6E267283215FCF6CE7AF82C18BFEEBD8053468",
+          to: "AF24738B406DB6387D05EB7CE1E90D420B25798F",
+          v: 0,
+          value: Decimal.new(1000000)
+        )
+
+      assert Pool.is_tx_from_balance_sufficient?(tx)
+    end
+
+    test "is_tx_from_balance_sufficient?/1 returns false for a transaction from an account without enough credos" do
+      tx =
+        struct(
+          CredoCoreNode.Pool.PendingTransaction,
+          data: "",
+          fee: Decimal.new(1.1),
+          hash: "E0137BE996B287A9DD541E4DD5C5FC6270D65738D837F20CC33F199353E973FA",
+          nonce: 0,
+          r: "8E2BFD6A070E324C161CFB112B1AE657B84A9C67788AA3BBCD1121EE9B64CE3E",
+          s: "02DB5FB3A4582633C4EB0191FD1F1420EC388D460B3C37B6DB35C455ADC1FC63",
+          to: "A7A5DF6D79203F6E6F0FA9CD550366FC9067A350",
+          v: 0,
+          value: Decimal.new(500)
+        )
+
+      refute Pool.is_tx_from_balance_sufficient?(tx)
+    end
+  end
 end
