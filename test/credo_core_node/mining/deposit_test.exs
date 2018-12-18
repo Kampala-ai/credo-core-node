@@ -1,4 +1,4 @@
-defmodule CredoCoreNode.IpTest do
+defmodule CredoCoreNode.DepositTest do
   use CredoCoreNodeWeb.DataCase
 
   alias CredoCoreNode.{Accounts, Mining}
