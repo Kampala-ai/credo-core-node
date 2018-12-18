@@ -20,7 +20,9 @@ defmodule CredoCoreNode.Pool do
 
   def list_pending_transactions(%PendingBlock{} = pending_block) do
     case pending_block_tx_trie(pending_block) do
-      nil -> []
+      nil ->
+        []
+
       tx_trie ->
         txs = MPT.Repo.list(tx_trie, PendingTransaction)
         Exleveldb.close(elem(tx_trie.db, 1))
@@ -40,6 +42,17 @@ defmodule CredoCoreNode.Pool do
   """
   def sum_pending_transaction_fees(txs) do
     fees = for %{fee: fee} <- txs, do: D.new(fee)
+    Enum.reduce(fees, fn x, acc -> D.add(x, acc) end)
+  end
+
+  def sum_pending_transaction_values(%PendingBlock{} = block) do
+    block
+    |> list_pending_transactions()
+    |> sum_pending_transaction_values()
+  end
+
+  def sum_pending_transaction_values(txs) do
+    fees = for %{value: value} <- txs, do: D.new(value)
     Enum.reduce(fees, fn x, acc -> D.add(x, acc) end)
   end
 
@@ -104,7 +117,7 @@ defmodule CredoCoreNode.Pool do
   def get_batch_of_valid_pending_transactions() do
     list_pending_transactions()
     |> Enum.sort(&(&1.fee > &2.fee))
-    |> Enum.filter(&(is_tx_valid?(&1)))
+    |> Enum.filter(&is_tx_valid?(&1))
     |> Enum.take(2000)
   end
 
@@ -167,7 +180,9 @@ defmodule CredoCoreNode.Pool do
 
   def load_pending_block_body(%PendingBlock{} = pending_block) do
     case pending_block_tx_trie(pending_block) do
-      nil -> pending_block
+      nil ->
+        pending_block
+
       tx_trie ->
         body =
           tx_trie
@@ -191,7 +206,7 @@ defmodule CredoCoreNode.Pool do
       |> Enum.map(&PendingTransaction.from_list(&1, type: :rlp_default))
 
     {:ok, tx_trie, _pending_transactions} =
-      "#{File.cwd!}/leveldb/pending_blocks/#{hash}"
+      "#{File.cwd!()}/leveldb/pending_blocks/#{hash}"
       |> MerklePatriciaTree.DB.LevelDB.init()
       |> Trie.new()
       |> MPT.Repo.write_list(PendingTransaction, pending_transactions)
@@ -291,6 +306,7 @@ defmodule CredoCoreNode.Pool do
   end
 
   def is_tx_unmined?(tx), do: is_tx_unmined?(tx, %Block{prev_hash: Blockchain.last_block().hash})
+
   def is_tx_unmined?(tx, block) do
     for block <- Blockchain.list_preceding_blocks(block) do
       for mined_tx <- Blockchain.list_transactions(block) do
@@ -322,13 +338,13 @@ defmodule CredoCoreNode.Pool do
   def pending_block_body_fetched?(%PendingBlock{hash: nil}), do: false
 
   def pending_block_body_fetched?(%PendingBlock{hash: hash}),
-    do: File.exists?("#{File.cwd!}/leveldb/pending_blocks/#{hash}")
+    do: File.exists?("#{File.cwd!()}/leveldb/pending_blocks/#{hash}")
 
   defp pending_block_tx_trie(%PendingBlock{tx_root: nil}), do: nil
   defp pending_block_tx_trie(%PendingBlock{hash: nil}), do: nil
 
   defp pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}) do
-    path = "#{File.cwd!}/leveldb/pending_blocks/#{hash}"
+    path = "#{File.cwd!()}/leveldb/pending_blocks/#{hash}"
     {:ok, tx_root} = Base.decode16(tx_root)
 
     if File.exists?(path) do

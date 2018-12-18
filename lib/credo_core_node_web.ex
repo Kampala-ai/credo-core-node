@@ -30,10 +30,11 @@ defmodule CredoCoreNodeWeb do
       end
 
       defp send_chunks(conn, enumerable) do
-        Enum.reduce_while(enumerable, conn, fn (ch, conn) ->
+        Enum.reduce_while(enumerable, conn, fn ch, conn ->
           case chunk(conn, ch) do
             {:ok, conn} ->
               {:cont, conn}
+
             {:error, :closed} ->
               {:halt, conn}
           end

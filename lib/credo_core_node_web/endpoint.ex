@@ -5,7 +5,8 @@ defmodule CredoCoreNodeWeb.Endpoint do
   #
   # You should set gzip to true if you are running phoenix.digest
   # when deploying your static files in production.
-  plug(Plug.Static,
+  plug(
+    Plug.Static,
     at: "/",
     from: :credo_core_node,
     gzip: false,
@@ -21,7 +22,8 @@ defmodule CredoCoreNodeWeb.Endpoint do
   plug(Plug.RequestId)
   plug(Plug.Logger)
 
-  plug(Plug.Parsers,
+  plug(
+    Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
     json_decoder: Poison
@@ -33,7 +35,8 @@ defmodule CredoCoreNodeWeb.Endpoint do
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
-  plug(Plug.Session,
+  plug(
+    Plug.Session,
     store: :cookie,
     key: "_credo_core_node_key",
     signing_salt: "CZZHYEYO"
@@ -52,7 +55,8 @@ defmodule CredoCoreNodeWeb.Endpoint do
   def init(_key, config) do
     CredoCoreNode.Mining.Ip.maybe_update_miner_ip()
 
-    config = Keyword.put(config, :session_id, 32 |> :crypto.strong_rand_bytes() |> Base.encode64())
+    config =
+      Keyword.put(config, :session_id, 32 |> :crypto.strong_rand_bytes() |> Base.encode64())
 
     if config[:load_from_system_env] do
       port = System.get_env("PORT") || raise "expected the PORT environment variable to be set"

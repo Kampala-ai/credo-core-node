@@ -67,19 +67,19 @@ defmodule CredoCoreNode.Workers.BlockSyncer do
         blocks
         |> Enum.each(fn block ->
           unless Blockchain.get_block(block["hash"]) do
-            Blockchain.write_block(
-              %{
-                hash: block["hash"],
-                prev_hash: block["prev_hash"],
-                number: block["number"],
-                state_root: block["state_root"],
-                receipt_root: block["receipt_root"],
-                tx_root: block["tx_root"]
-              })
+            Blockchain.write_block(%{
+              hash: block["hash"],
+              prev_hash: block["prev_hash"],
+              number: block["number"],
+              state_root: block["state_root"],
+              receipt_root: block["receipt_root"],
+              tx_root: block["tx_root"]
+            })
           end
         end)
 
         if length(blocks) == limit, do: sync_headers(ip, offset + limit)
+
       _ ->
         Logger.info("No response or incorrect response")
     end
@@ -95,7 +95,6 @@ defmodule CredoCoreNode.Workers.BlockSyncer do
     |> Enum.filter(& !Blockchain.block_body_fetched?(&1))
     |> Enum.each(&Blockchain.fetch_block_body(&1, Enum.random(ips)))
   end
-
 
   defp schedule_sync_blocks(interval) do
     send_after(self(), :sync_blocks, interval)

@@ -2,36 +2,41 @@ defmodule CredoCoreNode.Mining.DepositWithdrawal do
   alias CredoCoreNode.Mining
   alias CredoCoreNode.Pool
 
+  alias Decimal, as: D
+
   def validate_deposit_withdrawals(block) do
     block
     |> Pool.list_pending_transactions()
     |> get_deposit_withdrawals()
-    |> get_invalid_deposit_withdrawals()
-    |> Enum.empty?
+    |> get_invalid_deposit_withdrawals(block)
+    |> Enum.empty?()
   end
 
   def get_deposit_withdrawals(txs) do
-    Enum.filter(txs, & is_deposit_withdrawal(&1))
+    Enum.filter(txs, &is_deposit_withdrawal(&1))
   end
 
   def is_deposit_withdrawal(tx) do
-    Pool.get_transaction_from_address(tx)
-    |> Mining.get_miner()
+    tx
+    |> get_miner_for_deposit_withdrawal()
     |> is_nil
-    |> Kernel.not
+    |> Kernel.not()
   end
 
-  def get_invalid_deposit_withdrawals(deposit_withdrawals) do
+  def get_miner_for_deposit_withdrawal(deposit_withdrawal) do
+    deposit_withdrawal
+    |> Pool.get_transaction_from_address()
+    |> Mining.get_miner()
+  end
+
+  def get_invalid_deposit_withdrawals(deposit_withdrawals, block) do
     deposit_withdrawals
-    |> Enum.filter(& !validate_deposit_withdrawal_size(&1, Mining.get_miner(&1.address)))
-    |> Enum.filter(& !validate_deposit_withdrawal_timelock(&1, Mining.get_miner(&1.address)))
+    |> Enum.filter(&(!validate_deposit_withdrawal_amount(&1, block)))
   end
 
-  def validate_deposit_withdrawal_size(deposit_withdrawal, miner) do
-    deposit_withdrawal.value <= miner.stake_amount
-  end
+  def validate_deposit_withdrawal_amount(deposit_withdrawal, block) do
+    miner = get_miner_for_deposit_withdrawal(deposit_withdrawal)
 
-  def validate_deposit_withdrawal_timelock(deposit_withdrawal, miner) do
-    deposit_withdrawal.block_number <= miner.timelock # TODO Add function for getting a transaction's block number.
+    D.cmp(deposit_withdrawal.value, Mining.withdrawable_deposit_value(miner, block)) != :gt
   end
 end

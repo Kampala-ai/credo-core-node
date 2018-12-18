@@ -1,21 +1,29 @@
 defmodule CredoCoreNode.Mining.Slash do
+  use Mnesia.Schema,
+    table_name: :slashes,
+    fields: [:tx_hash, :target_miner_address, :infraction_block_number]
+
   alias CredoCoreNode.{Accounts, Blockchain, Mining, Pool}
 
   @slash_penalty_percentage 20
 
-  def slash_miner(private_key, byzantine_behavior_proof, miner_address) do #A byzantine behavior proof should be two or more votes signed by the allegedly-byzantine miner for a given block number and voting round.
+  # A byzantine behavior proof should be two or more votes signed by the allegedly-byzantine miner for a given block number and voting round.
+  def slash_miner(private_key, byzantine_behavior_proof, miner_address) do
     construct_miner_slash_tx(private_key, byzantine_behavior_proof, miner_address)
     |> Pool.propagate_pending_transaction()
   end
 
   def construct_miner_slash_tx(private_key, byzantine_behavior_proof, to) do
     {:ok, tx} =
-      Pool.generate_pending_transaction(private_key,  %{
+      Pool.generate_pending_transaction(private_key, %{
         nonce: Mining.default_nonce(),
         to: to,
         value: 0,
         fee: Mining.default_tx_fee(),
-        data: "{\"tx_type\" : \"#{Blockchain.slash_tx_type()}\", \"byzantine_behavior_proof\" : \"#{Poison.encode!(byzantine_behavior_proof)}\"}"
+        data:
+          "{\"tx_type\" : \"#{Blockchain.slash_tx_type()}\", \"byzantine_behavior_proof\" : \"#{
+            Poison.encode!(byzantine_behavior_proof)
+          }\"}"
       })
 
     tx
@@ -25,32 +33,28 @@ defmodule CredoCoreNode.Mining.Slash do
     block
     |> Blockchain.list_transactions()
     |> get_slashes()
-    |> validate_slashes()
-    |> slash_miners()
+    |> validate_and_slash_miners()
   end
 
   def get_slashes(txs) do
-    Enum.filter(txs, & is_slash(&1))
+    Enum.filter(txs, &is_slash(&1))
   end
 
   def is_slash(tx) do
-    String.length(tx.data) > 1 &&
-      Poison.decode!(tx.data)["tx_type"] == Blockchain.slash_tx_type()
+    String.length(tx.data) > 1 && Poison.decode!(tx.data)["tx_type"] == Blockchain.slash_tx_type()
   end
 
-  def validate_slashes(slashes) do
-    Enum.each slashes, fn slash ->
+  def validate_and_slash_miners(slashes) do
+    Enum.each(slashes, fn slash ->
       proof = Poison.decode!(slash.data)["byzantine_behavior_proof"]
 
-      if slash_proof_is_valid?(proof) do # TODO: check that the miner wasn't already slashed for that block number.
-        slash
+      if slash_proof_is_valid?(proof) && target_miner_is_unslashed_for_block_number?(slash) do
+        execute_slash(slash)
       end
-    end
+    end)
   end
 
   def slash_proof_is_valid?(proof) do
-    res = false
-
     if is_list(proof) && length(proof) > 1 do
       [voteAMap, voteBMap | _] = proof
 
@@ -61,22 +65,49 @@ defmodule CredoCoreNode.Mining.Slash do
         voteBm = for {key, val} <- voteBMap, into: %{}, do: {String.to_atom(key), val}
         voteB = struct(CredoCoreNode.Mining.Vote, voteBm)
 
-        res =
-          Accounts.payment_address(voteA) == Accounts.payment_address(voteB) &&
-            voteA.block_number == voteB.block_number &&
-            voteA.voting_round == voteB.voting_round &&
-            voteA.block_hash != voteB.block_hash # TODO check vote hashes
+        # TODO check vote hashes
+        Accounts.payment_address(voteA) == Accounts.payment_address(voteB) &&
+          voteA.block_number == voteB.block_number && voteA.voting_round == voteB.voting_round &&
+          voteA.block_hash != voteB.block_hash
+      else
+        false
       end
+    else
+      false
     end
-
-    res
   end
 
-  def slash_miners(slashes) do
-    Enum.each slashes, fn slash ->
-      slashed_miner = Mining.get_miner(slash.miner_address)
+  def first_vote(slash) do
+    proof = Poison.decode!(slash.data)["byzantine_behavior_proof"]
+    voteAttributes = for {key, val} <- hd(proof), into: %{}, do: {String.to_atom(key), val}
+    struct(CredoCoreNode.Mining.Vote, voteAttributes)
+  end
 
-      Mining.write_miner(%{slashed_miner | stake_amount: slashed_miner.stake_amount * (1 - @slash_penalty_percentage)})
-    end
+  def target_miner_is_unslashed_for_block_number?(slash) do
+    vote = first_vote(slash)
+
+    Mining.list_slashes()
+    |> Enum.filter(
+      &(&1.target_miner_address == Accounts.payment_address(vote) &&
+          &1.infraction_block_number == vote.block_number)
+    )
+    |> Enum.empty?()
+  end
+
+  def execute_slash(slash) do
+    slashed_miner = Mining.get_miner(slash.miner_address)
+
+    Mining.write_miner(%{
+      slashed_miner
+      | stake_amount: slashed_miner.stake_amount * (1 - @slash_penalty_percentage)
+    })
+
+    vote = first_vote(slash)
+
+    Mining.write_slash(%{
+      tx_hash: slash.hash,
+      target_miner_address: Accounts.payment_address(vote),
+      infraction_block_number: vote.block_number
+    })
   end
 end

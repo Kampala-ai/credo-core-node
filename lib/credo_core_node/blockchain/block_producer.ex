@@ -10,13 +10,13 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
   @block_production_timeout 10000
 
   def is_your_turn?(block, _retry_count) when is_nil(block), do: false
+
   def is_your_turn?(block, retry_count) do
     get_next_block_producer(block, retry_count) == Mining.my_miner()
   end
 
   def produce_block() do
-    batch =
-      Pool.get_batch_of_valid_pending_transactions()
+    batch = Pool.get_batch_of_valid_pending_transactions()
 
     if length(batch) > 0 do
       batch
@@ -34,13 +34,14 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
   def get_next_block_producer(block, retry_count) do
     :rand.seed(:exsplus, {101, retry_count, block.number + 1})
 
+    # TODO: implement a more memory-efficient weighting mechanism.
     miner_addresses =
       for miner <- Mining.list_miners() do
         for _ <- 0..round(D.to_float(miner.stake_amount) * miner.participation_rate) do
           miner.address
         end
       end
-      |> Enum.concat() # TODO: implement a more memory-efficient weighting mechanism.
+      |> Enum.concat()
 
     miner_addresses
     |> Enum.at(Enum.random(1..length(miner_addresses)))

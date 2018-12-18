@@ -32,7 +32,7 @@ defmodule Mnesia.Repo do
         if table_fields != module_fields do
           :mnesia.transform_table(
             table_name,
-            & transform_mnesia_record(&1, table_fields, module_fields),
+            &transform_mnesia_record(&1, table_fields, module_fields),
             module_fields
           )
         end
@@ -147,7 +147,7 @@ defmodule Mnesia.Repo do
       |> Enum.with_index()
       |> Enum.map(fn {fld_name, fld_idx} = _fld -> {fld_name, Enum.at(field_values, fld_idx)} end)
 
-    transformed_field_values = Enum.map(module_fields, & record[&1])
+    transformed_field_values = Enum.map(module_fields, &record[&1])
     List.to_tuple([table_name] ++ transformed_field_values)
   end
 end

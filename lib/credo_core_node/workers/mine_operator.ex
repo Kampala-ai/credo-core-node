@@ -25,6 +25,8 @@ defmodule CredoCoreNode.Workers.MineOperator do
         Blockchain.last_block()
         |> Mining.start_mining()
 
+        schedule_mine_block(1000)
+
       false ->
         schedule_mine_block(interval)
     end
