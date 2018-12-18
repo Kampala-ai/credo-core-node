@@ -53,7 +53,7 @@ defmodule CredoCoreNodeWeb.Endpoint do
   configuration should be loaded from the system environment.
   """
   def init(_key, config) do
-    CredoCoreNode.Mining.Ip.maybe_update_miner_ip()
+    # CredoCoreNode.Mining.Ip.maybe_update_miner_ip() TODO: call after delay.
 
     config =
       Keyword.put(config, :session_id, 32 |> :crypto.strong_rand_bytes() |> Base.encode64())

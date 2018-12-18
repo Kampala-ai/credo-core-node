@@ -18,9 +18,14 @@ defmodule CredoCoreNode.Network do
     do: Application.get_env(:credo_core_node, CredoCoreNode.Network)[:node_connection_port]
 
   @doc """
-  Returns the maximum allowed number of active connections.
+  Returns the maximum allowed number of active outgoing connections.
   """
-  def max_active_connections, do: 6
+  def active_connections_limit(:outgoing), do: 3
+
+  @doc """
+  Returns the maximum allowed number of active incoming connections.
+  """
+  def active_connections_limit(:incoming), do: 3
 
   @doc """
   Returns the request headers for cross-node requests.
@@ -60,6 +65,17 @@ defmodule CredoCoreNode.Network do
   """
   def channel_client_module(id) when is_integer(id) do
     :"Elixir.CredoCoreNodeWeb.NodeSocket.V1.EventChannelClient#{id}"
+  end
+
+  @doc """
+  Returns `:incoming` if an active incoming connection from the given IP exists, otherwise returns
+  `:outgoing`
+  """
+  def connection_type(ip) do
+    case get_connection(ip) do
+      %{is_active: true, is_outgoing: false} -> :incoming
+      _ -> :outgoing
+    end
   end
 
   def is_localhost?(ip) do
@@ -130,24 +146,48 @@ defmodule CredoCoreNode.Network do
   end
 
   @doc """
+  Merges given known_nodes list into the local list
+  """
+  def merge_known_nodes(known_nodes) do
+    Enum.each(known_nodes, fn known_node ->
+      unless get_known_node(known_node["ip"]) do
+        write_known_node(ip: known_node["ip"], is_seed: false)
+      end
+    end)
+  end
+
+  @doc """
   Retrieves the list of known_nodes from the given IP and merges into the local list
   """
-  def retrieve_known_nodes(ip) do
+  def retrieve_known_nodes(ip), do: retrieve_known_nodes(ip, connection_type(ip))
+
+  @doc """
+  Retrieves the list of known_nodes from the given IP and merges into the local list
+  """
+  def retrieve_known_nodes(ip, :outgoing) do
     url = "#{api_url(ip)}/known_nodes"
 
     case :hackney.request(:get, url, node_request_headers(), "", [:with_body, pool: false]) do
       {:ok, 200, _headers, body} ->
-        known_nodes = Poison.decode!(body)["data"]
-
-        Enum.each(known_nodes, fn known_node ->
-          unless get_known_node(known_node["ip"]) do
-            write_known_node(ip: known_node["ip"], is_seed: false)
-          end
-        end)
+        body
+        |> Poison.decode!()
+        |> Map.get("data")
+        |> merge_known_nodes()
 
       _ ->
         write_connection(ip: ip, is_active: false)
     end
+  end
+
+  @doc """
+  Retrieves the list of known_nodes from the given IP and merges into the local list
+  """
+  def retrieve_known_nodes(ip, :incoming) do
+    Endpoint.broadcast!(
+      "node_socket:#{get_connection(ip).session_id}",
+      "known_nodes:list_request",
+      %{session_id: Endpoint.config(:session_id)}
+    )
   end
 
   @doc """
@@ -189,19 +229,19 @@ defmodule CredoCoreNode.Network do
   end
 
   @doc """
-  Returns if half of the maximum number of active connections is reached.
+  Returns if the maximum allowed number of active outgoing connections is reached.
   """
-  def half_nodes_connected?() do
-    length(Enum.filter(list_connections(), & &1.is_active)) >=
-      min(length(list_known_nodes()), max_active_connections() / 2)
+  def active_connections_limit_reached?(:outgoing) do
+    length(Enum.filter(list_connections(), &(&1.is_active && &1.is_outgoing))) >=
+      min(length(list_known_nodes()), active_connections_limit(:outgoing))
   end
 
   @doc """
-  Returns if the maximum number of active connections is reached.
+  Returns if the maximum allowed number of active incoming connections is reached.
   """
-  def all_nodes_connected?() do
-    length(Enum.filter(list_connections(), & &1.is_active)) >=
-      min(length(list_known_nodes()), max_active_connections())
+  def active_connections_limit_reached?(:incoming) do
+    length(Enum.filter(list_connections(), &(&1.is_active && !&1.is_outgoing))) >=
+      min(length(list_known_nodes()), active_connections_limit(:incoming))
   end
 
   @doc """
@@ -210,34 +250,45 @@ defmodule CredoCoreNode.Network do
   def available_socket_client_id() do
     used_ids =
       list_connections()
-      |> Enum.filter(& &1.is_active)
+      |> Enum.filter(&(&1.is_active && &1.is_outgoing))
       |> Enum.map(& &1.socket_client_id)
 
-    diff = Enum.to_list(0..(max_active_connections() - 1)) -- used_ids
+    diff = Enum.to_list(0..(active_connections_limit(:outgoing) - 1)) -- used_ids
     List.first(diff)
   end
 
   @doc """
-  Returns if the current node is connected to the given IP.
+  Returns if the current node has active outgoing connection to the given IP.
   """
-  def connected_to?(ip) do
+  def connected_to?(ip, :outgoing) do
     case get_connection(ip) do
       nil -> false
-      connection -> connection.is_active
+      connection -> connection.is_active && connection.is_outgoing
     end
   end
 
   @doc """
-  Establishes socket connection to the given IP and writes the `Connection` record
+  Returns if the current node has active incoming connection from the given IP.
   """
-  def connect_to(ip) do
+  def connected_to?(ip, :incoming) do
+    case get_connection(ip) do
+      nil -> false
+      connection -> connection.is_active && !connection.is_outgoing
+    end
+  end
+
+  @doc """
+  Establishes outgoing socket connection to the given IP and writes the `Connection` record
+  """
+  def connect_to(ip, session_id) do
     socket_client_id = available_socket_client_id()
 
     # TODO: using Poison encoding/decoding upper-level `Phoenix.Socket.Message` struct;
     #   to be replaced with RLP serializer later to reduce the payload size
     socket_client_module(socket_client_id).start_link(
       url: socket_url(ip),
-      serializer: Poison
+      serializer: Poison,
+      params: %{session_id: Endpoint.config(:session_id)}
     )
 
     channel_client_module(socket_client_id).start_link(
@@ -251,8 +302,10 @@ defmodule CredoCoreNode.Network do
     write_connection(
       ip: ip,
       is_active: true,
+      is_outgoing: true,
       failed_attempts_count: 0,
-      socket_client_id: socket_client_id
+      socket_client_id: socket_client_id,
+      session_id: session_id
     )
   end
 
@@ -275,18 +328,25 @@ defmodule CredoCoreNode.Network do
     list_connections()
     |> Enum.filter(&(&1.is_active && !is_nil(&1.socket_client_id)))
     |> Enum.each(fn connection ->
-      module = channel_client_module(connection.socket_client_id)
+      if connection.is_outgoing do
+        module = channel_client_module(connection.socket_client_id)
 
-      if GenServer.whereis(module) do
-        Logger.info("sending to #{connection.ip}")
+        if GenServer.whereis(module) do
+          Logger.info("sending to #{connection.ip}")
 
-        module.push("#{Mnesia.Table.name(record)}:#{event}", %{
+          module.push("#{Mnesia.Table.name(record)}:#{event}", %{
+            rlp: ExRLP.encode(record, encoding: :hex),
+            session_ids: session_ids ++ [Endpoint.config(:session_id)]
+          })
+        else
+          Logger.info("closing connection to #{connection.ip}")
+          write_connection(%{connection | is_active: false})
+        end
+      else
+        Endpoint.broadcast!("events:all", "#{Mnesia.Table.name(record)}:#{event}", %{
           rlp: ExRLP.encode(record, encoding: :hex),
           session_ids: session_ids ++ [Endpoint.config(:session_id)]
         })
-      else
-        Logger.info("closing connection to #{connection.ip}")
-        write_connection(%{connection | is_active: false})
       end
     end)
   end

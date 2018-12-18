@@ -5,9 +5,13 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.Socket do
 
   transport(:websocket, Phoenix.Transports.WebSocket)
 
-  def connect(_params, socket) do
-    {:ok, socket}
+  def connect(%{"session_id" => session_id}, socket) do
+    {:ok, assign(socket, :session_id, session_id)}
   end
 
-  def id(_socket), do: nil
+  def connect(_params, socket) do
+    :error
+  end
+
+  def id(socket), do: "node_socket:#{socket.assigns.session_id}"
 end

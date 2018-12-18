@@ -86,9 +86,21 @@ defmodule CredoCoreNode.Workers.BlockSyncer do
   end
 
   defp sync_bodies() do
-    Blockchain.list_blocks()
-    |> Enum.filter(&(!Blockchain.block_body_fetched?(&1)))
-    |> Enum.each(&Blockchain.fetch_block_body/1)
+    active_connections =
+      Network.list_connections()
+      |> Enum.filter(& &1.is_active)
+
+    case active_connections do
+      [] ->
+        :ok
+
+      connections ->
+        ips = Enum.map(connections, & &1.ip)
+
+        Blockchain.list_blocks()
+        |> Enum.filter(&(!Blockchain.block_body_fetched?(&1)))
+        |> Enum.each(&Blockchain.fetch_block_body(&1, Enum.random(ips)))
+    end
   end
 
   defp schedule_sync_blocks(interval) do
