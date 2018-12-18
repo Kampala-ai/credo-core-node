@@ -8,10 +8,10 @@ defmodule CredoCoreNode.VoteManagerTest do
 
   alias Decimal, as: D
 
-  describe "vote counting" do
+  describe "counting votes" do
     @describetag table_name: :votes
 
-    def miner_fixture(stake_amount) do
+    def miner_fixture(stake_amount, inserted_at \\ DateTime.utc_now()) do
       {:ok, account} = Accounts.generate_address("miner")
 
       Mining.write_miner(%{
@@ -19,7 +19,7 @@ defmodule CredoCoreNode.VoteManagerTest do
         ip: "1.1.1.1",
         stake_amount: D.new(stake_amount),
         participation_rate: 1.0,
-        inserted_at: DateTime.utc_now(),
+        inserted_at: inserted_at,
         is_self: false
       })
       |> elem(1)
@@ -78,6 +78,10 @@ defmodule CredoCoreNode.VoteManagerTest do
       assert D.cmp(Enum.find(results, &(&1[:hash] == blockHashA))[:count], D.new(11000)) == :eq
       assert D.cmp(Enum.find(results, &(&1[:hash] == blockHashB))[:count], D.new(5000)) == :eq
     end
+  end
+
+  describe "determining a winner" do
+    @describetag table_name: :votes
 
     test "gets the correct winner" do
       pending_block = pending_block_fixture()
@@ -129,6 +133,39 @@ defmodule CredoCoreNode.VoteManagerTest do
         |> VoteManager.get_winner()
 
       assert is_nil(winner)
+    end
+  end
+
+  describe "validating votes" do
+    @describetag table_name: :votes
+
+    test "deems votes with the wrong signature to be invalid" do
+      miner = miner_fixture(5000)
+
+      vote = %{
+        vote_fixture(miner, "EBA692825740B1C2FE4F0AC106B32B6F41A2DA6B638CB7302C2C98F9B91C96A6")
+        | miner_address: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340"
+      }
+
+      refute VoteManager.is_valid_vote(vote)
+    end
+
+    test "deems votes from a new miner as invalid" do
+      miner = miner_fixture(5000)
+
+      vote =
+        vote_fixture(miner, "EBA692825740B1C2FE4F0AC106B32B6F41A2DA6B638CB7302C2C98F9B91C96A6")
+
+      refute VoteManager.is_valid_vote(vote)
+    end
+
+    test "deems votes with a valid signature from a miner that passed the probationary period as vali" do
+      miner = miner_fixture(5000, DateTime.from_unix!(1_464_096_368))
+
+      vote =
+        vote_fixture(miner, "EBA692825740B1C2FE4F0AC106B32B6F41A2DA6B638CB7302C2C98F9B91C96A6")
+
+      assert VoteManager.is_valid_vote(vote)
     end
   end
 end
