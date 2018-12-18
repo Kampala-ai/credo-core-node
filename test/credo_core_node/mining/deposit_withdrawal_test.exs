@@ -2,6 +2,7 @@ defmodule CredoCoreNode.DepositWithdrawalTest do
   use CredoCoreNodeWeb.DataCase
 
   alias CredoCoreNode.{Accounts, Mining}
+  alias CredoCoreNode.Blockchain.Block
   alias CredoCoreNode.Mining.{Deposit, DepositWithdrawal}
 
   alias Decimal, as: D
@@ -25,6 +26,22 @@ defmodule CredoCoreNode.DepositWithdrawalTest do
       {:ok, tx} = CredoCoreNode.Pool.generate_pending_transaction(account.private_key, attrs)
 
       DepositWithdrawal.is_deposit_withdrawal(tx)
+    end
+  end
+
+  describe "validating deposit withdrawals" do
+    @describetag table_name: :miners
+
+    test "invalidates a deposit withdrawal from an address with an insufficient balance" do
+      {:ok, account} = Accounts.generate_address("miner")
+      deposit = deposit_fixture(account)
+
+      Deposit.recognize_deposits([deposit])
+
+      attrs = %{nonce: 0, to: "AF24738B406DB6387D05EB7CE1E90D420B25798F", value: Decimal.new(10.0), fee: 1.1, data: ""}
+      {:ok, tx} = CredoCoreNode.Pool.generate_pending_transaction(account.private_key, attrs)
+
+      assert DepositWithdrawal.validate_deposit_withdrawal_amount(tx, %Block{number: 10})
     end
   end
 end
