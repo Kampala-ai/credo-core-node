@@ -165,4 +165,35 @@ defmodule CredoCoreNode.MiningTest do
       assert Mining.get_vote(vote.hash) == nil
     end
   end
+
+  describe "becoming a miner" do
+    @describetag table_name: :miners
+
+    def my_miner_fixture do
+      Mining.write_miner(%{
+        address: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340",
+        ip: "1.1.1.1",
+        stake_amount: D.new(1_000),
+        participation_rate: 1.0,
+        inserted_at: DateTime.utc_now(),
+        is_self: true
+      })
+    end
+
+    test "returns nil if the node already is a miner" do
+      my_miner_fixture()
+
+      private_key = :crypto.strong_rand_bytes(32)
+      amount = D.new(10_0000)
+
+      assert is_nil(Mining.become_miner(amount, private_key, "2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"))
+    end
+
+    test "constructs a transaction if the node is not a miner" do
+      private_key = :crypto.strong_rand_bytes(32)
+      amount = D.new(10_0000)
+
+      refute is_nil(Mining.become_miner(amount, private_key, "2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"))
+    end
+  end
 end
