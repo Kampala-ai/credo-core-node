@@ -9,9 +9,8 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.Socket do
     {:ok, assign(socket, :session_id, session_id)}
   end
 
-  # TODO: backwards-compatibility code, to be removed later
   def connect(_params, socket) do
-    {:ok, assign(socket, :session_id, "OBSOLETE-#{Enum.random(1..10000)}")}
+    :error
   end
 
   def id(socket), do: "node_socket:#{socket.assigns.session_id}"
