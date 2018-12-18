@@ -141,7 +141,9 @@ defmodule CredoCoreNode.Mining.VoteManager do
   end
 
   def voter_has_completed_probationary_period?(voter) do
-    DateTime.diff(DateTime.utc_now(), voter.inserted_at) > @num_seconds_for_voter_probation_period
+    is_nil(voter.inserted_at) ||
+      DateTime.diff(DateTime.utc_now(), voter.inserted_at) >
+        @num_seconds_for_voter_probation_period
   end
 
   def total_voting_power do

@@ -5,7 +5,9 @@ defmodule CredoCoreNode.Mining.Slash do
 
   alias CredoCoreNode.{Accounts, Blockchain, Mining, Pool}
 
-  @slash_penalty_percentage 20
+  alias Decimal, as: D
+
+  @slash_penalty_multiplier D.new(0.8)
 
   # A byzantine behavior proof should be two or more votes signed by the allegedly-byzantine miner for a given block number and voting round.
   def slash_miner(private_key, byzantine_behavior_proof, miner_address) do
@@ -21,9 +23,9 @@ defmodule CredoCoreNode.Mining.Slash do
         value: 0,
         fee: Mining.default_tx_fee(),
         data:
-          "{\"tx_type\" : \"#{Blockchain.slash_tx_type()}\", \"byzantine_behavior_proof\" : \"#{
+          "{\"tx_type\" : \"#{Blockchain.slash_tx_type()}\", \"byzantine_behavior_proof\" : #{
             Poison.encode!(byzantine_behavior_proof)
-          }\"}"
+          }}"
       })
 
     tx
@@ -44,9 +46,13 @@ defmodule CredoCoreNode.Mining.Slash do
     String.length(tx.data) > 1 && Poison.decode!(tx.data)["tx_type"] == Blockchain.slash_tx_type()
   end
 
+  def parse_proof(slash) do
+    Poison.decode!(slash.data)["byzantine_behavior_proof"]
+  end
+
   def validate_and_slash_miners(slashes) do
     Enum.each(slashes, fn slash ->
-      proof = Poison.decode!(slash.data)["byzantine_behavior_proof"]
+      proof = parse_proof(slash)
 
       if slash_proof_is_valid?(proof) && target_miner_is_unslashed_for_block_number?(slash) do
         execute_slash(slash)
@@ -78,7 +84,7 @@ defmodule CredoCoreNode.Mining.Slash do
   end
 
   def first_vote(slash) do
-    proof = Poison.decode!(slash.data)["byzantine_behavior_proof"]
+    proof = parse_proof(slash)
     voteAttributes = for {key, val} <- hd(proof), into: %{}, do: {String.to_atom(key), val}
     struct(CredoCoreNode.Mining.Vote, voteAttributes)
   end
@@ -95,18 +101,18 @@ defmodule CredoCoreNode.Mining.Slash do
   end
 
   def execute_slash(slash) do
-    slashed_miner = Mining.get_miner(slash.miner_address)
+    slashed_miner = Mining.get_miner(slash.to)
 
     Mining.write_miner(%{
       slashed_miner
-      | stake_amount: slashed_miner.stake_amount * (1 - @slash_penalty_percentage)
+      | stake_amount: D.mult(slashed_miner.stake_amount, @slash_penalty_multiplier)
     })
 
     vote = first_vote(slash)
 
     Mining.write_slash(%{
       tx_hash: slash.hash,
-      target_miner_address: Accounts.payment_address(vote),
+      target_miner_address: slash.to,
       infraction_block_number: vote.block_number
     })
   end

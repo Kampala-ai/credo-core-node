@@ -12,13 +12,17 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   @max_value_transfer_per_block_chain_segment D.new(50_000_000)
   @block_chain_segment_length 12
 
-  def validate_block(block) do
+  def validate_block(block, skip_network_consensus_validation \\ false) do
     is_valid =
       validate_previous_hash(block) && validate_format(block) && validate_transaction_count(block) &&
         validate_transaction_data_length(block) && validate_transaction_amounts(block) &&
         validate_transaction_are_unmined(block) && validate_deposit_withdrawals(block) &&
         validate_block_irreversibility(block) && validate_coinbase_transaction(block) &&
-        validate_value_transfer_limits(block) && validate_network_consensus(block)
+        validate_value_transfer_limits(block)
+
+    unless skip_network_consensus_validation do
+      is_valid = is_valid && validate_network_consensus(block)
+    end
 
     if is_valid do
       {:ok, block}
@@ -120,6 +124,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
     Blockchain.list_preceding_blocks(block)
     |> Enum.take(@block_chain_segment_length)
+    |> Enum.reject(&(&1.number == 0))
     |> Enum.reduce(pending_block_value, fn b, acc ->
       D.add(Blockchain.sum_transaction_values(b), acc)
     end)
