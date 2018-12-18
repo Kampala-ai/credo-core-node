@@ -95,7 +95,7 @@ defmodule CredoCoreNode.Workers.BlockSyncer do
         :ok
 
       connections ->
-        ips = Enum.reduce(connections, & &1.ip)
+        ips = Enum.map(connections, & &1.ip)
 
         Blockchain.list_blocks()
         |> Enum.filter(&(!Blockchain.block_body_fetched?(&1)))
