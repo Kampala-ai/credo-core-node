@@ -124,6 +124,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
     Blockchain.list_preceding_blocks(block)
     |> Enum.take(@block_chain_segment_length)
+    |> Enum.reject(&(&1.number == 0))
     |> Enum.reduce(pending_block_value, fn b, acc ->
       D.add(Blockchain.sum_transaction_values(b), acc)
     end)
