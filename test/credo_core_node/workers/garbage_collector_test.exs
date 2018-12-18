@@ -29,7 +29,7 @@ defmodule CredoCoreNode.GarbageCollectorTest do
 
       %Block{number: 50} |> Blockchain.write_block()
 
-      GarbageCollector.collect_pending_transaction_garbage
+      GarbageCollector.collect_pending_transaction_garbage()
 
       assert is_nil(Pool.get_pending_transaction(pending_transaction.hash))
     end
@@ -55,7 +55,7 @@ defmodule CredoCoreNode.GarbageCollectorTest do
 
       %Block{number: 50} |> Blockchain.write_block()
 
-      GarbageCollector.collect_pending_block_garbage
+      GarbageCollector.collect_pending_block_garbage()
 
       assert is_nil(Pool.get_pending_block(pending_block.hash))
     end

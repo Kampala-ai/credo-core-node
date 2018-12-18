@@ -186,14 +186,26 @@ defmodule CredoCoreNode.MiningTest do
       private_key = :crypto.strong_rand_bytes(32)
       amount = D.new(10_0000)
 
-      assert is_nil(Mining.become_miner(amount, private_key, "2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"))
+      assert is_nil(
+               Mining.become_miner(
+                 amount,
+                 private_key,
+                 "2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"
+               )
+             )
     end
 
     test "constructs a transaction if the node is not a miner" do
       private_key = :crypto.strong_rand_bytes(32)
       amount = D.new(10_0000)
 
-      refute is_nil(Mining.become_miner(amount, private_key, "2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"))
+      refute is_nil(
+               Mining.become_miner(
+                 amount,
+                 private_key,
+                 "2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"
+               )
+             )
     end
   end
 end

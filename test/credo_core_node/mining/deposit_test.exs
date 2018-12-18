@@ -80,7 +80,10 @@ defmodule CredoCoreNode.DepositTest do
 
       Deposit.recognize_deposits([deposit])
 
-      assert D.cmp(Mining.get_miner(miner.address).stake_amount, D.add(miner.stake_amount, deposit.value)) == :eq
+      assert D.cmp(
+               Mining.get_miner(miner.address).stake_amount,
+               D.add(miner.stake_amount, deposit.value)
+             ) == :eq
     end
   end
 end

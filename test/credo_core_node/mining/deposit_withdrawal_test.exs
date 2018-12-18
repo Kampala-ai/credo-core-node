@@ -22,7 +22,14 @@ defmodule CredoCoreNode.DepositWithdrawalTest do
 
       Deposit.recognize_deposits([deposit])
 
-      attrs = %{nonce: 0, to: "AF24738B406DB6387D05EB7CE1E90D420B25798F", value: Decimal.new(10.0), fee: 1.1, data: ""}
+      attrs = %{
+        nonce: 0,
+        to: "AF24738B406DB6387D05EB7CE1E90D420B25798F",
+        value: Decimal.new(10.0),
+        fee: 1.1,
+        data: ""
+      }
+
       {:ok, tx} = CredoCoreNode.Pool.generate_pending_transaction(account.private_key, attrs)
 
       DepositWithdrawal.is_deposit_withdrawal(tx)
@@ -38,7 +45,14 @@ defmodule CredoCoreNode.DepositWithdrawalTest do
 
       Deposit.recognize_deposits([deposit])
 
-      attrs = %{nonce: 0, to: "AF24738B406DB6387D05EB7CE1E90D420B25798F", value: Decimal.new(10.0), fee: 1.1, data: ""}
+      attrs = %{
+        nonce: 0,
+        to: "AF24738B406DB6387D05EB7CE1E90D420B25798F",
+        value: Decimal.new(10.0),
+        fee: 1.1,
+        data: ""
+      }
+
       {:ok, tx} = CredoCoreNode.Pool.generate_pending_transaction(account.private_key, attrs)
 
       assert DepositWithdrawal.validate_deposit_withdrawal_amount(tx, %Block{number: 10})

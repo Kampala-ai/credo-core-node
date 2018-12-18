@@ -25,13 +25,13 @@ defmodule CredoCoreNode.IpTest do
 
       miner_fixture(ip)
 
-      refute Ip.miner_ip_changed?
+      refute Ip.miner_ip_changed?()
     end
 
     test "returns true when the miner's ip has changed" do
       miner_fixture("1.2.3.4")
 
-      assert Ip.miner_ip_changed?
+      assert Ip.miner_ip_changed?()
     end
   end
 
@@ -49,7 +49,7 @@ defmodule CredoCoreNode.IpTest do
     end
   end
 
-   describe "processing an ip update transaction" do
+  describe "processing an ip update transaction" do
     @describetag table_name: :miners
 
     test "updates the miner's ip" do

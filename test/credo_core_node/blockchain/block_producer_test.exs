@@ -75,12 +75,11 @@ defmodule CredoCoreNode.BlockProducerTest do
 
       block = %CredoCoreNode.Blockchain.Block{number: 1}
 
-      miners =
-        [
-          elem(miner_fixture(), 1),
-          elem(miner_fixture(), 1),
-          elem(miner_fixture(), 1)
-        ]
+      miners = [
+        elem(miner_fixture(), 1),
+        elem(miner_fixture(), 1),
+        elem(miner_fixture(), 1)
+      ]
 
       assert Enum.member?(miners, BlockProducer.get_next_block_producer(block, 0))
     end

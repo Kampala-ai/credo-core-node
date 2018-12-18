@@ -178,6 +178,7 @@ defmodule CredoCoreNode.Mining do
     do: timelock > 0 && timelock < @max_timelock_block_height
 
   def timelock_has_expired?(timelock, block) when is_bitstring(timelock), do: true
+
   def timelock_has_expired?(timelock, block) do
     if timelock_is_block_height?(timelock) do
       block.number >= timelock
