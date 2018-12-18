@@ -48,4 +48,23 @@ defmodule CredoCoreNode.IpTest do
       assert Ip.is_miner_ip_update(tx)
     end
   end
+
+   describe "processing an ip update transaction" do
+    @describetag table_name: :miners
+
+    test "updates the miner's ip" do
+      miner = elem(miner_fixture("1.2.3.4"), 1)
+      private_key = :crypto.strong_rand_bytes(32)
+      to = miner.address
+
+      tx = Ip.construct_miner_ip_update_transaction(private_key, to)
+
+      Ip.update_miner_ips([tx])
+
+      updated_miner = Mining.get_miner(miner.address)
+
+      assert miner.ip != updated_miner.ip
+      assert updated_miner.ip == Network.get_current_ip()
+    end
+  end
 end
