@@ -72,7 +72,13 @@ defmodule CredoCoreNode.SlashTest do
       assert D.cmp(slashed_miner.stake_amount, D.mult(D.new(0.8), stake_amount_before_slash)) == :eq
     end
 
-    test "processing a slash reduces a miner's stake" do
+    test "processing a slash saves the slash transaction" do
+      miner = miner_fixture()
+      tx = slash_tx_fixture(miner)
+
+      Slash.validate_and_slash_miners([tx])
+
+      assert !is_nil(Mining.get_slash(tx.hash))
     end
   end
 end
