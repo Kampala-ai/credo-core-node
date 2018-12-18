@@ -3,6 +3,8 @@ defmodule CredoCoreNode.AccountsTest do
 
   alias CredoCoreNode.Accounts
 
+  alias Decimal, as: D
+
   describe "accounts" do
     @describetag table_name: :accounts
     @attrs [
@@ -45,6 +47,12 @@ defmodule CredoCoreNode.AccountsTest do
       account = account_fixture()
       assert {:ok, account} = Accounts.delete_account(account)
       assert Accounts.get_account(account.address) == nil
+    end
+
+    test "get_account_balance/1 gets the correct account balance" do
+      assert D.cmp(Accounts.get_account_balance("F7DA6E2803E37C10D591C08EBFE2F8A018352955"), D.new(1_374_719_257.2286)) == :eq
+      assert D.cmp(Accounts.get_account_balance("A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340"), D.new(10000.0)) == :eq
+      assert D.cmp(Accounts.get_account_balance("2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"), D.new(0.0)) == :eq
     end
   end
 end
