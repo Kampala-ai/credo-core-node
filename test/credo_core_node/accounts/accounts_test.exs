@@ -66,4 +66,25 @@ defmodule CredoCoreNode.AccountsTest do
              ) == :eq
     end
   end
+
+  describe "saving accounts from a private key" do
+    @describetag table_name: :accounts
+    @private_key "8B4460A032C2287DF59A2D58AC36BD0EB7D6182827A2E20388DE5040A4C92839"
+
+    test "generates the correct public key" do
+      account = Accounts.save_account(@private_key) |> elem(1)
+
+      assert account.public_key ==
+               <<113, 199, 170, 69, 35, 78, 16, 253, 158, 35, 77, 149, 150, 141, 11, 123, 203,
+                 200, 159, 120, 61, 235, 80, 243, 171, 33, 241, 99, 225, 41, 231, 212, 76, 5, 125,
+                 70, 114, 111, 218, 176, 187, 124, 191, 133, 51, 188, 2, 10, 228, 86, 242, 153,
+                 159, 24, 58, 117, 186, 251, 234, 191, 157, 148, 199, 251>>
+    end
+
+    test "generates the correct address" do
+      account = Accounts.save_account(@private_key) |> elem(1)
+
+      assert account.address == "C3F9BFC7A3000903A6FD0B27CD01B59ED4AB7F7E"
+    end
+  end
 end
