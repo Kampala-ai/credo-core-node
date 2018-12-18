@@ -96,4 +96,15 @@ defmodule CredoCoreNode.BlockchainTest do
       assert Blockchain.get_transaction(transaction.hash) == nil
     end
   end
+
+  describe "loading the genesis block" do
+    @describetag table_name: :blocks
+
+    test "load_genesis_block/0 returns the genesis block" do
+      block = Blockchain.load_genesis_block()
+
+      assert block.number == 0
+      assert block.hash == "51D9D50254B866AEE7060B51B611B2C19FB280641FB5CDB11D4669AA14BB1A07"
+    end
+  end
 end
