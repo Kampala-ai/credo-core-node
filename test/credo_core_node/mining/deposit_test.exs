@@ -24,7 +24,7 @@ defmodule CredoCoreNode.DepositTest do
 
     def deposit_fixture(amount, account \\ nil, timelock \\ nil) do
       account = account || elem(Accounts.generate_address("miner"), 1)
-      tx = Deposit.construct_deposit(amount, account.private_key, account.address, timelock)
+      Deposit.construct_deposit(amount, account.private_key, account.address, timelock)
     end
 
     test "validates a deposit above the minimum" do

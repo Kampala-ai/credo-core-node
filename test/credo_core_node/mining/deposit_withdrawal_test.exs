@@ -1,7 +1,7 @@
 defmodule CredoCoreNode.DepositWithdrawalTest do
   use CredoCoreNodeWeb.DataCase
 
-  alias CredoCoreNode.{Accounts, Mining}
+  alias CredoCoreNode.Accounts
   alias CredoCoreNode.Blockchain.Block
   alias CredoCoreNode.Mining.{Deposit, DepositWithdrawal}
 

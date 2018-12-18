@@ -1,7 +1,7 @@
 defmodule CredoCoreNode.IpTest do
   use CredoCoreNodeWeb.DataCase
 
-  alias CredoCoreNode.{Accounts, Mining, Network}
+  alias CredoCoreNode.{Mining, Network}
   alias CredoCoreNode.Mining.Ip
 
   alias Decimal, as: D

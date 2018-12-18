@@ -3,7 +3,7 @@ defmodule CredoCoreNode.VoteManagerTest do
 
   alias CredoCoreNode.Accounts
   alias CredoCoreNode.Mining
-  alias CredoCoreNode.Mining.{Slash, Vote, VoteManager}
+  alias CredoCoreNode.Mining.{Vote, VoteManager}
   alias CredoCoreNode.Pool
 
   alias Decimal, as: D
