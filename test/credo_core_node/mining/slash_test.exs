@@ -69,7 +69,8 @@ defmodule CredoCoreNode.SlashTest do
 
       slashed_miner = Mining.get_miner(miner.address)
 
-      assert D.cmp(slashed_miner.stake_amount, D.mult(D.new(0.8), stake_amount_before_slash)) == :eq
+      assert D.cmp(slashed_miner.stake_amount, D.mult(D.new(0.8), stake_amount_before_slash)) ==
+               :eq
     end
 
     test "processing a slash saves the slash transaction" do
@@ -92,13 +93,15 @@ defmodule CredoCoreNode.SlashTest do
 
       slashed_miner = Mining.get_miner(miner.address)
 
-      assert D.cmp(slashed_miner.stake_amount, D.mult(D.new(0.8), stake_amount_before_slash)) == :eq
+      assert D.cmp(slashed_miner.stake_amount, D.mult(D.new(0.8), stake_amount_before_slash)) ==
+               :eq
 
       Slash.validate_and_slash_miners([second_slash])
 
       slashed_miner = Mining.get_miner(miner.address)
 
-      assert D.cmp(slashed_miner.stake_amount, D.mult(D.new(0.8), stake_amount_before_slash)) == :eq
+      assert D.cmp(slashed_miner.stake_amount, D.mult(D.new(0.8), stake_amount_before_slash)) ==
+               :eq
     end
   end
 end
