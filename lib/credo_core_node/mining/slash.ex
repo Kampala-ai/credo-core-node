@@ -5,7 +5,9 @@ defmodule CredoCoreNode.Mining.Slash do
 
   alias CredoCoreNode.{Accounts, Blockchain, Mining, Pool}
 
-  @slash_penalty_percentage 20
+  alias Decimal, as: D
+
+  @slash_penalty_multiplier D.new(0.8)
 
   # A byzantine behavior proof should be two or more votes signed by the allegedly-byzantine miner for a given block number and voting round.
   def slash_miner(private_key, byzantine_behavior_proof, miner_address) do
@@ -99,18 +101,18 @@ defmodule CredoCoreNode.Mining.Slash do
   end
 
   def execute_slash(slash) do
-    slashed_miner = Mining.get_miner(slash.miner_address)
+    slashed_miner = Mining.get_miner(slash.to)
 
     Mining.write_miner(%{
       slashed_miner
-      | stake_amount: slashed_miner.stake_amount * (1 - @slash_penalty_percentage)
+      | stake_amount: D.mult(slashed_miner.stake_amount, @slash_penalty_multiplier)
     })
 
     vote = first_vote(slash)
 
     Mining.write_slash(%{
       tx_hash: slash.hash,
-      target_miner_address: Accounts.payment_address(vote),
+      target_miner_address: slash.to,
       infraction_block_number: vote.block_number
     })
   end

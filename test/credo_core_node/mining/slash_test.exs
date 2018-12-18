@@ -5,6 +5,8 @@ defmodule CredoCoreNode.SlashTest do
   alias CredoCoreNode.Mining
   alias CredoCoreNode.Mining.{Slash, Vote, VoteManager}
 
+  alias Decimal, as: D
+
   describe "slashes" do
     @describetag table_name: :slashes
 
@@ -41,16 +43,36 @@ defmodule CredoCoreNode.SlashTest do
       ]
     end
 
-    test "constructing a slash transaction " do
+    def slash_tx_fixture(miner) do
       private_key = :crypto.strong_rand_bytes(32)
-      miner = miner_fixture()
       byzantine_behavior_proof = byzantine_behavior_proof_fixture(miner)
       to = miner.address
 
-      tx = Slash.construct_miner_slash_tx(private_key, byzantine_behavior_proof, to)
+      Slash.construct_miner_slash_tx(private_key, byzantine_behavior_proof, to)
+    end
+
+    test "constructing a slash transaction creates a valid slash transaction" do
+      miner = miner_fixture()
+      tx = slash_tx_fixture(miner)
 
       assert Slash.is_slash(tx)
       assert Slash.slash_proof_is_valid?(Slash.parse_proof(tx))
+    end
+
+    test "processing a slash saves a slash a miner's stake" do
+      miner = miner_fixture()
+      tx = slash_tx_fixture(miner)
+
+      stake_amount_before_slash = miner.stake_amount
+
+      Slash.validate_and_slash_miners([tx])
+
+      slashed_miner = Mining.get_miner(miner.address)
+
+      assert D.cmp(slashed_miner.stake_amount, D.mult(D.new(0.8), stake_amount_before_slash)) == :eq
+    end
+
+    test "processing a slash reduces a miner's stake" do
     end
   end
 end
