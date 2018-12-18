@@ -55,6 +55,15 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
       )
 
       case :hackney.request(:post, url, headers, "", [:with_body, pool: false]) do
+        # TODO: backwards-compatibility code, to be removed later
+        {:ok, 201, _headers, ""} ->
+          Logger.info(
+            "Responded with `created` (successfully connected), obsolete response format"
+          )
+
+          Network.connect_to(known_node.ip, "OBSOLETE-#{Enum.random(1..10000)}")
+          Network.retrieve_known_nodes(known_node.ip, :outgoing)
+
         {:ok, 201, _headers, body} ->
           Logger.info("Responded with `created` (successfully connected)")
           %{"session_id" => session_id} = Poison.decode!(body)
