@@ -36,7 +36,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventHandler do
 
     connection =
       Network.list_connections()
-      |> Enum.find(& &1.session_id == List.last(session_ids))
+      |> Enum.find(&(&1.session_id == List.last(session_ids)))
 
     if !Pool.get_pending_block(hash) && !already_processed?(session_ids) && connection do
       Logger.info("Writing pending block and fetching body...")
@@ -55,7 +55,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventHandler do
 
     connection =
       Network.list_connections()
-      |> Enum.find(& &1.session_id == List.last(session_ids))
+      |> Enum.find(&(&1.session_id == List.last(session_ids)))
 
     if !Blockchain.get_block(hash) && !already_processed?(session_ids) && connection do
       Logger.info("Writing block and fetching body...")

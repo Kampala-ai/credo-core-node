@@ -92,7 +92,7 @@ defmodule CredoCoreNode.Workers.BlockSyncer do
       |> Enum.reduce(& &1.ip)
 
     Blockchain.list_blocks()
-    |> Enum.filter(& !Blockchain.block_body_fetched?(&1))
+    |> Enum.filter(&(!Blockchain.block_body_fetched?(&1)))
     |> Enum.each(&Blockchain.fetch_block_body(&1, Enum.random(ips)))
   end
 

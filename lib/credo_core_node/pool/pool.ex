@@ -280,7 +280,9 @@ defmodule CredoCoreNode.Pool do
       {:ok, 200, _headers, body} ->
         write_pending_block(%{pending_block | body: body})
         propagate_pending_block(pending_block)
-      _ -> nil
+
+      _ ->
+        nil
     end
   end
 

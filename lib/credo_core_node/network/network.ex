@@ -145,7 +145,6 @@ defmodule CredoCoreNode.Network do
     Enum.each(seed_node_ips(), &write_known_node(ip: &1, is_seed: true))
   end
 
-
   @doc """
   Merges given known_nodes list into the local list
   """
@@ -233,7 +232,7 @@ defmodule CredoCoreNode.Network do
   Returns if the maximum allowed number of active outgoing connections is reached.
   """
   def active_connections_limit_reached?(:outgoing) do
-    length(Enum.filter(list_connections(), & &1.is_active && &1.is_outgoing)) >=
+    length(Enum.filter(list_connections(), &(&1.is_active && &1.is_outgoing))) >=
       min(length(list_known_nodes()), active_connections_limit(:outgoing))
   end
 
@@ -241,7 +240,7 @@ defmodule CredoCoreNode.Network do
   Returns if the maximum allowed number of active incoming connections is reached.
   """
   def active_connections_limit_reached?(:incoming) do
-    length(Enum.filter(list_connections(), & &1.is_active && !&1.is_outgoing)) >=
+    length(Enum.filter(list_connections(), &(&1.is_active && !&1.is_outgoing))) >=
       min(length(list_known_nodes()), active_connections_limit(:incoming))
   end
 
@@ -251,7 +250,7 @@ defmodule CredoCoreNode.Network do
   def available_socket_client_id() do
     used_ids =
       list_connections()
-      |> Enum.filter(& &1.is_active && &1.is_outgoing)
+      |> Enum.filter(&(&1.is_active && &1.is_outgoing))
       |> Enum.map(& &1.socket_client_id)
 
     diff = Enum.to_list(0..(active_connections_limit(:outgoing) - 1)) -- used_ids

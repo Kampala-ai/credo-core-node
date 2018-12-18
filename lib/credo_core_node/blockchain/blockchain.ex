@@ -288,7 +288,9 @@ defmodule CredoCoreNode.Blockchain do
       {:ok, 200, _headers, body} ->
         write_block(%{block | body: body})
         propagate_block(block)
-      _ -> nil
+
+      _ ->
+        nil
     end
   end
 

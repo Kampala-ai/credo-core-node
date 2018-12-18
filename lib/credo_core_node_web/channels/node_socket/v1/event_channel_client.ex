@@ -80,9 +80,7 @@ Enum.each(0..(CredoCoreNode.Network.active_connections_limit(:outgoing) - 1), fn
       spawn(fn ->
         known_nodes
         |> Enum.chunk_every(25)
-        |> Enum.each(
-          &module.push("known_nodes:list_fragment_transfer", %{list_fragment: &1})
-        )
+        |> Enum.each(&module.push("known_nodes:list_fragment_transfer", %{list_fragment: &1}))
       end)
 
       {:noreply, state}

@@ -62,7 +62,9 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
           Network.retrieve_known_nodes(known_node.ip, :outgoing)
 
         {:ok, 302, _headers, _body} ->
-          Logger.info("Responded with `found` (already connected as outgoing on remote node side)")
+          Logger.info(
+            "Responded with `found` (already connected as outgoing on remote node side)"
+          )
 
           Network.write_connection(
             ip: known_node.ip,
