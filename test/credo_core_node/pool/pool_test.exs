@@ -96,4 +96,45 @@ defmodule CredoCoreNode.PoolTest do
       assert Pool.get_pending_transaction(pending_transaction.hash) == nil
     end
   end
+
+  describe "validating that a transaction is unmined" do
+    @describetag table_name: :pending_transactions
+
+    test "is_tx_unmined?/1 returns false for a mined transaction" do
+      tx =
+        struct(
+          CredoCoreNode.Pool.PendingTransaction,
+          data:
+            "{\"tx_type\" : \"security_deposit\", \"node_ip\" : \"10.0.1.9\", \"timelock\": \"\"}",
+          fee: D.new(1.0),
+          hash: "A588D170F64FC3ADAF805670DA67C152FA906B8BB855AAA9B2041ED8E2747FF1",
+          nonce: 0,
+          r: "389576343235F0311A7FA5DD8BCE9C6E529698B66AB146427403C4B6863DC801",
+          s: "46A623CC9B3FAFB41F35A698EE4C7ED73C76FA01D8E12209A76046C0B120D0E9",
+          to: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340",
+          v: 0,
+          value: D.new(10000.0)
+        )
+
+      refute Pool.is_tx_unmined?(tx)
+    end
+
+    test "is_tx_unmined?/1 returns true for a mined transaction" do
+      tx =
+        struct(
+          CredoCoreNode.Pool.PendingTransaction,
+          data: "",
+          fee: Decimal.new(1.1),
+          hash: "E0137BE996B287A9DD541E4DD5C5FC6270D65738D837F20CC33F199353E973FA",
+          nonce: 0,
+          r: "8E2BFD6A070E324C161CFB112B1AE657B84A9C67788AA3BBCD1121EE9B64CE3E",
+          s: "02DB5FB3A4582633C4EB0191FD1F1420EC388D460B3C37B6DB35C455ADC1FC63",
+          to: "A7A5DF6D79203F6E6F0FA9CD550366FC9067A350",
+          v: 0,
+          value: Decimal.new(500)
+        )
+
+      assert Pool.is_tx_unmined?(tx)
+    end
+  end
 end
