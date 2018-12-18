@@ -50,9 +50,20 @@ defmodule CredoCoreNode.AccountsTest do
     end
 
     test "get_account_balance/1 gets the correct account balance" do
-      assert D.cmp(Accounts.get_account_balance("F7DA6E2803E37C10D591C08EBFE2F8A018352955"), D.new(1_374_719_257.2286)) == :eq
-      assert D.cmp(Accounts.get_account_balance("A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340"), D.new(10000.0)) == :eq
-      assert D.cmp(Accounts.get_account_balance("2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"), D.new(0.0)) == :eq
+      assert D.cmp(
+               Accounts.get_account_balance("F7DA6E2803E37C10D591C08EBFE2F8A018352955"),
+               D.new(1_374_719_257.2286)
+             ) == :eq
+
+      assert D.cmp(
+               Accounts.get_account_balance("A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340"),
+               D.new(10000.0)
+             ) == :eq
+
+      assert D.cmp(
+               Accounts.get_account_balance("2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"),
+               D.new(0.0)
+             ) == :eq
     end
   end
 end

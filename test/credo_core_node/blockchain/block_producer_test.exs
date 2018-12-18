@@ -1,4 +1,4 @@
-defmodule CredoCoreNode.BlockValidatorTest do
+defmodule CredoCoreNode.BlockProducerTest do
   use CredoCoreNodeWeb.DataCase
 
   alias CredoCoreNode.Accounts
@@ -21,15 +21,14 @@ defmodule CredoCoreNode.BlockValidatorTest do
         s: "7A4A73877604F44BC673D46CEF6E267283215FCF6CE7AF82C18BFEEBD8053468",
         to: "AF24738B406DB6387D05EB7CE1E90D420B25798F",
         v: 0,
-        value: Decimal.new(1000000)
+        value: Decimal.new(1_000_000)
       }
       |> CredoCoreNode.Pool.write_pending_transaction()
       |> elem(1)
     end
 
     def miner_fixture do
-      {:ok, account} =
-        Accounts.generate_address("miner")
+      {:ok, account} = Accounts.generate_address("miner")
 
       Mining.write_miner(%{
         address: account.address,
@@ -38,7 +37,7 @@ defmodule CredoCoreNode.BlockValidatorTest do
         participation_rate: 1.0,
         inserted_at: DateTime.utc_now(),
         is_self: true
-        })
+      })
     end
 
     def tear_down_pending_transactions do

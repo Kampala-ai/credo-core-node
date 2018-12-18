@@ -138,10 +138,13 @@ defmodule CredoCoreNode.BlockValidatorTest do
 
     def block_fixture(data_length) do
       chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" |> String.split("")
+
       long_data =
-        Enum.reduce((0..data_length), [], fn (_i, acc) ->
+        Enum.reduce(0..data_length, [], fn _i, acc ->
           [Enum.random(chars) | acc]
-        end) |> Enum.join("")
+        end)
+        |> Enum.join("")
+
       private_key = :crypto.strong_rand_bytes(32)
       attrs = [nonce: 0, to: "ABC", value: D.new(1), fee: D.new(1), data: long_data]
 

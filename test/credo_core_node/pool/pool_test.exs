@@ -153,7 +153,7 @@ defmodule CredoCoreNode.PoolTest do
           s: "7A4A73877604F44BC673D46CEF6E267283215FCF6CE7AF82C18BFEEBD8053468",
           to: "AF24738B406DB6387D05EB7CE1E90D420B25798F",
           v: 0,
-          value: Decimal.new(1000000)
+          value: Decimal.new(1_000_000)
         )
 
       assert Pool.is_tx_from_balance_sufficient?(tx)
