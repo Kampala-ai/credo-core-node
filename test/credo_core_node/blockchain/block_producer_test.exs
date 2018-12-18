@@ -66,4 +66,23 @@ defmodule CredoCoreNode.BlockProducerTest do
       tear_down_miners()
     end
   end
+
+  describe "getting the next block producer" do
+    @describetag table_name: :pending_blocks
+
+    test "returns a miner" do
+      tear_down_miners()
+
+      block = %CredoCoreNode.Blockchain.Block{number: 1}
+
+      miners =
+        [
+          elem(miner_fixture(), 1),
+          elem(miner_fixture(), 1),
+          elem(miner_fixture(), 1)
+        ]
+
+      assert Enum.member?(miners, BlockProducer.get_next_block_producer(block, 0))
+    end
+  end
 end
