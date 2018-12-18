@@ -86,6 +86,8 @@ Enum.each(0..(CredoCoreNode.Network.active_connections_limit(:outgoing) - 1), fn
       {:noreply, state}
     end
 
+    def handle_in("phx_close", _params, state), do: handle_close(%{}, state)
+
     def handle_close(_reason, state) do
       "Elixir.CredoCoreNodeWeb.NodeSocket.V1.EventChannelClient" <> id =
         Atom.to_string(__MODULE__)
