@@ -177,4 +177,47 @@ defmodule CredoCoreNode.PoolTest do
       refute Pool.is_tx_from_balance_sufficient?(tx)
     end
   end
+
+  describe "summing pending transaction values" do
+    @describetag table_name: :pending_blocks
+    @private_key :crypto.strong_rand_bytes(32)
+    @attrs [nonce: 0, to: "ABC", value: D.new(12345.6), fee: D.new(1), data: ""]
+    @second_attrs [nonce: 1, to: "ABCD", value: D.new(2000), fee: D.new(1), data: ""]
+
+    def pending_block_fixture(private_key, attrs, second_attrs) do
+      {:ok, pending_transaction} =
+        private_key
+        |> Pool.generate_pending_transaction(attrs)
+        |> elem(1)
+        |> Pool.write_pending_transaction()
+
+      {:ok, second_pending_transaction} =
+        private_key
+        |> Pool.generate_pending_transaction(second_attrs)
+        |> elem(1)
+        |> Pool.write_pending_transaction()
+
+      {:ok, pending_block} =
+        [pending_transaction, second_pending_transaction]
+        |> Pool.generate_pending_block()
+        |> elem(1)
+        |> Pool.write_pending_block()
+
+      pending_block
+    end
+
+    test "correctly sums up pending transaction values for a block" do
+      block = pending_block_fixture(@private_key, @attrs, @second_attrs)
+
+      assert D.cmp(Pool.sum_pending_transaction_values(block), D.new(14345.6)) == :eq
+    end
+
+    test "correctly sums up pending transaction values for a list of transactions" do
+      transactions =
+        pending_block_fixture(@private_key, @attrs, @second_attrs)
+        |> Pool.list_pending_transactions()
+
+      assert D.cmp(Pool.sum_pending_transaction_values(transactions), D.new(14345.6)) == :eq
+    end
+  end
 end
