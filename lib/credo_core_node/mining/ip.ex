@@ -21,9 +21,10 @@ defmodule CredoCoreNode.Mining.Ip do
         value: 1.0,
         fee: Mining.default_tx_fee(),
         data:
-          "{\"tx_type\" : \"#{Blockchain.update_miner_ip_tx_type()}\", \"node_ip\" : \"#{
-            Network.get_current_ip()
-          }\"}"
+          Poison.encode!(%{
+            tx_type: Blockchain.update_miner_ip_tx_type(),
+            node_ip: Network.get_current_ip()
+          })
       })
 
     tx

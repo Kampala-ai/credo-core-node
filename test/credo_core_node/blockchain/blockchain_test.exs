@@ -2,6 +2,7 @@ defmodule CredoCoreNode.BlockchainTest do
   use CredoCoreNodeWeb.DataCase
 
   alias CredoCoreNode.{Blockchain, Pool}
+  alias CredoCoreNode.Mining.{Coinbase, Deposit, Ip, Slash}
 
   alias Decimal, as: D
 
@@ -105,6 +106,87 @@ defmodule CredoCoreNode.BlockchainTest do
 
       assert block.number == 0
       assert block.hash == "51D9D50254B866AEE7060B51B611B2C19FB280641FB5CDB11D4669AA14BB1A07"
+    end
+  end
+
+  describe "transaction types" do
+    @describetag table_name: :pending_transactions
+    @private_key :crypto.strong_rand_bytes(32)
+    @attrs [nonce: 0, to: "ABC", value: D.new(1), fee: D.new(1)]
+
+    def pending_transaction_fixture(private_key, attrs, data) do
+      private_key
+      |> Pool.generate_pending_transaction(attrs ++ [data: data])
+      |> elem(1)
+    end
+
+    test "constant getters return expected type" do
+      assert Blockchain.coinbase_tx_type() == "coinbase"
+      assert Blockchain.security_deposit_tx_type() == "security_deposit"
+      assert Blockchain.slash_tx_type() == "slash"
+      assert Blockchain.update_miner_ip_tx_type() == "update_miner_ip"
+    end
+
+    test "detecting coinbase transaction type" do
+      pending_transaction =
+        pending_transaction_fixture(
+          @private_key,
+          @attrs,
+          "{\"tx_type\" : \"#{Blockchain.coinbase_tx_type()}\"}"
+        )
+
+      assert Coinbase.is_coinbase_tx(pending_transaction)
+    end
+
+    test "detecting deposit transaction type" do
+      pending_transaction =
+        pending_transaction_fixture(
+          @private_key,
+          @attrs,
+          "{\"tx_type\" : \"#{Blockchain.security_deposit_tx_type()}\"}"
+        )
+
+      assert Deposit.is_deposit(pending_transaction)
+    end
+
+    test "detecting ip transaction type" do
+      pending_transaction =
+        pending_transaction_fixture(
+          @private_key,
+          @attrs,
+          "{\"tx_type\" : \"#{Blockchain.update_miner_ip_tx_type()}\"}"
+        )
+
+      assert Ip.is_miner_ip_update(pending_transaction)
+    end
+
+    test "detecting slash transaction type" do
+      pending_transaction =
+        pending_transaction_fixture(
+          @private_key,
+          @attrs,
+          "{\"tx_type\" : \"#{Blockchain.slash_tx_type()}\"}"
+        )
+
+      assert Slash.is_slash(pending_transaction)
+    end
+  end
+
+  describe "summing transaction values" do
+    @describetag table_name: :transactions
+
+    test "correctly sums up transaction values for a block" do
+      block = Blockchain.load_genesis_block()
+
+      assert D.cmp(Blockchain.sum_transaction_values(block), D.new(1374729257.2286)) == :eq
+    end
+
+    test "correctly sums up transaction values for a list of transactions" do
+      transactions =
+        Blockchain.load_genesis_block()
+        |> Blockchain.list_transactions()
+
+      assert D.cmp(Blockchain.sum_transaction_values(transactions), D.new(1374729257.2286)) == :eq
     end
   end
 end

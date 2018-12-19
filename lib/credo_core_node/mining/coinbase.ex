@@ -15,7 +15,7 @@ defmodule CredoCoreNode.Mining.Coinbase do
         to: Mining.my_miner().address,
         value: Pool.sum_pending_transaction_fees(txs),
         fee: 1.0,
-        data: "{\"tx_type\" : \"#{Blockchain.coinbase_tx_type()}\"}"
+        data: Poison.encode!(%{tx_type: Blockchain.coinbase_tx_type()})
       })
 
     txs ++ [tx]

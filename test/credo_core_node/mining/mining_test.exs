@@ -208,4 +208,52 @@ defmodule CredoCoreNode.MiningTest do
              )
     end
   end
+
+  describe "deleting a miner for an insufficient stake" do
+    @describetag table_name: :miners
+    @attrs [
+      address: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340",
+      inserted_at: DateTime.utc_now(),
+      ip: "10.0.1.4",
+      is_self: true,
+      participation_rate: 0.729999999999964
+    ]
+
+    def miner_fixture(attrs, stake_amount) do
+      {:ok, miner} =
+        attrs ++ [stake_amount: stake_amount]
+        |> Mining.write_miner()
+
+      miner
+    end
+
+    test "deletes a miner when the stake is insufficient" do
+      miner = miner_fixture(@attrs, D.new(9_000))
+
+      Mining.delete_miner_for_insufficient_stake(miner)
+
+      assert is_nil(Mining.get_miner(miner.address))
+    end
+
+    test "does not delete a miner when the stake is sufficient" do
+      miner = miner_fixture(@attrs, D.new(10_500))
+
+      Mining.delete_miner_for_insufficient_stake(miner)
+
+      refute is_nil(Mining.get_miner(miner.address))
+    end
+  end
+
+  describe "interpreting timelocks" do
+    @describetag table_name: :miners
+
+    test "timelock values below a threshold are interpreted as block numbers" do
+      assert Mining.timelock_is_block_height?(100_000)
+      assert Mining.timelock_is_block_height?(490_000_000)
+    end
+
+    test "timelock values below a threshold are interpreted as unix timestamps" do
+      refute Mining.timelock_is_block_height?(510_000_000)
+    end
+  end
 end

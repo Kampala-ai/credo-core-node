@@ -23,9 +23,10 @@ defmodule CredoCoreNode.Mining.Slash do
         value: 0,
         fee: Mining.default_tx_fee(),
         data:
-          "{\"tx_type\" : \"#{Blockchain.slash_tx_type()}\", \"byzantine_behavior_proof\" : #{
-            Poison.encode!(byzantine_behavior_proof)
-          }}"
+          Poison.encode!(%{
+            tx_type: Blockchain.slash_tx_type(),
+            byzantine_behavior_proof: byzantine_behavior_proof
+          })
       })
 
     tx

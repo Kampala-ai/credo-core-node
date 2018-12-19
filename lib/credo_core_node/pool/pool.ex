@@ -116,7 +116,7 @@ defmodule CredoCoreNode.Pool do
   """
   def get_batch_of_valid_pending_transactions() do
     list_pending_transactions()
-    |> Enum.sort(&(&1.fee > &2.fee))
+    |> Enum.sort(&(D.cmp(&1.fee, &2.fee) == :gt))
     |> Enum.filter(&is_tx_valid?(&1))
     |> Enum.take(2000)
   end
