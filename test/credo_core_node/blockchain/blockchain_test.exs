@@ -171,4 +171,22 @@ defmodule CredoCoreNode.BlockchainTest do
       assert Slash.is_slash(pending_transaction)
     end
   end
+
+  describe "summing transaction values" do
+    @describetag table_name: :transactions
+
+    test "correctly sums up transaction values for a block" do
+      block = Blockchain.load_genesis_block()
+
+      assert D.cmp(Blockchain.sum_transaction_values(block), D.new(1374729257.2286)) == :eq
+    end
+
+    test "correctly sums up transaction values for a list of transactions" do
+      transactions =
+        Blockchain.load_genesis_block()
+        |> Blockchain.list_transactions()
+
+      assert D.cmp(Blockchain.sum_transaction_values(transactions), D.new(1374729257.2286)) == :eq
+    end
+  end
 end
