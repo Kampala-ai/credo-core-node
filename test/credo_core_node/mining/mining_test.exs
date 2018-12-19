@@ -243,4 +243,17 @@ defmodule CredoCoreNode.MiningTest do
       refute is_nil(Mining.get_miner(miner.address))
     end
   end
+
+  describe "interpreting timelocks" do
+    @describetag table_name: :miners
+
+    test "timelock values below a threshold are interpreted as block numbers" do
+      assert Mining.timelock_is_block_height?(100_000)
+      assert Mining.timelock_is_block_height?(490_000_000)
+    end
+
+    test "timelock values below a threshold are interpreted as unix timestamps" do
+      refute Mining.timelock_is_block_height?(510_000_000)
+    end
+  end
 end
