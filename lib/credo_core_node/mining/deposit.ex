@@ -19,9 +19,11 @@ defmodule CredoCoreNode.Mining.Deposit do
         value: amount,
         fee: Mining.default_tx_fee(),
         data:
-          "{\"tx_type\" : \"#{Blockchain.security_deposit_tx_type()}\", \"node_ip\" : \"#{
-            Network.get_current_ip()
-          }\", \"timelock\": \"#{timelock}\"}"
+          Poison.encode!(%{
+            tx_type: Blockchain.security_deposit_tx_type(),
+            node_ip: Network.get_current_ip(),
+            timelock: "#{timelock}"
+          })
       })
 
     tx
