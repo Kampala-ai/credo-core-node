@@ -16,7 +16,7 @@ defmodule CredoCoreNode.Mining do
 
   @default_nonce 0
   @default_tx_fee 1.0
-  @min_stake_size 10000
+  @min_stake_size D.new(10000)
   @vote_waiting_intervals 50
   @max_timelock_block_height 500_000_000
 
@@ -32,7 +32,7 @@ defmodule CredoCoreNode.Mining do
   end
 
   def delete_miner_for_insufficient_stake(miner) do
-    if miner.stake_amount < @min_stake_size, do: delete_miner(miner)
+    if D.cmp(miner.stake_amount, @min_stake_size) == :lt, do: delete_miner(miner)
   end
 
   def my_miner() do

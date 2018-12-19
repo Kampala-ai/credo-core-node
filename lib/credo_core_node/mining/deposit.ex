@@ -51,7 +51,7 @@ defmodule CredoCoreNode.Mining.Deposit do
   end
 
   def validate_deposit_size(tx) do
-    D.cmp(tx.value, D.new(Mining.min_stake_size())) != :lt
+    D.cmp(tx.value, Mining.min_stake_size()) != :lt
   end
 
   def parse_timelock(tx) do
