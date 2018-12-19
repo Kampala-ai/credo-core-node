@@ -74,7 +74,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
             socket_client_id: nil
           )
 
-          Network.retrieve_known_nodes(known_node.ip, :outgoing)
+          Network.retrieve_known_nodes(known_node.ip, :incoming)
 
         {:ok, 403, _headers, _body} ->
           Logger.info("Responded with `forbidden` (trying to connect to self)")
