@@ -42,8 +42,24 @@ defmodule CredoCoreNode.Mining.Ip do
     Enum.filter(txs, &is_miner_ip_update(&1))
   end
 
-  def is_miner_ip_update(tx) do
-    Poison.decode!(tx.data)["tx_type"] == Blockchain.update_miner_ip_tx_type()
+  def is_miner_ip_update(%{data: nil} = _tx), do: false
+  def is_miner_ip_update(%{data: data} = _tx) when not is_binary(data), do: false
+  def is_miner_ip_update(%{data: data} = tx) when is_binary(data) do
+    try do
+      tx.data =~ "tx_type" && Poison.decode!(tx.data)["tx_type"] == Blockchain.update_miner_ip_tx_type()
+    rescue
+      Poison.SyntaxError -> false
+    end
+  end
+
+  def parse_node_ip(%{data: nil} = _miner_ip_update), do: nil
+  def parse_node_ip(%{data: data} = _miner_ip_update) when not is_binary(data), do: nil
+  def parse_node_ip(%{data: data} = miner_ip_update) when is_binary(data) do
+    try do
+      miner_ip_update.data =~ "node_ip" && Poison.decode!(miner_ip_update.data)["node_ip"]
+    rescue
+      Poison.SyntaxError -> nil
+    end
   end
 
   def validate_miner_ip_updates(miner_ip_updates) do
@@ -55,7 +71,7 @@ defmodule CredoCoreNode.Mining.Ip do
     Enum.each(miner_ip_updates, fn miner_ip_update ->
       miner_ip_update.to
       |> Mining.get_miner()
-      |> Map.merge(%{ip: Poison.decode!(miner_ip_update.data)["node_ip"]})
+      |> Map.merge(%{ip: parse_node_ip(miner_ip_update)})
       |> Mining.write_miner()
     end)
   end

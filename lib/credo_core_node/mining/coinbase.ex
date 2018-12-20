@@ -27,9 +27,14 @@ defmodule CredoCoreNode.Mining.Coinbase do
     |> Enum.filter(&is_coinbase_tx(&1))
   end
 
-  def is_coinbase_tx(tx) do
-    String.length(tx.data) > 1 &&
-      Poison.decode!(tx.data)["tx_type"] == Blockchain.coinbase_tx_type()
+  def is_coinbase_tx(%{data: nil} = _tx), do: false
+  def is_coinbase_tx(%{data: data} = _tx) when not is_binary(data), do: false
+  def is_coinbase_tx(%{data: data} = tx) when is_binary(data) do
+    try do
+      tx.data =~ "tx_type" && Poison.decode!(tx.data)["tx_type"] == Blockchain.coinbase_tx_type()
+    rescue
+      Poison.SyntaxError -> false
+    end
   end
 
   def tx_fee_sums_match(block, coinbase_txs) do

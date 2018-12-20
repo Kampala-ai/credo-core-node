@@ -43,12 +43,24 @@ defmodule CredoCoreNode.Mining.Slash do
     Enum.filter(txs, &is_slash(&1))
   end
 
-  def is_slash(tx) do
-    String.length(tx.data) > 1 && Poison.decode!(tx.data)["tx_type"] == Blockchain.slash_tx_type()
+  def is_slash(%{data: nil} = _tx), do: false
+  def is_slash(%{data: data} = _tx) when not is_binary(data), do: false
+  def is_slash(%{data: data} = tx) when is_binary(data) do
+    try do
+      tx.data =~ "tx_type" && Poison.decode!(tx.data)["tx_type"] == Blockchain.slash_tx_type()
+    rescue
+      Poison.SyntaxError -> false
+    end
   end
 
-  def parse_proof(slash) do
-    Poison.decode!(slash.data)["byzantine_behavior_proof"]
+  def parse_proof(%{data: nil} = _slash), do: []
+  def parse_proof(%{data: data} = _slash) when not is_binary(data), do: []
+  def parse_proof(%{data: data} = slash) when is_binary(data) do
+    try do
+      slash.data =~ "byzantine_behavior_proof" && Poison.decode!(slash.data)["byzantine_behavior_proof"]
+    rescue
+      Poison.SyntaxError -> []
+    end
   end
 
   def validate_and_slash_miners(slashes) do

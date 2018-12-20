@@ -41,9 +41,14 @@ defmodule CredoCoreNode.Mining.Deposit do
     Enum.filter(txs, &is_deposit(&1))
   end
 
-  def is_deposit(tx) do
-    String.length(tx.data) > 1 &&
-      Poison.decode!(tx.data)["tx_type"] == Blockchain.security_deposit_tx_type()
+  def is_deposit(%{data: nil} = _tx), do: false
+  def is_deposit(%{data: data} = _tx) when not is_binary(data), do: false
+  def is_deposit(%{data: data} = tx) when is_binary(data) do
+    try do
+      tx.data =~ "tx_type" && Poison.decode!(tx.data)["tx_type"] == Blockchain.security_deposit_tx_type()
+    rescue
+      Poison.SyntaxError -> false
+    end
   end
 
   def validate_deposits(deposits) do
@@ -56,8 +61,24 @@ defmodule CredoCoreNode.Mining.Deposit do
     D.cmp(tx.value, Mining.min_stake_size()) != :lt
   end
 
-  def parse_timelock(tx) do
-    Poison.decode!(tx.data)["timelock"]
+  def parse_timelock(%{data: nil} = _tx), do: nil
+  def parse_timelock(%{data: data} = _tx) when not is_binary(data), do: nil
+  def parse_timelock(%{data: data} = tx) when is_binary(data) do
+    try do
+      tx.data =~ "timelock" && Poison.decode!(tx.data)["timelock"]
+    rescue
+      Poison.SyntaxError -> nil
+    end
+  end
+
+  def parse_node_ip(%{data: nil} = _tx), do: nil
+  def parse_node_ip(%{data: data} = _tx) when not is_binary(data), do: nil
+  def parse_node_ip(%{data: data} = tx) when is_binary(data) do
+    try do
+      tx.data =~ "node_ip" && Poison.decode!(tx.data)["node_ip"]
+    rescue
+      Poison.SyntaxError -> nil
+    end
   end
 
   def validate_deposit_timelock(tx) do
@@ -85,12 +106,12 @@ defmodule CredoCoreNode.Mining.Deposit do
       case get_miner_for_deposit(deposit) do
         nil ->
           %{
-            ip: Poison.decode!(deposit.data)["node_ip"],
+            ip: parse_node_ip(deposit),
             address: deposit.to,
             stake_amount: deposit.value,
             participation_rate: 1,
             inserted_at: DateTime.utc_now(),
-            is_self: Poison.decode!(deposit.data)["node_ip"] == Network.get_current_ip()
+            is_self: parse_node_ip(deposit) == Network.get_current_ip()
           }
 
         miner ->
