@@ -188,4 +188,20 @@ defmodule CredoCoreNode.Mining.VoteManager do
     |> Enum.filter(&(&1.miner_address == miner.address))
     |> Enum.any?()
   end
+
+  def get_current_voting_round(block) do
+    highest_vote =
+      Mining.list_votes()
+      |> Enum.filter(&(&1.block_number == block.number))
+      |> Enum.sort(&(&1.voting_round >= &2.voting_round))
+      |> List.first()
+
+    case highest_vote do
+      nil ->
+        0
+
+      vote ->
+        vote.voting_round + 1
+    end
+  end
 end

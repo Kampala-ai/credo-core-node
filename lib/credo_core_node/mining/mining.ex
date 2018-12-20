@@ -215,7 +215,11 @@ defmodule CredoCoreNode.Mining do
     end
   end
 
-  def start_voting(block, voting_round \\ 0) do
+  def start_voting(block, voting_round) when voting_round == 0 do
+    start_voting(block, VoteManager.get_current_voting_round(block))
+  end
+
+  def start_voting(block, voting_round) do
     Logger.info("Started voting at block height #{block.number} in round #{voting_round}.")
 
     unless VoteManager.already_voted?(block, voting_round) do

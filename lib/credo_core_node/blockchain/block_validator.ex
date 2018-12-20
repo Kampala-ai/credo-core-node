@@ -132,7 +132,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   def validate_network_consensus(block) do
-    {:ok, confirmed_block} = Mining.start_voting(block)
+    {:ok, confirmed_block} = Mining.start_voting(block, 0)
 
     block.hash == confirmed_block.hash
   end
