@@ -41,7 +41,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
       known_node =
         Network.list_known_nodes()
         |> Enum.filter(&(!Network.connected_to?(&1.ip, :outgoing)))
-        |> Enum.sort(&(Network.updated_at(&1.ip) <= Network.updated_at(&2.ip)))
+        |> Enum.sort(&Network.compare(&1, &2))
         |> List.first()
 
       port = Application.get_env(:credo_core_node, CredoCoreNode.Network)[:node_connection_port]

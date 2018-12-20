@@ -316,6 +316,18 @@ defmodule CredoCoreNode.Network do
     end
   end
 
+  def compare(%KnownNode{} = node_a, %KnownNode{} = node_b) do
+    compare(updated_at(node_a.ip), updated_at(node_b.ip))
+  end
+
+  def compare(updated_at_a, updated_at_b) do
+    updated_at_a <= updated_at_b
+  end
+
+  def compare(%DateTime{} = updated_at_a, %DateTime{} = updated_at_b) do
+    DateTime.compare(updated_at_a, updated_at_b) != :gt
+  end
+
   def propagate_record(record, options \\ []) do
     event = options[:event] || :create
     session_ids = options[:session_ids] || []
