@@ -136,8 +136,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
 
   defp valid_block_body?(nil, _body), do: false
 
-  defp valid_block_body?(%Block{} = blk, body),
-    do: valid_block_body?(blk, body, Transaction)
+  defp valid_block_body?(%Block{} = blk, body), do: valid_block_body?(blk, body, Transaction)
 
   defp valid_block_body?(%PendingBlock{} = blk, body),
     do: valid_block_body?(blk, body, PendingTransaction)
@@ -152,7 +151,8 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
       valid_block_transactions?(blk, txs, tx_module)
     rescue
       # Body is not properly RLP-encoded
-      ArgumentError -> false
+      ArgumentError ->
+        false
     end
   end
 

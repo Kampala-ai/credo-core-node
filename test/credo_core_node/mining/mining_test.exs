@@ -221,7 +221,7 @@ defmodule CredoCoreNode.MiningTest do
 
     def miner_fixture(attrs, stake_amount) do
       {:ok, miner} =
-        attrs ++ [stake_amount: stake_amount]
+        (attrs ++ [stake_amount: stake_amount])
         |> Mining.write_miner()
 
       miner

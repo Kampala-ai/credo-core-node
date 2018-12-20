@@ -25,7 +25,7 @@ defmodule CredoCoreNode.Workers do
       GarbageCollector,
       IpManager,
       MineOperator,
-      Slasher,
+      Slasher
     ]
 
     Supervisor.init(children, strategy: :one_for_one, name: CredoCoreNode.WorkersSupervisor)

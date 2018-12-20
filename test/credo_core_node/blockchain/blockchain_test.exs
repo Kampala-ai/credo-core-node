@@ -178,7 +178,7 @@ defmodule CredoCoreNode.BlockchainTest do
     test "correctly sums up transaction values for a block" do
       block = Blockchain.load_genesis_block()
 
-      assert D.cmp(Blockchain.sum_transaction_values(block), D.new(1374729257.2286)) == :eq
+      assert D.cmp(Blockchain.sum_transaction_values(block), D.new(1_374_729_257.2286)) == :eq
     end
 
     test "correctly sums up transaction values for a list of transactions" do
@@ -186,7 +186,8 @@ defmodule CredoCoreNode.BlockchainTest do
         Blockchain.load_genesis_block()
         |> Blockchain.list_transactions()
 
-      assert D.cmp(Blockchain.sum_transaction_values(transactions), D.new(1374729257.2286)) == :eq
+      assert D.cmp(Blockchain.sum_transaction_values(transactions), D.new(1_374_729_257.2286)) ==
+               :eq
     end
   end
 end
