@@ -7,7 +7,7 @@ defmodule CredoCoreNode.Workers.MineOperator do
 
   alias CredoCoreNode.{Blockchain, Mining}
 
-  @default_interval 300_000
+  @default_interval 60_000
 
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, @default_interval, name: __MODULE__)
@@ -16,7 +16,7 @@ defmodule CredoCoreNode.Workers.MineOperator do
   def init(interval) do
     Logger.info("Initializing the mine operator...")
 
-    handle_info(:mine_block, interval)
+    schedule_mine_block(interval)
 
     {:ok, interval}
   end
@@ -27,7 +27,7 @@ defmodule CredoCoreNode.Workers.MineOperator do
         Blockchain.last_block()
         |> Mining.start_mining()
 
-        schedule_mine_block(1000)
+        schedule_mine_block(2000)
 
       false ->
         schedule_mine_block(interval)
