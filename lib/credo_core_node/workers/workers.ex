@@ -5,8 +5,6 @@ defmodule CredoCoreNode.Workers do
 
   use Supervisor
 
-  import Supervisor.Spec, only: [worker: 2]
-
   alias CredoCoreNode.Workers.ConnectionManager
   alias CredoCoreNode.Workers.BlockSyncer
   alias CredoCoreNode.Workers.DepositRecognizer
@@ -21,13 +19,13 @@ defmodule CredoCoreNode.Workers do
 
   def init(_) do
     children = [
-      worker(ConnectionManager, [60_000]),
-      worker(BlockSyncer, []),
-      worker(DepositRecognizer, []),
-      worker(GarbageCollector, []),
-      worker(IpManager, []),
-      worker(MineOperator, []),
-      worker(Slasher, [])
+      ConnectionManager,
+      BlockSyncer,
+      DepositRecognizer,
+      GarbageCollector,
+      IpManager,
+      MineOperator,
+      Slasher,
     ]
 
     Supervisor.init(children, strategy: :one_for_one, name: CredoCoreNode.WorkersSupervisor)

@@ -7,8 +7,10 @@ defmodule CredoCoreNode.Workers.MineOperator do
 
   alias CredoCoreNode.{Blockchain, Mining}
 
-  def start_link(interval \\ 300_000) do
-    GenServer.start_link(__MODULE__, interval, name: __MODULE__)
+  @default_interval 300_000
+
+  def start_link(opts \\ []) do
+    GenServer.start_link(__MODULE__, @default_interval, name: __MODULE__)
   end
 
   def init(interval) do

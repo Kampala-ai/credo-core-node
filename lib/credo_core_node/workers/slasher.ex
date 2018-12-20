@@ -8,10 +8,12 @@ defmodule CredoCoreNode.Workers.Slasher do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Mining.Slash
 
-  def start_link(interval \\ 240_000) do
+  @default_interval 240_000
+
+  def start_link(opts \\ []) do
     GenServer.start_link(
       __MODULE__,
-      %{last_processed_block: nil, interval: interval},
+      %{last_processed_block: nil, interval: @default_interval},
       name: __MODULE__
     )
   end

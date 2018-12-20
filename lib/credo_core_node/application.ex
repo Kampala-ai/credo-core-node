@@ -39,14 +39,12 @@ defmodule CredoCoreNode.Application do
   end
 
   defp background_workers(children) do
-    import Supervisor.Spec, only: [worker: 2]
-
     if Application.get_env(:credo_core_node, CredoCoreNode.Workers, [])[:enabled] do
       # Start the background workers
       children ++
         [
-          worker(CredoCoreNode.Scheduler, []),
-          worker(CredoCoreNode.Workers, [])
+          CredoCoreNode.Scheduler,
+          CredoCoreNode.Workers
         ]
     else
       children

@@ -8,8 +8,10 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
   alias CredoCoreNode.Network
   alias CredoCoreNodeWeb.Endpoint
 
-  def start_link(interval \\ 60_000) do
-    GenServer.start_link(__MODULE__, interval, name: __MODULE__)
+  @default_interval 60_000
+
+  def start_link(opts \\ []) do
+    GenServer.start_link(__MODULE__, @default_interval, name: __MODULE__)
   end
 
   def init(interval) do

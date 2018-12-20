@@ -7,10 +7,11 @@ defmodule CredoCoreNode.Workers.GarbageCollector do
 
   alias CredoCoreNode.{Blockchain, Pool}
 
+  @default_interval 60_000
   @recency_length 60
 
-  def start_link(interval \\ 60_000) do
-    GenServer.start_link(__MODULE__, interval, name: __MODULE__)
+  def start_link(opts \\ []) do
+    GenServer.start_link(__MODULE__, @default_interval, name: __MODULE__)
   end
 
   def init(interval) do
