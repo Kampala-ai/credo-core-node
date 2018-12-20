@@ -87,7 +87,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
       if length(valid_votes) >= @quorum_size do
         valid_votes
         |> count_votes()
-        |> get_winner()
+        |> get_winner(valid_votes)
         |> Pool.load_pending_block_body()
       end
 
@@ -146,19 +146,22 @@ defmodule CredoCoreNode.Mining.VoteManager do
         @num_seconds_for_voter_probation_period
   end
 
-  def total_voting_power do
-    stake_amounts = for %{stake_amount: stake_amount} <- Mining.list_miners(), do: stake_amount
-    Enum.reduce(stake_amounts, fn x, acc -> D.add(x, acc) end)
+  def total_voting_power(votes) do
+    voting_miner_addresses = Enum.map(votes, & &1.miner_address)
+
+    Mining.list_miners()
+    |> Enum.filter(&Enum.member?(voting_miner_addresses, &1.address))
+    |> Enum.reduce(D.new(0), fn miner, acc -> D.add(miner.stake_amount, acc) end)
   end
 
-  def has_supermajority?(num_votes) do
-    D.cmp(num_votes, D.mult(D.new(2 / 3), total_voting_power())) != :lt
+  def has_supermajority?(num_votes, votes) do
+    D.cmp(num_votes, D.mult(D.new(2 / 3), total_voting_power(votes))) != :lt
   end
 
-  def get_winner(results) do
+  def get_winner(results, votes) do
     winning_result =
       results
-      |> Enum.filter(fn result -> has_supermajority?(result.count) end)
+      |> Enum.filter(fn result -> has_supermajority?(result.count, votes) end)
       |> List.first()
 
     if is_nil(winning_result) do
