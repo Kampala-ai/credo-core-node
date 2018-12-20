@@ -144,6 +144,7 @@ defmodule CredoCoreNode.Accounts do
       end
     end
     |> Enum.concat()
+    |> Enum.reject(&(is_nil(&1)))
     |> Enum.reduce(D.new(0), fn x, acc -> D.add(x, acc) end)
   end
 end
