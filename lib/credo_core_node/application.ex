@@ -39,20 +39,14 @@ defmodule CredoCoreNode.Application do
   end
 
   defp background_workers(children) do
-    import Supervisor.Spec, only: [worker: 2, supervisor: 2]
+    import Supervisor.Spec, only: [worker: 2]
 
     if Application.get_env(:credo_core_node, CredoCoreNode.Workers, [])[:enabled] do
       # Start the background workers
       children ++
         [
-          worker(CredoCoreNode.Workers.ConnectionManager, [60_000]),
-          worker(CredoCoreNode.Workers.BlockSyncer, []),
-          worker(CredoCoreNode.Workers.DepositRecognizer, []),
-          worker(CredoCoreNode.Workers.GarbageCollector, []),
-          worker(CredoCoreNode.Workers.IpManager, []),
-          worker(CredoCoreNode.Workers.MineOperator, []),
-          worker(CredoCoreNode.Workers.Slasher, []),
-          worker(CredoCoreNode.Scheduler, [])
+          worker(CredoCoreNode.Scheduler, []),
+          worker(CredoCoreNode.Workers, [])
         ]
     else
       children
