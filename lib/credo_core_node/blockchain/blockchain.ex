@@ -312,19 +312,11 @@ defmodule CredoCoreNode.Blockchain do
   def block_body_fetched?(%Block{hash: nil}), do: false
 
   def block_body_fetched?(%Block{hash: hash}),
-    do: File.exists?("#{File.cwd!()}/leveldb/blocks/#{hash}")
+    do: MPT.RepoManager.trie_exists?("blocks", hash)
 
   defp block_tx_trie(%Block{tx_root: nil}), do: nil
   defp block_tx_trie(%Block{hash: nil}), do: nil
 
-  defp block_tx_trie(%Block{tx_root: tx_root, hash: hash}) do
-    path = "#{File.cwd!()}/leveldb/blocks/#{hash}"
-    {:ok, tx_root} = Base.decode16(tx_root)
-
-    if File.exists?(path) do
-      path
-      |> MerklePatriciaTree.DB.LevelDB.init()
-      |> Trie.new(tx_root)
-    end
-  end
-end
+  defp block_tx_trie(%Block{tx_root: tx_root, hash: hash}),
+    do: MPT.RepoManager.trie("blocks", hash, tx_root)
+ end

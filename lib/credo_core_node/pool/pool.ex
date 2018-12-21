@@ -342,19 +342,11 @@ defmodule CredoCoreNode.Pool do
   def pending_block_body_fetched?(%PendingBlock{hash: nil}), do: false
 
   def pending_block_body_fetched?(%PendingBlock{hash: hash}),
-    do: File.exists?("#{File.cwd!()}/leveldb/pending_blocks/#{hash}")
+    do: MPT.RepoManager.trie_exists?("pending_blocks", hash)
 
   defp pending_block_tx_trie(%PendingBlock{tx_root: nil}), do: nil
   defp pending_block_tx_trie(%PendingBlock{hash: nil}), do: nil
 
-  defp pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}) do
-    path = "#{File.cwd!()}/leveldb/pending_blocks/#{hash}"
-    {:ok, tx_root} = Base.decode16(tx_root)
-
-    if File.exists?(path) do
-      path
-      |> MerklePatriciaTree.DB.LevelDB.init()
-      |> Trie.new(tx_root)
-    end
-  end
+  defp pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}),
+    do: MPT.RepoManager.trie("pending_blocks", hash, tx_root)
 end
