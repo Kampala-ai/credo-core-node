@@ -2,7 +2,7 @@
 
 APP="credo_core_node"
 
-BUILD_HOST="13.57.49.254"
+BUILD_HOST="18.144.37.227"
 BUILD_USER="ubuntu"
 BUILD_AT="/tmp/edeliver/credo_core_node"
 
