@@ -46,14 +46,18 @@ defmodule Mnesia.Repo do
   @doc """
   Returns the list of records.
   """
-  def list(schema) do
+  def list(schema, limit \\ nil) do
     table_name = :"#{schema.table_name()}_#{table_suffix()}"
 
     fn -> :mnesia.all_keys(table_name) end
     |> :mnesia.sync_transaction()
     |> elem(1)
+    |> apply_limit(limit)
     |> Enum.map(&get(schema, &1))
   end
+
+  def apply_limit(results, limit) when is_integer(limit), do: Enum.take(results, limit)
+  def apply_limit(results, limit), do: results
 
   @doc """
   Gets a single record.

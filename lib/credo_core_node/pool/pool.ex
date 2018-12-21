@@ -11,11 +11,13 @@ defmodule CredoCoreNode.Pool do
 
   alias Decimal, as: D
 
+  @default_pending_transaction_query_limit 500
+
   @doc """
   Returns the list of pending_transactions.
   """
   def list_pending_transactions() do
-    Mnesia.Repo.list(PendingTransaction)
+    Mnesia.Repo.list(PendingTransaction, @default_pending_transaction_query_limit)
   end
 
   def list_pending_transactions(%PendingBlock{} = pending_block) do
@@ -118,7 +120,7 @@ defmodule CredoCoreNode.Pool do
     list_pending_transactions()
     |> Enum.sort(&(D.cmp(&1.fee, &2.fee) == :gt))
     |> Enum.filter(&is_tx_valid?(&1))
-    |> Enum.take(2000)
+    |> Enum.take(500)
   end
 
   @doc """
