@@ -178,7 +178,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
       rate =
         if miner_voted?(votes, miner),
           do: min(miner.participation_rate + 0.01, 1),
-          else: max(miner.participation_rate - 0.01, 0)
+          else: max(miner.participation_rate - 0.01, 0.0001)
 
       miner
       |> Map.merge(%{participation_rate: rate})
