@@ -11,7 +11,7 @@ defmodule CredoCoreNode.Pool do
 
   alias Decimal, as: D
 
-  @default_pending_transaction_query_limit 500
+  @default_pending_transaction_query_limit 2
 
   @doc """
   Returns the list of pending_transactions.
