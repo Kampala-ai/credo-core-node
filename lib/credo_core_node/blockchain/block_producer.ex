@@ -16,9 +16,12 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
   end
 
   def get_produced_block(block) do
-    Pool.list_pending_blocks(block.number + 1)
-    |> Enum.filter(&is_produced_by_my_miner?(&1))
-    |> List.first()
+    produced_block =
+      Pool.list_pending_blocks(block.number + 1)
+      |> Enum.filter(&is_produced_by_my_miner?(&1))
+      |> List.first()
+
+    if is_nil(block), do: nil, else: {:ok, produced_block}
   end
 
   def is_produced_by_my_miner?(pending_block) do
