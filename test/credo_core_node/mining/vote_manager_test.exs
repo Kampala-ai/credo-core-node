@@ -159,7 +159,7 @@ defmodule CredoCoreNode.VoteManagerTest do
       refute VoteManager.is_valid_vote(vote)
     end
 
-    test "deems votes with a valid signature from a miner that passed the probationary period as valid" do
+    test "deems votes with a valid signature from a miner that passed the warm up period as valid" do
       miner = miner_fixture(5000, DateTime.from_unix!(1_464_096_368))
 
       vote =

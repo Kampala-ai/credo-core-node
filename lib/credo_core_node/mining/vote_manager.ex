@@ -7,7 +7,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
   @vote_collection_timeout 500
   @quorum_size 1
   @early_vote_counting_threshold 50
-  @num_seconds_for_voter_probation_period 48 * 60 * 60
+  @num_seconds_for_voter_warm_up_period 48 * 60 * 60
 
   def already_voted?(block, voting_round) do
     Mining.list_votes()
@@ -136,14 +136,13 @@ defmodule CredoCoreNode.Mining.VoteManager do
 
     voter = Mining.get_miner(vote.miner_address)
 
-    address == vote.miner_address && !is_nil(voter) &&
-      voter_has_completed_probationary_period?(voter)
+    address == vote.miner_address && !is_nil(voter) # && voter_has_completed_warm_up_period?(voter)
   end
 
-  def voter_has_completed_probationary_period?(voter) do
+  def voter_has_completed_warm_up_period?(voter) do
     is_nil(voter.inserted_at) ||
       DateTime.diff(DateTime.utc_now(), voter.inserted_at) >
-        @num_seconds_for_voter_probation_period
+        @num_seconds_for_voter_warm_up_period
   end
 
   def total_voting_power(votes) do
