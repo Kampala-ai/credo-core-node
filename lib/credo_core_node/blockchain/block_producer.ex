@@ -15,6 +15,33 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
     get_next_block_producer(block, retry_count) == Mining.my_miner()
   end
 
+  def get_produced_block(block) do
+    Pool.list_pending_blocks(block.number + 1)
+    |> Enum.filter(&is_produced_by_my_miner?(&1))
+    |> List.first()
+  end
+
+  def is_produced_by_my_miner?(pending_block) do
+    case Mining.my_miner() do
+      nil ->
+        false
+
+      miner ->
+        coinbase_tx =
+          pending_block
+          |> Coinbase.get_coinbase_txs()
+          |> List.first()
+
+        case coinbase_tx do
+          nil ->
+            false
+
+          tx ->
+            tx.to == miner.address
+        end
+    end
+  end
+
   def produce_block(txs \\ nil) do
     batch = txs || Pool.get_batch_of_valid_pending_transactions()
 

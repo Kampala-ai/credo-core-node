@@ -203,7 +203,7 @@ defmodule CredoCoreNode.Mining do
 
   def start_mining(block, retry_count \\ 0) do
     if BlockProducer.is_your_turn?(block, retry_count) do
-      case BlockProducer.produce_block() do
+      case BlockProducer.get_produced_block(block) || BlockProducer.produce_block() do
         {:ok, block} ->
           BlockValidator.validate_block(block)
 
