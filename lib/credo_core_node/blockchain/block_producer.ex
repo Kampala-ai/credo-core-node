@@ -15,8 +15,8 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
     get_next_block_producer(block, retry_count) == Mining.my_miner()
   end
 
-  def produce_block() do
-    batch = Pool.get_batch_of_valid_pending_transactions()
+  def produce_block(txs \\ nil) do
+    batch = txs || Pool.get_batch_of_valid_pending_transactions()
 
     if length(batch) > 0 do
       batch
