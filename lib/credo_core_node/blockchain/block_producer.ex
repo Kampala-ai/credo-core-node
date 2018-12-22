@@ -21,7 +21,7 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
       |> Enum.filter(&is_produced_by_my_miner?(&1))
       |> List.first()
 
-    if is_nil(block), do: nil, else: {:ok, produced_block}
+    if is_nil(produced_block), do: nil, else: {:ok, produced_block}
   end
 
   def is_produced_by_my_miner?(pending_block) do
