@@ -45,7 +45,7 @@ defmodule CredoCoreNode.Workers.BlockSyncer do
       Blockchain.list_blocks()
       |> Enum.map(& &1.number)
 
-    last_block_number = Blockchain.last_confirmed_block_number()
+    last_block_number = Blockchain.last_irreversible_block_number()
     missing_block_numbers = Enum.to_list(0..last_block_number) -- block_numbers
 
     case List.first(missing_block_numbers) do
