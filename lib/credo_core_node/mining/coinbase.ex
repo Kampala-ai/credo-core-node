@@ -11,7 +11,7 @@ defmodule CredoCoreNode.Mining.Coinbase do
     # TODO: set private key
     {:ok, tx} =
       Pool.generate_pending_transaction("", %{
-        nonce: 0,
+        nonce: Blockchain.last_confirmed_block_number() + 1,
         to: Mining.my_miner().address,
         value: Pool.sum_pending_transaction_fees(txs),
         fee: 1.0,
