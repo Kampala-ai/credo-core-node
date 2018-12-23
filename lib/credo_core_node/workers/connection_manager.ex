@@ -107,7 +107,8 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
                 failed_attempts_count: failed_attempts_count
               )
 
-              if !known_node.is_seed && failed_attempts_count >= 5 do
+              if is_persistently_unreachable_node?(known_node, failed_attempts_count) ||
+                   is_deprecated_seed_node?(known_node, failed_attempts_count) do
                 Network.delete_known_node(known_node.ip)
                 Network.delete_connection(known_node.ip)
               end
@@ -116,6 +117,14 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
 
       connect(num_attempts + 1)
     end
+  end
+
+  defp is_persistently_unreachable_node?(known_node, failed_attempts_count) do
+    !known_node.is_seed && failed_attempts_count >= 5
+  end
+
+  defp is_deprecated_seed_node?(known_node, failed_attempts_count) do
+    known_node.is_seed && failed_attempts_count >= 1000
   end
 
   defp schedule_manage_connections(interval) do
