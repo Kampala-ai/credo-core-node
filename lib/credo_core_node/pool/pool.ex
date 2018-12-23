@@ -11,7 +11,7 @@ defmodule CredoCoreNode.Pool do
 
   alias Decimal, as: D
 
-  @default_pending_transaction_query_limit 2
+  @default_pending_transaction_query_limit 500
 
   @doc """
   Returns the list of pending_transactions.
@@ -111,6 +111,8 @@ defmodule CredoCoreNode.Pool do
     {:ok, tx}
   end
 
+  @target_txs_per_block 2
+
   @doc """
   Gets a batch of a pending_transaction.
 
@@ -119,8 +121,17 @@ defmodule CredoCoreNode.Pool do
   def get_batch_of_valid_pending_transactions() do
     list_pending_transactions()
     |> Enum.sort(&(D.cmp(&1.fee, &2.fee) == :gt))
-    |> Enum.filter(&is_tx_valid?(&1))
-    |> Enum.take(500)
+    |> Enum.reduce_while([], fn tx, acc ->
+      if length(acc) >= @target_txs_per_block do
+        {:halt, acc}
+      else
+        if is_tx_valid?(tx) do
+          {:cont, acc ++ [tx]}
+        else
+          {:cont, acc}
+        end
+      end
+    end)
   end
 
   @doc """
