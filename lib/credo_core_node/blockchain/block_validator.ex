@@ -145,15 +145,15 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   # TODO: refactor block hash/body validation functions for better performance
-  defp valid_block_hash?(nil, _hash), do: false
-  defp valid_block_hash?(%{hash: blk_hash}, hash) when blk_hash != hash, do: false
-  defp valid_block_hash?(blk, hash), do: RLP.Hash.hex(blk) == hash
+  def valid_block_hash?(nil, _hash), do: false
+  def valid_block_hash?(%{hash: blk_hash}, hash) when blk_hash != hash, do: false
+  def valid_block_hash?(blk, hash), do: RLP.Hash.hex(blk) == hash
 
-  defp valid_block_body?(nil, _body), do: false
+  def valid_block_body?(nil, _body), do: false
 
-  defp valid_block_body?(%Block{} = blk, body), do: valid_block_body?(blk, body, Transaction)
+  def valid_block_body?(%Block{} = blk, body), do: valid_block_body?(blk, body, Transaction)
 
-  defp valid_block_body?(%PendingBlock{} = blk, body),
+  def valid_block_body?(%PendingBlock{} = blk, body),
     do: valid_block_body?(blk, body, PendingTransaction)
 
   defp valid_block_body?(blk, body, tx_module) do

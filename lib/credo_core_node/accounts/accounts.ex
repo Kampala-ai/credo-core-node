@@ -124,7 +124,9 @@ defmodule CredoCoreNode.Accounts do
 
   def get_account_balance(address) do
     # TODO: replace with more efficient implementation.
-    for block <- Blockchain.list_blocks() do
+    last_block = Blockchain.last_block()
+
+    for block <- (Blockchain.list_preceding_blocks(last_block) ++ [last_block]) do
       for tx <- Blockchain.list_transactions(block) do
         from = Pool.get_transaction_from_address(tx)
         to = tx.to

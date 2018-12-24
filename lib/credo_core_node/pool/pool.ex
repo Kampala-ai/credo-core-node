@@ -369,7 +369,7 @@ defmodule CredoCoreNode.Pool do
     (Blockchain.list_preceding_blocks(last_block) ++ [last_block])
     |> Enum.map(fn block ->
       Enum.map(Blockchain.list_transactions(block), fn tx ->
-        if Pool.get_transaction_from_address(tx) == from_address, do: 1
+        if get_transaction_from_address(tx) == from_address, do: 1
       end)
     end)
     |> Enum.concat()
