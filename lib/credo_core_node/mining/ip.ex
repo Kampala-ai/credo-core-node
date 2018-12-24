@@ -18,7 +18,7 @@ defmodule CredoCoreNode.Mining.Ip do
       Pool.generate_pending_transaction(private_key, %{
         nonce: Mining.default_nonce(),
         to: to,
-        value: 1.0,
+        value: 0.0,
         fee: Mining.default_tx_fee(),
         data:
           Poison.encode!(%{
@@ -44,9 +44,11 @@ defmodule CredoCoreNode.Mining.Ip do
 
   def is_miner_ip_update(%{data: nil} = _tx), do: false
   def is_miner_ip_update(%{data: data} = _tx) when not is_binary(data), do: false
+
   def is_miner_ip_update(%{data: data} = tx) when is_binary(data) do
     try do
-      tx.data =~ "tx_type" && Poison.decode!(tx.data)["tx_type"] == Blockchain.update_miner_ip_tx_type()
+      tx.data =~ "tx_type" &&
+        Poison.decode!(tx.data)["tx_type"] == Blockchain.update_miner_ip_tx_type()
     rescue
       Poison.SyntaxError -> false
     end
@@ -54,6 +56,7 @@ defmodule CredoCoreNode.Mining.Ip do
 
   def parse_node_ip(%{data: nil} = _miner_ip_update), do: nil
   def parse_node_ip(%{data: data} = _miner_ip_update) when not is_binary(data), do: nil
+
   def parse_node_ip(%{data: data} = miner_ip_update) when is_binary(data) do
     try do
       miner_ip_update.data =~ "node_ip" && Poison.decode!(miner_ip_update.data)["node_ip"]
@@ -62,9 +65,19 @@ defmodule CredoCoreNode.Mining.Ip do
     end
   end
 
+  def is_valid_miner_ip_update?(miner_ip_update) do
+    Mining.miner_exists?(miner_ip_update.to) && has_valid_signature?(miner_ip_update)
+  end
+
+  def has_valid_signature?(miner_ip_update) do
+    {:ok, public_key} = Accounts.calculate_public_key(miner_ip_update)
+
+    Mining.miner_exists?(miner_ip_update.to) &&
+      miner_ip_update.to == Accounts.payment_address(public_key)
+  end
+
   def validate_miner_ip_updates(miner_ip_updates) do
-    # TODO implement signature check.
-    miner_ip_updates
+    Enum.filter(miner_ip_updates, &is_valid_miner_ip_update?(&1))
   end
 
   def update_miner_ips(miner_ip_updates) do

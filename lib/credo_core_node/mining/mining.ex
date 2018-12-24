@@ -81,6 +81,10 @@ defmodule CredoCoreNode.Mining do
     Repo.get(Miner, address)
   end
 
+  def miner_exists?(address) do
+    not is_nil(get_miner(address))
+  end
+
   @doc """
   Creates/updates a miner.
   """
