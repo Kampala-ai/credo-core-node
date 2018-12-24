@@ -135,6 +135,15 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     |> D.cmp(@max_value_transfer_per_block_chain_segment) != :gt
   end
 
+  def valid_nonces?(block) do
+    res =
+      Enum.map(Pool.list_pending_transactions(block), fn tx ->
+        tx.nonce == Pool.outgoing_tx_count_for_from_address(tx, block)
+      end)
+
+    Enum.reduce(res, true, &(&1 && &2))
+  end
+
   # TODO: refactor block hash/body validation functions for better performance
   defp valid_block_hash?(nil, _hash), do: false
   defp valid_block_hash?(%{hash: blk_hash}, hash) when blk_hash != hash, do: false

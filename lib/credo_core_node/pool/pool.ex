@@ -360,4 +360,20 @@ defmodule CredoCoreNode.Pool do
 
   defp pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}),
     do: MPT.RepoManager.trie("pending_blocks", hash, tx_root)
+
+  def outgoing_tx_count_for_from_address(tx, last_block) do
+    # TODO: replace with more efficient implementation.
+    from_address = get_transaction_from_address(tx)
+    last_block = last_block || Blockchain.last_block()
+
+    (Blockchain.list_preceding_blocks(last_block) ++ [last_block])
+    |> Enum.map(fn block ->
+      Enum.map(Blockchain.list_transactions(block), fn tx ->
+        if Pool.get_transaction_from_address(tx) == from_address, do: 1
+      end)
+    end)
+    |> Enum.concat()
+    |> Enum.reject(&is_nil(&1))
+    |> Enum.reduce(0, fn x, acc -> x + acc end)
+  end
 end
