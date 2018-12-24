@@ -1,5 +1,5 @@
 defmodule CredoCoreNode.Mining.Ip do
-  alias CredoCoreNode.{Blockchain, Mining, Network, Pool}
+  alias CredoCoreNode.{Accounts, Blockchain, Mining, Network, Pool}
 
   def maybe_update_miner_ip do
     if Mining.is_miner?() && miner_ip_changed?() do

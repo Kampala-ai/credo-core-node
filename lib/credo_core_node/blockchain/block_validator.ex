@@ -1,6 +1,9 @@
 defmodule CredoCoreNode.Blockchain.BlockValidator do
   alias CredoCoreNode.{Blockchain, Pool, Mining}
+  alias CredoCoreNode.Blockchain.{Block, Transaction}
   alias CredoCoreNode.Mining.{Coinbase, DepositWithdrawal}
+  alias CredoCoreNode.Pool.{PendingBlock, PendingTransaction}
+  alias MerklePatriciaTree.Trie
 
   alias Decimal, as: D
 
@@ -14,7 +17,8 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
   def validate_block(block, skip_network_consensus_validation \\ false) do
     is_valid =
-      validate_previous_hash(block) && validate_format(block) && validate_transaction_count(block) &&
+      valid_block_hash?(block, block.hash) && validate_previous_hash(block) &&
+        validate_format(block) && validate_transaction_count(block) &&
         validate_transaction_data_length(block) && validate_transaction_amounts(block) &&
         validate_transaction_are_unmined(block) && validate_deposit_withdrawals(block) &&
         validate_block_irreversibility(block) && validate_coinbase_transaction(block) &&
@@ -130,6 +134,48 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     end)
     |> D.cmp(@max_value_transfer_per_block_chain_segment) != :gt
   end
+
+  # TODO: refactor block hash/body validation functions for better performance
+  defp valid_block_hash?(nil, _hash), do: false
+  defp valid_block_hash?(%{hash: blk_hash}, hash) when blk_hash != hash, do: false
+  defp valid_block_hash?(blk, hash), do: RLP.Hash.hex(blk) == hash
+
+  defp valid_block_body?(nil, _body), do: false
+
+  defp valid_block_body?(%Block{} = blk, body), do: valid_block_body?(blk, body, Transaction)
+
+  defp valid_block_body?(%PendingBlock{} = blk, body),
+    do: valid_block_body?(blk, body, PendingTransaction)
+
+  defp valid_block_body?(blk, body, tx_module) do
+    try do
+      txs =
+        body
+        |> ExRLP.decode()
+        |> Enum.map(&tx_module.from_list(&1, type: :rlp_default))
+
+      valid_block_transactions?(blk, txs, tx_module)
+    rescue
+      # Body is not properly RLP-encoded
+      ArgumentError ->
+        false
+    end
+  end
+
+  defp valid_block_transactions?(_blk, [], _tx_module), do: false
+
+  defp valid_block_transactions?(blk, txs, tx_module) when is_list(txs) do
+    {:ok, tx_trie, _txs} =
+      MerklePatriciaTree.DB.ETS.random_ets_db()
+      |> Trie.new()
+      |> MPT.Repo.write_list(tx_module, txs)
+
+    tx_root = Base.encode16(tx_trie.root_hash)
+
+    blk.tx_root == tx_root
+  end
+
+  defp valid_block_transactions?(_blk, _invalid_arg, _tx_module), do: false
 
   def validate_network_consensus(block) do
     {:ok, confirmed_block} = Mining.start_voting(block, 0)
