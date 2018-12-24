@@ -82,7 +82,7 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
     :timer.sleep(@block_production_timeout)
 
     if next_block = next_block?(block) do
-      BlockValidator.validate_block(next_block)
+      BlockValidator.valid_block?(next_block)
     else
       Mining.start_mining(block, retry_count + 1)
     end

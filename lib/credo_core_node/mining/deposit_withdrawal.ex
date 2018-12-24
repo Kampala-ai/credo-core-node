@@ -4,7 +4,7 @@ defmodule CredoCoreNode.Mining.DepositWithdrawal do
 
   alias Decimal, as: D
 
-  def validate_deposit_withdrawals(block) do
+  def valid_deposit_withdrawals?(block) do
     block
     |> Pool.list_pending_transactions()
     |> get_deposit_withdrawals()
@@ -31,10 +31,10 @@ defmodule CredoCoreNode.Mining.DepositWithdrawal do
 
   def get_invalid_deposit_withdrawals(deposit_withdrawals, block) do
     deposit_withdrawals
-    |> Enum.filter(&(!validate_deposit_withdrawal_amount(&1, block)))
+    |> Enum.filter(&(!valid_deposit_withdrawal_amount?(&1, block)))
   end
 
-  def validate_deposit_withdrawal_amount(deposit_withdrawal, block) do
+  def valid_deposit_withdrawal_amount?(deposit_withdrawal, block) do
     miner = get_miner_for_deposit_withdrawal(deposit_withdrawal)
 
     D.cmp(deposit_withdrawal.value, Mining.withdrawable_deposit_value(miner, block)) != :gt

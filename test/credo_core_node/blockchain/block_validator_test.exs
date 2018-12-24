@@ -49,46 +49,46 @@ defmodule CredoCoreNode.BlockValidatorTest do
     test "is marked as valid" do
       pending_block = valid_pending_block_fixture()
 
-      assert {:ok, _} = BlockValidator.validate_block(pending_block, true)
+      assert {:ok, _} = BlockValidator.valid_block?(pending_block, true)
     end
   end
 
   describe "invalidly constructed block" do
     @describetag table_name: :pending_blocks
 
-    test "validate_previous_hash/1 returns false" do
+    test "valid_prev_hash?/1 returns false" do
       {:ok, invalid_pending_block} =
         %CredoCoreNode.Pool.PendingBlock{prev_hash: nil}
         |> Pool.write_pending_block()
 
-      refute BlockValidator.validate_previous_hash(invalid_pending_block)
+      refute BlockValidator.valid_prev_hash?(invalid_pending_block)
     end
 
-    test "validate_transaction_count/1 returns false" do
+    test "valid_transaction_count?/1 returns false" do
       {:ok, invalid_pending_block} =
         %CredoCoreNode.Pool.PendingBlock{}
         |> Pool.write_pending_block()
 
-      refute BlockValidator.validate_transaction_count(invalid_pending_block)
+      refute BlockValidator.valid_transaction_count?(invalid_pending_block)
     end
 
-    test "validate_coinbase_transaction/1 returns false" do
+    test "valid_coinbase_transaction?/1 returns false" do
       {:ok, invalid_pending_block} =
         %CredoCoreNode.Pool.PendingBlock{}
         |> Pool.write_pending_block()
 
-      refute BlockValidator.validate_coinbase_transaction(invalid_pending_block)
+      refute BlockValidator.valid_coinbase_transaction?(invalid_pending_block)
     end
 
-    test "validate_format/1 returns false" do
+    test "valid_format?/1 returns false" do
       {:ok, invalid_pending_block} =
         %CredoCoreNode.Pool.PendingBlock{hash: nil}
         |> Pool.write_pending_block()
 
-      refute BlockValidator.validate_format(invalid_pending_block)
+      refute BlockValidator.valid_format?(invalid_pending_block)
     end
 
-    test "validate_transaction_amounts/1 returns false" do
+    test "valid_transaction_amounts?/1 returns false" do
       private_key = :crypto.strong_rand_bytes(32)
       attrs = [nonce: 0, to: "ABC", value: D.new(1), fee: D.new(1), data: ""]
 
@@ -104,10 +104,10 @@ defmodule CredoCoreNode.BlockValidatorTest do
         |> elem(1)
         |> Pool.write_pending_block()
 
-      refute BlockValidator.validate_transaction_amounts(block)
+      refute BlockValidator.valid_transaction_amounts?(block)
     end
 
-    test "validate_transaction_are_unmined/1 returns false" do
+    test "valid_transaction_are_unmined?/1 returns false" do
       pending_block =
         [
           struct(
@@ -129,7 +129,7 @@ defmodule CredoCoreNode.BlockValidatorTest do
         |> Pool.write_pending_block()
         |> elem(1)
 
-      refute BlockValidator.validate_transaction_are_unmined(pending_block)
+      refute BlockValidator.valid_transaction_are_unmined?(pending_block)
     end
   end
 
@@ -163,16 +163,16 @@ defmodule CredoCoreNode.BlockValidatorTest do
       block
     end
 
-    test "validate_transaction_data_length/1 returns true" do
+    test "valid_transaction_data_length?/1 returns true" do
       block = block_fixture(10_000)
 
-      assert BlockValidator.validate_transaction_data_length(block)
+      assert BlockValidator.valid_transaction_data_length?(block)
     end
 
-    test "validate_transaction_data_length/1 returns false" do
+    test "valid_transaction_data_length?/1 returns false" do
       block = block_fixture(60_000)
 
-      refute BlockValidator.validate_transaction_data_length(block)
+      refute BlockValidator.valid_transaction_data_length?(block)
     end
   end
 
@@ -198,30 +198,30 @@ defmodule CredoCoreNode.BlockValidatorTest do
       block
     end
 
-    test "validate_value_transfer_limits/1 returns false" do
+    test "valid_value_transfer_limits?/1 returns false" do
       invalid_pending_block = block_fixture()
 
-      refute BlockValidator.validate_value_transfer_limits(invalid_pending_block)
+      refute BlockValidator.valid_value_transfer_limits?(invalid_pending_block)
     end
 
-    test "validate_per_tx_value_transfer_limits/1 returns false" do
+    test "valid_per_tx_value_transfer_limits?/1 returns false" do
       block = block_fixture()
       txs = block |> Pool.list_pending_transactions()
 
-      refute BlockValidator.validate_per_tx_value_transfer_limits(txs)
+      refute BlockValidator.valid_per_tx_value_transfer_limits?(txs)
     end
 
-    test "validate_per_block_value_transfer_limits/1 returns false" do
+    test "valid_per_block_value_transfer_limits?/1 returns false" do
       block = block_fixture(@private_key, @attrs, D.new(10_000_001))
       txs = block |> Pool.list_pending_transactions()
 
-      refute BlockValidator.validate_per_block_value_transfer_limits(txs)
+      refute BlockValidator.valid_per_block_value_transfer_limits?(txs)
     end
 
-    test "validate_per_block_chain_segment_value_transfer_limits/1 returns false" do
+    test "valid_per_block_chain_segment_value_transfer_limits?/1 returns false" do
       block = block_fixture(@private_key, @attrs, D.new(50_000_001))
 
-      refute BlockValidator.validate_per_block_chain_segment_value_transfer_limits(block)
+      refute BlockValidator.valid_per_block_chain_segment_value_transfer_limits?(block)
     end
   end
 end

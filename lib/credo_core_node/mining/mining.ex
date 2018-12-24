@@ -209,7 +209,7 @@ defmodule CredoCoreNode.Mining do
     if BlockProducer.is_your_turn?(block, retry_count) do
       case BlockProducer.get_produced_block(block) || BlockProducer.produce_block() do
         {:ok, block} ->
-          BlockValidator.validate_block(block)
+          BlockValidator.valid_block?(block)
 
         {:error, :no_pending_txs} ->
           Logger.info("No pending txs...")

@@ -34,7 +34,7 @@ defmodule CredoCoreNode.Mining.Ip do
     block
     |> Blockchain.list_transactions()
     |> get_miner_ip_updates()
-    |> validate_miner_ip_updates()
+    |> valid_miner_ip_updates?()
     |> update_miner_ips()
   end
 
@@ -65,7 +65,7 @@ defmodule CredoCoreNode.Mining.Ip do
     end
   end
 
-  def is_valid_miner_ip_update?(miner_ip_update) do
+  def valid_miner_ip_update?(miner_ip_update) do
     Mining.miner_exists?(miner_ip_update.to) && has_valid_signature?(miner_ip_update)
   end
 
@@ -76,8 +76,8 @@ defmodule CredoCoreNode.Mining.Ip do
       miner_ip_update.to == Accounts.payment_address(public_key)
   end
 
-  def validate_miner_ip_updates(miner_ip_updates) do
-    Enum.filter(miner_ip_updates, &is_valid_miner_ip_update?(&1))
+  def valid_miner_ip_updates?(miner_ip_updates) do
+    Enum.filter(miner_ip_updates, &valid_miner_ip_update?(&1))
   end
 
   def update_miner_ips(miner_ip_updates) do

@@ -30,13 +30,13 @@ defmodule CredoCoreNode.DepositTest do
     test "validates a deposit above the minimum" do
       deposit = deposit_fixture(D.new(50_000))
 
-      assert Deposit.validate_deposits([deposit]) == [deposit]
+      assert Deposit.valid_deposits?([deposit]) == [deposit]
     end
 
     test "invalidates an overly small deposit" do
       deposit = deposit_fixture(D.new(5))
 
-      assert Deposit.validate_deposits([deposit]) == []
+      assert Deposit.valid_deposits?([deposit]) == []
     end
   end
 

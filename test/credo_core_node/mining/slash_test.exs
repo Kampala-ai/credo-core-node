@@ -56,7 +56,7 @@ defmodule CredoCoreNode.SlashTest do
       tx = slash_tx_fixture(miner)
 
       assert Slash.is_slash(tx)
-      assert Slash.slash_proof_is_valid?(Slash.parse_proof(tx))
+      assert Slash.valid_slash_proof?(Slash.parse_proof(tx))
     end
 
     test "processing a slash saves a slash a miner's stake" do

@@ -15,17 +15,17 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   @max_value_transfer_per_block_chain_segment D.new(50_000_000)
   @block_chain_segment_length 12
 
-  def validate_block(block, skip_network_consensus_validation \\ false) do
+  def valid_block?(block, skip_network_consensus_validation \\ false) do
     is_valid =
-      valid_block_hash?(block, block.hash) && validate_previous_hash(block) &&
-        validate_format(block) && validate_transaction_count(block) &&
-        validate_transaction_data_length(block) && validate_transaction_amounts(block) &&
-        validate_transaction_are_unmined(block) && validate_deposit_withdrawals(block) &&
-        validate_block_irreversibility(block) && validate_coinbase_transaction(block) &&
-        validate_value_transfer_limits(block)
+      valid_block_hash?(block, block.hash) && valid_prev_hash?(block) &&
+        valid_format?(block) && valid_transaction_count?(block) &&
+        valid_transaction_data_length?(block) && valid_transaction_amounts?(block) &&
+        valid_transaction_are_unmined?(block) && valid_deposit_withdrawals?(block) &&
+        valid_block_irreversibility?(block) && valid_coinbase_transaction?(block) &&
+        valid_value_transfer_limits?(block)
 
     unless skip_network_consensus_validation do
-      is_valid = is_valid && validate_network_consensus(block)
+      is_valid = is_valid && valid_network_consensus?(block)
     end
 
     if is_valid do
@@ -37,26 +37,26 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     end
   end
 
-  def validate_previous_hash(%{number: number} = _block) when number == 0, do: true
+  def valid_prev_hash?(%{number: number} = _block) when number == 0, do: true
 
-  def validate_previous_hash(block) do
+  def valid_prev_hash?(block) do
     prev_block = Blockchain.get_block(block.prev_hash)
 
-    not is_nil(prev_block) && prev_block.number == block.number - 1
+    not is_nil(prev_block) && prev_block.number == (block.number || 0) - 1
   end
 
-  def validate_format(block) do
+  def valid_format?(block) do
     not is_nil(block.hash) && not is_nil(block.prev_hash) && not is_nil(block.number) &&
       not is_nil(block.state_root) && not is_nil(block.receipt_root) && not is_nil(block.tx_root)
   end
 
-  def validate_transaction_count(block) do
+  def valid_transaction_count?(block) do
     len = length(Pool.list_pending_transactions(block))
 
     len >= @min_txs_per_block && len <= @max_txs_per_block
   end
 
-  def validate_transaction_data_length(block) do
+  def valid_transaction_data_length?(block) do
     res =
       Enum.map(Pool.list_pending_transactions(block), fn tx ->
         String.length(tx.data) <= @max_data_length
@@ -65,7 +65,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     Enum.reduce(res, true, &(&1 && &2))
   end
 
-  def validate_transaction_amounts(block) do
+  def valid_transaction_amounts?(block) do
     res =
       Enum.map(Pool.list_pending_transactions(block), fn tx ->
         Pool.is_tx_from_balance_sufficient?(tx) || Coinbase.is_coinbase_tx(tx)
@@ -74,7 +74,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     Enum.reduce(res, true, &(&1 && &2))
   end
 
-  def validate_transaction_are_unmined(block) do
+  def valid_transaction_are_unmined?(block) do
     # TODO: replace with more efficient implementation.
     res =
       Enum.map(Pool.list_pending_transactions(block), fn tx ->
@@ -84,11 +84,11 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     Enum.reduce(res, true, &(&1 && &2))
   end
 
-  def validate_deposit_withdrawals(block) do
-    DepositWithdrawal.validate_deposit_withdrawals(block)
+  def valid_deposit_withdrawals?(block) do
+    DepositWithdrawal.valid_deposit_withdrawals?(block)
   end
 
-  def validate_block_irreversibility(block) do
+  def valid_block_irreversibility?(block) do
     _last_irreversible_block =
       Blockchain.list_blocks()
       |> Enum.filter(&(&1.number == block.number - Blockchain.irreversibility_threshold()))
@@ -98,19 +98,19 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     true
   end
 
-  def validate_coinbase_transaction(block) do
+  def valid_coinbase_transaction?(block) do
     coinbase_txs = Coinbase.get_coinbase_txs(block)
 
     length(coinbase_txs) == 1 && Coinbase.tx_fee_sums_match(block, coinbase_txs)
   end
 
-  def validate_value_transfer_limits(block) do
+  def valid_value_transfer_limits?(block) do
     txs = Pool.list_pending_transactions(block)
 
-    validate_per_tx_value_transfer_limits(txs) && validate_per_block_value_transfer_limits(txs)
+    valid_per_tx_value_transfer_limits?(txs) && valid_per_block_value_transfer_limits?(txs)
   end
 
-  def validate_per_tx_value_transfer_limits(txs) do
+  def valid_per_tx_value_transfer_limits?(txs) do
     res =
       Enum.map(txs, fn tx ->
         D.cmp(tx.value, @max_value_transfer_per_tx) != :gt
@@ -119,11 +119,11 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     Enum.reduce(res, true, &(&1 && &2))
   end
 
-  def validate_per_block_value_transfer_limits(txs) do
+  def valid_per_block_value_transfer_limits?(txs) do
     D.cmp(Pool.sum_pending_transaction_values(txs), @max_value_transfer_per_block) != :gt
   end
 
-  def validate_per_block_chain_segment_value_transfer_limits(block) do
+  def valid_per_block_chain_segment_value_transfer_limits?(block) do
     pending_block_value = Pool.sum_pending_transaction_values(block)
 
     Blockchain.list_preceding_blocks(block)
@@ -177,7 +177,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
   defp valid_block_transactions?(_blk, _invalid_arg, _tx_module), do: false
 
-  def validate_network_consensus(block) do
+  def valid_network_consensus?(block) do
     {:ok, confirmed_block} = Mining.start_voting(block, 0)
 
     block.hash == confirmed_block.hash

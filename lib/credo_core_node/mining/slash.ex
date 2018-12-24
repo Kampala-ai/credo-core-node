@@ -67,13 +67,13 @@ defmodule CredoCoreNode.Mining.Slash do
     Enum.each(slashes, fn slash ->
       proof = parse_proof(slash)
 
-      if slash_proof_is_valid?(proof) && target_miner_is_unslashed_for_block_number?(slash) do
+      if valid_slash_proof?(proof) && target_miner_is_unslashed_for_block_number?(slash) do
         execute_slash(slash)
       end
     end)
   end
 
-  def slash_proof_is_valid?(proof) do
+  def valid_slash_proof?(proof) do
     if is_list(proof) && length(proof) > 1 do
       [voteAMap, voteBMap | _] = proof
 

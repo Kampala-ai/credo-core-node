@@ -33,7 +33,7 @@ defmodule CredoCoreNode.Mining.Deposit do
     block
     |> Blockchain.list_transactions()
     |> parse_deposits()
-    |> validate_deposits()
+    |> valid_deposits?()
     |> recognize_deposits()
   end
 
@@ -51,13 +51,13 @@ defmodule CredoCoreNode.Mining.Deposit do
     end
   end
 
-  def validate_deposits(deposits) do
+  def valid_deposits?(deposits) do
     deposits
-    |> Enum.filter(&validate_deposit_size(&1))
-    |> Enum.filter(&validate_deposit_timelock(&1))
+    |> Enum.filter(&valid_deposit_size?(&1))
+    |> Enum.filter(&valid_deposit_timelock?(&1))
   end
 
-  def validate_deposit_size(tx) do
+  def valid_deposit_size?(tx) do
     D.cmp(tx.value, Mining.min_stake_size()) != :lt
   end
 
@@ -81,7 +81,7 @@ defmodule CredoCoreNode.Mining.Deposit do
     end
   end
 
-  def validate_deposit_timelock(tx) do
+  def valid_deposit_timelock?(tx) do
     timelock = parse_timelock(tx)
 
     # use emtpy string for default timelock
