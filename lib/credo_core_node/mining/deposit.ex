@@ -43,9 +43,11 @@ defmodule CredoCoreNode.Mining.Deposit do
 
   def is_deposit(%{data: nil} = _tx), do: false
   def is_deposit(%{data: data} = _tx) when not is_binary(data), do: false
+
   def is_deposit(%{data: data} = tx) when is_binary(data) do
     try do
-      tx.data =~ "tx_type" && Poison.decode!(tx.data)["tx_type"] == Blockchain.security_deposit_tx_type()
+      tx.data =~ "tx_type" &&
+        Poison.decode!(tx.data)["tx_type"] == Blockchain.security_deposit_tx_type()
     rescue
       Poison.SyntaxError -> false
     end
@@ -63,6 +65,7 @@ defmodule CredoCoreNode.Mining.Deposit do
 
   def parse_timelock(%{data: nil} = _tx), do: nil
   def parse_timelock(%{data: data} = _tx) when not is_binary(data), do: nil
+
   def parse_timelock(%{data: data} = tx) when is_binary(data) do
     try do
       tx.data =~ "timelock" && Poison.decode!(tx.data)["timelock"]
@@ -73,6 +76,7 @@ defmodule CredoCoreNode.Mining.Deposit do
 
   def parse_node_ip(%{data: nil} = _tx), do: nil
   def parse_node_ip(%{data: data} = _tx) when not is_binary(data), do: nil
+
   def parse_node_ip(%{data: data} = tx) when is_binary(data) do
     try do
       tx.data =~ "node_ip" && Poison.decode!(tx.data)["node_ip"]

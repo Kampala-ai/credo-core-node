@@ -319,4 +319,4 @@ defmodule CredoCoreNode.Blockchain do
 
   defp block_tx_trie(%Block{tx_root: tx_root, hash: hash}),
     do: MPT.RepoManager.trie("blocks", hash, tx_root)
- end
+end
