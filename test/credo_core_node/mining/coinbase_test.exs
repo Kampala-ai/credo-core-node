@@ -38,8 +38,27 @@ defmodule CredoCoreNode.CoinbaseTest do
 
       [coinbase_tx] = tl(txs)
 
-      assert = Coinbase.is_coinbase_tx(coinbase_tx)
-      assert = Coinbase.tx_fee_sums_match(block, [coinbase_tx])
+      assert Coinbase.is_coinbase_tx(coinbase_tx)
+      assert Coinbase.tx_fee_sums_match(block, [coinbase_tx])
+    end
+  end
+
+  describe "checking if a transaction is a coinbase transaction" do
+    @describetag table_name: :pending_transactions
+
+    test "determines that a regular transaction is not a coinbase transaction" do
+      [pending_tx] = pending_transactions_fixture()
+
+      refute Coinbase.is_coinbase_tx(pending_tx)
+    end
+
+    test "determines that a coinbase transaction is a coinbase transaction" do
+      [coinbase_tx] =
+        pending_transactions_fixture()
+        |> Coinbase.add_coinbase_tx()
+        |> tl()
+
+      assert Coinbase.is_coinbase_tx(coinbase_tx)
     end
   end
 end
