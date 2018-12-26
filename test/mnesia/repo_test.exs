@@ -79,7 +79,7 @@ defmodule CredoCoreNode.RepoTest do
     @describetag table_name: :accounts
 
     def tear_down_accounts do
-      Enum.each(Accounts.list_accounts, &(Accounts.delete_account(&1)))
+      Enum.each(Accounts.list_accounts(), &Accounts.delete_account(&1))
     end
 
     def accounts_fixture do

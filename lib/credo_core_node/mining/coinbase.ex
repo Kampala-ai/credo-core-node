@@ -29,6 +29,7 @@ defmodule CredoCoreNode.Mining.Coinbase do
 
   def is_coinbase_tx(%{data: nil} = _tx), do: false
   def is_coinbase_tx(%{data: data} = _tx) when not is_binary(data), do: false
+
   def is_coinbase_tx(%{data: data} = tx) when is_binary(data) do
     try do
       tx.data =~ "tx_type" && Poison.decode!(tx.data)["tx_type"] == Blockchain.coinbase_tx_type()

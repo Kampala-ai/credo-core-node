@@ -136,13 +136,13 @@ defmodule CredoCoreNode.Mining.VoteManager do
 
     voter = Mining.get_miner(vote.miner_address)
 
-    address == vote.miner_address && !is_nil(voter) # && voter_has_completed_warm_up_period?(voter)
+    address == vote.miner_address && !is_nil(voter)
+    #   && voter_has_completed_warm_up_period?(voter)
   end
 
   def voter_has_completed_warm_up_period?(voter) do
     is_nil(voter.inserted_at) ||
-      DateTime.diff(DateTime.utc_now(), voter.inserted_at) >
-        @num_seconds_for_voter_warm_up_period
+      DateTime.diff(DateTime.utc_now(), voter.inserted_at) > @num_seconds_for_voter_warm_up_period
   end
 
   def total_voting_power(votes) do

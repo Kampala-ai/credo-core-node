@@ -31,7 +31,8 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
 
         blk = Blockchain.get_block(hash)
 
-        if BlockValidator.valid_block_hash?(blk, hash) && BlockValidator.valid_block_body?(blk, body) do
+        if BlockValidator.valid_block_hash?(blk, hash) &&
+             BlockValidator.valid_block_body?(blk, body) do
           Logger.info("Writing block #{hash}")
 
           blk
@@ -81,7 +82,8 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
 
         blk = Pool.get_pending_block(hash)
 
-        if BlockValidator.valid_block_hash?(blk, hash) && BlockValidator.valid_block_body?(blk, body) do
+        if BlockValidator.valid_block_hash?(blk, hash) &&
+             BlockValidator.valid_block_body?(blk, body) do
           Logger.info("Writing pending_block #{hash}")
 
           blk
