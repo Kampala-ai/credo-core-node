@@ -43,6 +43,29 @@ defmodule CredoCoreNode.CoinbaseTest do
     end
   end
 
+  describe "retrieving a coinbase transaction from a pending block" do
+    @describetag table_name: :pending_transactions
+
+    test "retrieves a coinbase transaction from a pending block that contains a coinbase transaction" do
+      pending_txs = pending_transactions_fixture()
+      txs = Coinbase.add_coinbase_tx(pending_txs)
+      block = pending_block_fixture(txs)
+
+      [coinbase_tx] = tl(txs)
+
+      assert List.first(Coinbase.get_coinbase_txs(block)).hash == coinbase_tx.hash
+    end
+
+    test "retrieves an empty list from a pending block that doesn't contain a coinbase transaction" do
+      block =
+        pending_transactions_fixture()
+        |> pending_block_fixture()
+
+      assert Coinbase.get_coinbase_txs(block) == []
+    end
+
+  end
+
   describe "checking if a transaction is a coinbase transaction" do
     @describetag table_name: :pending_transactions
 
