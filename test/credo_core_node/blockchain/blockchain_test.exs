@@ -32,6 +32,14 @@ defmodule CredoCoreNode.BlockchainTest do
       assert Enum.member?(Blockchain.list_blocks(), %{block | body: nil})
     end
 
+    test "list_preceding_blocks/0 returns all blocks before the current one" do
+      Blockchain.load_genesis_block()
+      block = block_fixture()
+      preceding_blocks = Blockchain.list_preceding_blocks(block)
+      assert length(preceding_blocks) == block.number
+      assert hd(preceding_blocks).number == block.number - 1
+    end
+
     test "get_block!/1 returns the block with given hash" do
       block = block_fixture()
       assert Blockchain.get_block(block.hash) == %{block | body: nil}
