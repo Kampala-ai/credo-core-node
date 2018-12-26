@@ -63,7 +63,6 @@ defmodule CredoCoreNode.CoinbaseTest do
 
       assert Coinbase.get_coinbase_txs(block) == []
     end
-
   end
 
   describe "checking if a transaction is a coinbase transaction" do

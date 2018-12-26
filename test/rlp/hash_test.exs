@@ -66,7 +66,7 @@ defmodule CredoCoreNode.RLPHashTest do
     end
 
     def tear_down_blocks() do
-      Enum.each(Blockchain.list_blocks, fn block ->
+      Enum.each(Blockchain.list_blocks(), fn block ->
         unless block.number == 0 do
           Blockchain.delete_block(block)
         end
@@ -74,7 +74,7 @@ defmodule CredoCoreNode.RLPHashTest do
     end
 
     def tear_down_pending_blocks() do
-      Enum.each(Pool.list_pending_blocks, fn pending_block ->
+      Enum.each(Pool.list_pending_blocks(), fn pending_block ->
         unless pending_block.number == 0 do
           Pool.delete_pending_block(pending_block)
         end
@@ -92,13 +92,14 @@ defmodule CredoCoreNode.RLPHashTest do
     end
 
     test "hashing pending blocks renders correct hash" do
+      tear_down_blocks()
       Blockchain.load_genesis_block()
       tear_down_pending_blocks()
 
       pending_block = pending_block_fixture()
 
       assert RLP.Hash.hex(pending_block) ==
-               "4194A74B85FAFBEFEE4A2C2AB7A356F8FB96EFC5FA050168A9AAB48C399C954D"
+               "A0496CD2988EADC5B4CCE7522CEDE9B062B9EAACA53FC7557F2051BE7B181CFC"
     end
 
     test "hashing pending transactions renders correct hash" do

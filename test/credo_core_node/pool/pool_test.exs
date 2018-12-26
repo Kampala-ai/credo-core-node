@@ -26,6 +26,14 @@ defmodule CredoCoreNode.PoolTest do
       pending_block
     end
 
+    def tear_down_pending_blocks() do
+      Enum.each(Pool.list_pending_blocks(), fn pending_block ->
+        unless pending_block.number == 0 do
+          Pool.delete_pending_block(pending_block)
+        end
+      end)
+    end
+
     test "list_pending_blocks/0 returns all pending_blocks" do
       pending_block = pending_block_fixture()
       assert Enum.member?(Pool.list_pending_blocks(), pending_block)
@@ -37,6 +45,7 @@ defmodule CredoCoreNode.PoolTest do
     end
 
     test "writes_pending_block/1 with valid data creates a pending_block" do
+      tear_down_pending_blocks()
       Blockchain.load_genesis_block()
 
       pending_block = pending_block_fixture()
@@ -224,11 +233,13 @@ defmodule CredoCoreNode.PoolTest do
   describe "parsing the from address of a transaction" do
     @describetag table_name: :pending_transactions
     @p_key <<212, 93, 219, 73, 97, 13, 114, 247, 158, 147, 154, 108, 212, 236, 153, 88, 224, 103,
-          199, 247, 31, 161, 202, 234, 145, 129, 200, 212, 43, 119, 137, 198>>
+             199, 247, 31, 161, 202, 234, 145, 129, 200, 212, 43, 119, 137, 198>>
 
     test "correctly parses a from address" do
       pending_transaction = pending_transaction_fixture(@p_key)
-      assert Pool.get_transaction_from_address(pending_transaction) == "2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"
+
+      assert Pool.get_transaction_from_address(pending_transaction) ==
+               "2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"
     end
   end
 end

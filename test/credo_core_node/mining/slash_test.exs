@@ -120,23 +120,23 @@ defmodule CredoCoreNode.SlashTest do
       vote_round = 0
       second_vote_round = 1
 
-      different_miner_addresses_proof =
-        [
-          %Vote{
-            miner_address: miner.address,
-            block_number: 1,
-            block_hash: "B73BC51DF28E5DD2493DED1A2DF22A714217159ABD059E0FF802E46DE16E2C7B",
-            voting_round: vote_round
-          }
-          |> VoteManager.sign_vote(),
-          %Vote{
-            miner_address: miner.address,
-            block_number: 1,
-            block_hash: "A79C83020ED99A47919874034601862306A890B6505E25F9BCB0331FBE688F24",
-            voting_round: second_vote_round
-          }
-          |> VoteManager.sign_vote()
-        ]
+      different_miner_addresses_proof = [
+        %Vote{
+          miner_address: miner.address,
+          block_number: 1,
+          block_hash: "B73BC51DF28E5DD2493DED1A2DF22A714217159ABD059E0FF802E46DE16E2C7B",
+          voting_round: vote_round
+        }
+        |> VoteManager.sign_vote(),
+        %Vote{
+          miner_address: miner.address,
+          block_number: 1,
+          block_hash: "A79C83020ED99A47919874034601862306A890B6505E25F9BCB0331FBE688F24",
+          voting_round: second_vote_round
+        }
+        |> VoteManager.sign_vote()
+      ]
+
       tx = slash_tx_fixture(miner, vote_round, different_miner_addresses_proof)
 
       refute Slash.valid_slash_proof?(Slash.parse_proof(tx))
@@ -146,16 +146,15 @@ defmodule CredoCoreNode.SlashTest do
       miner = miner_fixture()
       vote_round = 0
 
-      single_vote_proof =
-        [
-          %Vote{
-            miner_address: miner.address,
-            block_number: 1,
-            block_hash: "B73BC51DF28E5DD2493DED1A2DF22A714217159ABD059E0FF802E46DE16E2C7B",
-            voting_round: vote_round
-          }
-          |> VoteManager.sign_vote()
-        ]
+      single_vote_proof = [
+        %Vote{
+          miner_address: miner.address,
+          block_number: 1,
+          block_hash: "B73BC51DF28E5DD2493DED1A2DF22A714217159ABD059E0FF802E46DE16E2C7B",
+          voting_round: vote_round
+        }
+        |> VoteManager.sign_vote()
+      ]
 
       tx = slash_tx_fixture(miner, vote_round, single_vote_proof)
 
@@ -166,23 +165,23 @@ defmodule CredoCoreNode.SlashTest do
       miner = miner_fixture()
       vote_round = 0
 
-      different_block_numbers_proof =
-        [
-          %Vote{
-            miner_address: miner.address,
-            block_number: 1,
-            block_hash: "B73BC51DF28E5DD2493DED1A2DF22A714217159ABD059E0FF802E46DE16E2C7B",
-            voting_round: vote_round
-          }
-          |> VoteManager.sign_vote(),
-          %Vote{
-            miner_address: miner.address,
-            block_number: 2,
-            block_hash: "A79C83020ED99A47919874034601862306A890B6505E25F9BCB0331FBE688F24",
-            voting_round: vote_round
-          }
-          |> VoteManager.sign_vote()
-        ]
+      different_block_numbers_proof = [
+        %Vote{
+          miner_address: miner.address,
+          block_number: 1,
+          block_hash: "B73BC51DF28E5DD2493DED1A2DF22A714217159ABD059E0FF802E46DE16E2C7B",
+          voting_round: vote_round
+        }
+        |> VoteManager.sign_vote(),
+        %Vote{
+          miner_address: miner.address,
+          block_number: 2,
+          block_hash: "A79C83020ED99A47919874034601862306A890B6505E25F9BCB0331FBE688F24",
+          voting_round: vote_round
+        }
+        |> VoteManager.sign_vote()
+      ]
+
       tx = slash_tx_fixture(miner, vote_round, different_block_numbers_proof)
 
       refute Slash.valid_slash_proof?(Slash.parse_proof(tx))
@@ -192,23 +191,23 @@ defmodule CredoCoreNode.SlashTest do
       miner = miner_fixture()
       vote_round = 0
 
-      same_block_hash_proof =
-        [
-          %Vote{
-            miner_address: miner.address,
-            block_number: 1,
-            block_hash: "B73BC51DF28E5DD2493DED1A2DF22A714217159ABD059E0FF802E46DE16E2C7B",
-            voting_round: vote_round
-          }
-          |> VoteManager.sign_vote(),
-          %Vote{
-            miner_address: miner.address,
-            block_number: 1,
-            block_hash: "B73BC51DF28E5DD2493DED1A2DF22A714217159ABD059E0FF802E46DE16E2C7B",
-            voting_round: vote_round
-          }
-          |> VoteManager.sign_vote()
-        ]
+      same_block_hash_proof = [
+        %Vote{
+          miner_address: miner.address,
+          block_number: 1,
+          block_hash: "B73BC51DF28E5DD2493DED1A2DF22A714217159ABD059E0FF802E46DE16E2C7B",
+          voting_round: vote_round
+        }
+        |> VoteManager.sign_vote(),
+        %Vote{
+          miner_address: miner.address,
+          block_number: 1,
+          block_hash: "B73BC51DF28E5DD2493DED1A2DF22A714217159ABD059E0FF802E46DE16E2C7B",
+          voting_round: vote_round
+        }
+        |> VoteManager.sign_vote()
+      ]
+
       tx = slash_tx_fixture(miner, vote_round, same_block_hash_proof)
 
       refute Slash.valid_slash_proof?(Slash.parse_proof(tx))
@@ -219,23 +218,23 @@ defmodule CredoCoreNode.SlashTest do
       second_miner = miner_fixture()
       vote_round = 0
 
-      different_miner_addresses_proof =
-        [
-          %Vote{
-            miner_address: miner.address,
-            block_number: 1,
-            block_hash: "B73BC51DF28E5DD2493DED1A2DF22A714217159ABD059E0FF802E46DE16E2C7B",
-            voting_round: vote_round
-          }
-          |> VoteManager.sign_vote(),
-          %Vote{
-            miner_address: second_miner.address,
-            block_number: 1,
-            block_hash: "A79C83020ED99A47919874034601862306A890B6505E25F9BCB0331FBE688F24",
-            voting_round: vote_round
-          }
-          |> VoteManager.sign_vote()
-        ]
+      different_miner_addresses_proof = [
+        %Vote{
+          miner_address: miner.address,
+          block_number: 1,
+          block_hash: "B73BC51DF28E5DD2493DED1A2DF22A714217159ABD059E0FF802E46DE16E2C7B",
+          voting_round: vote_round
+        }
+        |> VoteManager.sign_vote(),
+        %Vote{
+          miner_address: second_miner.address,
+          block_number: 1,
+          block_hash: "A79C83020ED99A47919874034601862306A890B6505E25F9BCB0331FBE688F24",
+          voting_round: vote_round
+        }
+        |> VoteManager.sign_vote()
+      ]
+
       tx = slash_tx_fixture(miner, vote_round, different_miner_addresses_proof)
 
       refute Slash.valid_slash_proof?(Slash.parse_proof(tx))
