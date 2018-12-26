@@ -169,6 +169,33 @@ defmodule CredoCoreNode.VoteManagerTest do
     end
   end
 
+  describe "casting a vote" do
+    @describetag table_name: :votes
+    @voting_round 0
+
+    test "constructs and returns a new vote" do
+      miner_fixture(10_000, DateTime.utc_now(), true)
+
+      block = pending_block_fixture()
+
+      {:ok, vote} = VoteManager.cast_vote(block, @voting_round)
+
+      assert vote.block_hash == block.hash
+    end
+
+    test "saves a new vote for a candidate" do
+      tear_down_miners()
+
+      miner_fixture(10_000, DateTime.utc_now(), true)
+
+      block = pending_block_fixture()
+
+      VoteManager.cast_vote(block, @voting_round)
+
+      assert VoteManager.already_voted?(block, @voting_round)
+    end
+  end
+
   describe "checking whether a node's miner already voted" do
     @describetag table_name: :votes
     @voting_round 0
