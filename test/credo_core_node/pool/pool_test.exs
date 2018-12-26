@@ -220,4 +220,15 @@ defmodule CredoCoreNode.PoolTest do
       assert D.cmp(Pool.sum_pending_transaction_values(transactions), D.new(14345.6)) == :eq
     end
   end
+
+  describe "parsing the from address of a transaction" do
+    @describetag table_name: :pending_transactions
+    @p_key <<212, 93, 219, 73, 97, 13, 114, 247, 158, 147, 154, 108, 212, 236, 153, 88, 224, 103,
+          199, 247, 31, 161, 202, 234, 145, 129, 200, 212, 43, 119, 137, 198>>
+
+    test "correctly parses a from address" do
+      pending_transaction = pending_transaction_fixture(@p_key)
+      assert Pool.get_transaction_from_address(pending_transaction) == "2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"
+    end
+  end
 end
