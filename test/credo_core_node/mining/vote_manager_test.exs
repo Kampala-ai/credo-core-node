@@ -173,7 +173,7 @@ defmodule CredoCoreNode.VoteManagerTest do
     @describetag table_name: :votes
     @voting_round 0
 
-    test "returns true if a node's miner has votes" do
+    test "returns true if a node's miner has voted" do
       block = pending_block_fixture()
 
       miner_fixture(10_000, DateTime.utc_now(), true)
@@ -183,11 +183,38 @@ defmodule CredoCoreNode.VoteManagerTest do
       assert VoteManager.already_voted?(block, @voting_round)
     end
 
-    test "returns false if a node's miner has votes" do
+    test "returns false if a node's miner has voted" do
       miner = miner_fixture(10_000, DateTime.utc_now(), true)
       block = pending_block_fixture()
 
       refute VoteManager.already_voted?(block, @voting_round)
+    end
+  end
+
+  describe "checking whether another miner has voted" do
+    @describetag table_name: :votes
+    @voting_round 0
+
+    test "returns true if a specified miner has voted" do
+      miner = miner_fixture(10_000, DateTime.utc_now(), false)
+      block = pending_block_fixture()
+
+      miner
+      |> vote_fixture(block.hash)
+      |> Mining.write_vote()
+
+      votes = Mining.list_votes_for_round(block, @voting_round)
+
+      assert VoteManager.miner_voted?(votes, miner)
+    end
+
+    test "returns false if a specified miner has voted" do
+      miner = miner_fixture(10_000, DateTime.utc_now(), false)
+      block = pending_block_fixture()
+
+      votes = Mining.list_votes_for_round(block, @voting_round)
+
+      refute VoteManager.miner_voted?(votes, miner)
     end
   end
 end
