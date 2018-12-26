@@ -11,7 +11,7 @@ defmodule CredoCoreNode.VoteManagerTest do
   describe "counting votes" do
     @describetag table_name: :votes
 
-    def miner_fixture(stake_amount, inserted_at \\ DateTime.utc_now()) do
+    def miner_fixture(stake_amount, inserted_at \\ DateTime.utc_now(), is_self \\ false) do
       {:ok, account} = Accounts.generate_address("miner")
 
       Mining.write_miner(%{
@@ -20,7 +20,7 @@ defmodule CredoCoreNode.VoteManagerTest do
         stake_amount: D.new(stake_amount),
         participation_rate: 1.0,
         inserted_at: inserted_at,
-        is_self: false
+        is_self: is_self
       })
       |> elem(1)
     end
@@ -104,7 +104,7 @@ defmodule CredoCoreNode.VoteManagerTest do
       winner =
         votes
         |> VoteManager.count_votes()
-        |> VoteManager.get_winner()
+        |> VoteManager.get_winner(votes)
 
       assert winner == pending_block
     end
@@ -130,7 +130,7 @@ defmodule CredoCoreNode.VoteManagerTest do
       winner =
         votes
         |> VoteManager.count_votes()
-        |> VoteManager.get_winner()
+        |> VoteManager.get_winner(votes)
 
       assert is_nil(winner)
     end
@@ -166,6 +166,28 @@ defmodule CredoCoreNode.VoteManagerTest do
         vote_fixture(miner, "EBA692825740B1C2FE4F0AC106B32B6F41A2DA6B638CB7302C2C98F9B91C96A6")
 
       assert VoteManager.is_valid_vote(vote)
+    end
+  end
+
+  describe "checking whether a node's miner already voted" do
+    @describetag table_name: :votes
+    @voting_round 0
+
+    test "returns true if a node's miner has votes" do
+      block = pending_block_fixture()
+
+      miner_fixture(10_000, DateTime.utc_now(), true)
+      |> vote_fixture(block.hash)
+      |> Mining.write_vote()
+
+      assert VoteManager.already_voted?(block, @voting_round)
+    end
+
+    test "returns false if a node's miner has votes" do
+      miner = miner_fixture(10_000, DateTime.utc_now(), true)
+      block = pending_block_fixture()
+
+      refute VoteManager.already_voted?(block, @voting_round)
     end
   end
 end
