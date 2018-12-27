@@ -6,6 +6,15 @@ defmodule CredoCoreNode.DepositTest do
 
   alias Decimal, as: D
 
+  describe "table" do
+    @describetag table_name: :deposits
+
+    test "has expected fields" do
+      assert CredoCoreNode.Mining.Deposit.fields == [:tx_hash, :miner_address, :amount, :timelock]
+    end
+
+  end
+
   describe "constructing a miner deposit" do
     @describetag table_name: :pending_transactions
 
