@@ -18,4 +18,14 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.AccountControllerTest do
       assert address ==  Accounts.payment_address(p_key)
     end
   end
+
+  describe "show" do
+    @id "ABC"
+
+    test "creates an account", %{conn: conn} do
+      conn = get(conn, client_api_v1_account_path(conn, :show, @id))
+
+      assert json_response(conn, 200) == %{"balance" => 0.0, "address" => @id}
+    end
+  end
 end
