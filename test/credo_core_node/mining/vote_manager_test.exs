@@ -11,14 +11,14 @@ defmodule CredoCoreNode.VoteManagerTest do
   describe "counting votes" do
     @describetag table_name: :votes
 
-    def miner_fixture(stake_amount, inserted_at \\ DateTime.utc_now(), is_self \\ false) do
+    def miner_fixture(stake_amount, inserted_at \\ DateTime.utc_now(), is_self \\ false, participation_rate \\ 1.0) do
       {:ok, account} = Accounts.generate_address("miner")
 
       Mining.write_miner(%{
         address: account.address,
         ip: "1.1.1.1",
         stake_amount: D.new(stake_amount),
-        participation_rate: 1.0,
+        participation_rate: participation_rate,
         inserted_at: inserted_at,
         is_self: is_self
       })
@@ -242,6 +242,59 @@ defmodule CredoCoreNode.VoteManagerTest do
       votes = Mining.list_votes_for_round(block, @voting_round)
 
       refute VoteManager.miner_voted?(votes, miner)
+    end
+  end
+
+  describe "updating participation rates" do
+    @describetag table_name: :miners
+    @voting_round 0
+
+    test "decreases a miner's participation rate when it didn't vote in a round" do
+      miner = miner_fixture(10000)
+      block = pending_block_fixture()
+
+      VoteManager.update_participation_rates(block, @voting_round)
+
+      updated_miner = Mining.get_miner(miner.address)
+      assert updated_miner.participation_rate == miner.participation_rate - 0.01
+    end
+
+    test "doesn't decreases a miner's participation rate when it's already at the minimum" do
+      miner = miner_fixture(10000, DateTime.utc_now(), false, 0.0001)
+      block = pending_block_fixture()
+
+      VoteManager.update_participation_rates(block, @voting_round)
+
+      updated_miner = Mining.get_miner(miner.address)
+      assert updated_miner.participation_rate == miner.participation_rate
+    end
+
+    test "increases a miner's participation rate when it voted in a round" do
+      miner = miner_fixture(10000, DateTime.utc_now(), false, 0.5)
+      block = pending_block_fixture()
+
+      miner
+      |> vote_fixture(block.hash)
+      |> Mining.write_vote()
+
+      VoteManager.update_participation_rates(block, @voting_round)
+
+      updated_miner = Mining.get_miner(miner.address)
+      assert updated_miner.participation_rate == miner.participation_rate + 0.01
+    end
+
+    test "doesn't increase a miner's participation rate when it's already at the maximum" do
+      miner = miner_fixture(10000, DateTime.utc_now(), false, 1.0)
+      block = pending_block_fixture()
+
+      miner
+      |> vote_fixture(block.hash)
+      |> Mining.write_vote()
+
+      VoteManager.update_participation_rates(block, @voting_round)
+
+      updated_miner = Mining.get_miner(miner.address)
+      assert updated_miner.participation_rate == miner.participation_rate
     end
   end
 end

@@ -8,6 +8,8 @@ defmodule CredoCoreNode.Mining.VoteManager do
   @quorum_size 1
   @early_vote_counting_threshold 50
   @num_seconds_for_voter_warm_up_period 48 * 60 * 60
+  @min_participation_rate 0.0001
+  @max_participation_rate 1.0
 
   def already_voted?(block, voting_round) do
     Mining.list_votes()
@@ -176,8 +178,8 @@ defmodule CredoCoreNode.Mining.VoteManager do
     Enum.each(Mining.list_miners(), fn miner ->
       rate =
         if miner_voted?(votes, miner),
-          do: min(miner.participation_rate + 0.01, 1),
-          else: max(miner.participation_rate - 0.01, 0.0001)
+          do: min(miner.participation_rate + 0.01, @max_participation_rate),
+          else: max(miner.participation_rate - 0.01, @min_participation_rate)
 
       miner
       |> Map.merge(%{participation_rate: rate})
