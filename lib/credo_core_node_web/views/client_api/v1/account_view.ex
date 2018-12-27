@@ -15,7 +15,7 @@ defmodule CredoCoreNodeWeb.ClientApi.V1.AccountView do
   def render("create.json", %{account: account}) do
     %{
       address: account.address,
-      private_key: Base.encode64(account.private_key),
+      private_key: Base.encode16(account.private_key),
       public_key: Base.encode16(account.public_key),
       label: account.label
     }

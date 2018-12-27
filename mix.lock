@@ -12,6 +12,7 @@
   "enacl": {:git, "https://github.com/aeternity/enacl.git", "2f50ba6289f2f2d9fef05d22a396c0bab4f64149", [ref: "2f50ba6"]},
   "ex_rlp": {:hex, :ex_rlp, "0.3.0", "76eb293a743b17d6071693014c1a57eb0f3f71fbf560716046d62c8a14340628", [:mix], [], "hexpm"},
   "exleveldb": {:hex, :exleveldb, "0.11.1", "37c0414208a50d2419d8246305e6c4a33ed339c25c0bdfa27774795e1e089f7b", [:mix], [{:eleveldb, "~> 2.2.19", [hex: :eleveldb, repo: "hexpm", optional: false]}], "hexpm"},
+  "faker": {:hex, :faker, "0.11.2", "c2251639f7418f54159fabcacfa0949f467ae77e9046001a8f091455d46905dd", [], [], "hexpm"},
   "gen_stage": {:hex, :gen_stage, "0.14.1", "9d46723fda072d4f4bb31a102560013f7960f5d80ea44dcb96fd6304ed61e7a4", [], [], "hexpm"},
   "gen_state_machine": {:hex, :gen_state_machine, "2.0.3", "477ea51b466a749ab23a0d6090e9e84073f41f9aa28c7efc40eac18f3d4a9f77", [], [], "hexpm"},
   "gettext": {:hex, :gettext, "0.16.0", "4a7e90408cef5f1bf57c5a39e2db8c372a906031cc9b1466e963101cb927dafc", [:mix], [], "hexpm"},

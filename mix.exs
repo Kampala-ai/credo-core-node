@@ -47,8 +47,11 @@ defmodule CredoCoreNode.Mixfile do
       {:merkle_patricia_tree, github: "aeternity/elixir-merkle-patricia-tree"},
       {:decimal, "~> 1.0"},
       {:phoenix_channel_client, github: "malroc/phoenix_channel_client"},
+
+      # dev/test dependencies
       {:edeliver, ">= 1.6.0"},
-      {:distillery, "~> 2.0"}
+      {:distillery, "~> 2.0"},
+      {:faker, "~> 0.10", only: :test}
     ]
   end
 end
