@@ -85,6 +85,24 @@ defmodule CredoCoreNode.Mining do
     not is_nil(get_miner(address))
   end
 
+  @first_stake_threshold D.new(1_000_000)
+  @second_stake_threshold D.new(30_000_000)
+
+  def get_dampened_stake_amount(%Miner{stake_amount: stake_amount} = miner), do: get_dampened_stake_amount(stake_amount)
+  def get_dampened_stake_amount(stake_amount) do
+    if D.cmp(stake_amount, @first_stake_threshold) != :gt do
+      stake_amount
+    else
+      if D.cmp(stake_amount, @second_stake_threshold) != :gt do
+        D.add(@first_stake_threshold, D.mult(D.new(0.5), D.sub(stake_amount, @first_stake_threshold)))
+      else
+        second_tier_stake_amount = D.add(@first_stake_threshold, D.mult(D.new(0.5), D.sub(@second_stake_threshold, @first_stake_threshold)))
+
+        D.add(second_tier_stake_amount, D.mult(D.new(0.25), D.sub(stake_amount, @second_stake_threshold)))
+      end
+    end
+  end
+
   @doc """
   Creates/updates a miner.
   """
