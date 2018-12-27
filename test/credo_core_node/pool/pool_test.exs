@@ -242,4 +242,37 @@ defmodule CredoCoreNode.PoolTest do
                "2BB1D6F107F7A3D5AD92AD2CE984483A34E6381E"
     end
   end
+
+  describe "getting a batch of valid pending transactions" do
+    @describetag table_name: :pending_transactions
+
+    def tear_down_pending_transactions() do
+      Enum.each(Pool.list_pending_transactions(), fn pending_transaction ->
+        Pool.delete_pending_transaction(pending_transaction)
+      end)
+    end
+
+    test "returns an empty list when there are no valid pending transactions" do
+      tear_down_pending_transactions()
+
+      assert Pool.get_batch_of_valid_pending_transactions() == []
+    end
+
+    test "returns a list with pending transactions when they exist" do
+      {:ok, pending_transaction} =
+        %CredoCoreNode.Pool.PendingTransaction{
+          data: "",
+          fee: Decimal.new(1.100000000000000000),
+          hash: "34F97321DDC0E56E67CC0AECE02053E64393390730AFDB6F63FB546CB7FA9B47",
+          nonce: 0,
+          r: "8DBF9628AB59AB7E28418B3D58EE696B744624041BF955075FDD3A2653173905",
+          s: "7A4A73877604F44BC673D46CEF6E267283215FCF6CE7AF82C18BFEEBD8053468",
+          to: "AF24738B406DB6387D05EB7CE1E90D420B25798F",
+          v: 0,
+          value: Decimal.new(1000000.000000000000000000)
+        } |> Pool.write_pending_transaction()
+
+      assert Pool.get_batch_of_valid_pending_transactions() == [pending_transaction]
+    end
+  end
 end
