@@ -106,7 +106,7 @@ defmodule CredoCoreNode.Mining.Deposit do
   end
 
   def recognize_deposits(deposits) do
-    Enum.each(deposits, fn deposit ->
+    Enum.map(deposits, fn deposit ->
       case get_miner_for_deposit(deposit) do
         nil ->
           %{

@@ -51,7 +51,8 @@ defmodule CredoCoreNode.Mixfile do
       # dev/test dependencies
       {:edeliver, ">= 1.6.0"},
       {:distillery, "~> 2.0"},
-      {:faker, "~> 0.10", only: :test}
+      {:faker, "~> 0.10", only: :test},
+      {:mox, "~> 0.3", only: :test}
     ]
   end
 end
