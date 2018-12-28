@@ -165,7 +165,7 @@ defmodule CredoCoreNode.BlockchainTest do
           "{\"tx_type\" : \"#{Blockchain.update_miner_ip_tx_type()}\"}"
         )
 
-      assert Ip.is_miner_ip_update(pending_transaction)
+      assert Ip.is_miner_ip_update?(pending_transaction)
     end
 
     test "detecting slash transaction type" do

@@ -6,7 +6,7 @@ defmodule CredoCoreNode.Workers.IpManagerTest do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.BlockchainMock
   alias CredoCoreNode.DepositMock
-  alias CredoCoreNode.Workers.Slasher
+  alias CredoCoreNode.Workers.Ip
 
   setup :set_mox_from_context
   setup :verify_on_exit!
@@ -19,7 +19,7 @@ defmodule CredoCoreNode.Workers.IpManagerTest do
       BlockchainMock |> expect(:last_block, fn -> Blockchain.last_block() end)
       BlockchainMock |> expect(:last_processed_block, fn _ -> Blockchain.last_block() end)
 
-      assert {:ok, pid} = Slasher.start_link(interval: 10)
+      assert {:ok, pid} = Ip.start_link(interval: 10)
 
       :timer.sleep(15)
 

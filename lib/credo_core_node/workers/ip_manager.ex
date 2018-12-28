@@ -44,7 +44,7 @@ defmodule CredoCoreNode.Workers.IpManager do
     processable_blocks = @blockchain.list_processable_blocks(last_processed_block_number)
 
     processable_blocks
-    |> Enum.each(fn block -> @ip.maybe_update_miner_ips(block) end)
+    |> Enum.each(fn block -> @ip.maybe_apply_miner_ip_updates(block) end)
 
     last_processed_block = @blockchain.last_processed_block(processable_blocks)
 

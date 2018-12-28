@@ -45,7 +45,7 @@ defmodule CredoCoreNode.IpTest do
 
       tx = Ip.construct_miner_ip_update_transaction(private_key, to)
 
-      assert Ip.is_miner_ip_update(tx)
+      assert Ip.is_miner_ip_update?(tx)
     end
   end
 
@@ -59,7 +59,7 @@ defmodule CredoCoreNode.IpTest do
 
       tx = Ip.construct_miner_ip_update_transaction(private_key, to)
 
-      Ip.update_miner_ips([tx])
+      Ip.apply_miner_ip_updates([tx])
 
       updated_miner = Mining.get_miner(miner.address)
 

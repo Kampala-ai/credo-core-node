@@ -32,22 +32,22 @@ defmodule CredoCoreNode.Mining.Ip do
     tx
   end
 
-  def maybe_update_miner_ips(block) do
+  def maybe_apply_miner_ip_updates(block) do
     block
     |> Blockchain.list_transactions()
     |> get_miner_ip_updates()
     |> valid_miner_ip_updates?()
-    |> update_miner_ips()
+    |> apply_miner_ip_updates()
   end
 
-  def get_miner_ip_updates(txs) do
-    Enum.filter(txs, &is_miner_ip_update(&1))
+  defp get_miner_ip_updates(txs) do
+    Enum.filter(txs, &is_miner_ip_update?(&1))
   end
 
-  def is_miner_ip_update(%{data: nil} = _tx), do: false
-  def is_miner_ip_update(%{data: data} = _tx) when not is_binary(data), do: false
+  def is_miner_ip_update?(%{data: nil} = _tx), do: false
+  def is_miner_ip_update?(%{data: data} = _tx) when not is_binary(data), do: false
 
-  def is_miner_ip_update(%{data: data} = tx) when is_binary(data) do
+  def is_miner_ip_update?(%{data: data} = tx) when is_binary(data) do
     try do
       tx.data =~ "tx_type" &&
         Poison.decode!(tx.data)["tx_type"] == Blockchain.update_miner_ip_tx_type()
@@ -56,10 +56,10 @@ defmodule CredoCoreNode.Mining.Ip do
     end
   end
 
-  def parse_node_ip(%{data: nil} = _miner_ip_update), do: nil
-  def parse_node_ip(%{data: data} = _miner_ip_update) when not is_binary(data), do: nil
+  defp parse_node_ip(%{data: nil} = _miner_ip_update), do: nil
+  defp parse_node_ip(%{data: data} = _miner_ip_update) when not is_binary(data), do: nil
 
-  def parse_node_ip(%{data: data} = miner_ip_update) when is_binary(data) do
+  defp parse_node_ip(%{data: data} = miner_ip_update) when is_binary(data) do
     try do
       miner_ip_update.data =~ "node_ip" && Poison.decode!(miner_ip_update.data)["node_ip"]
     rescue
@@ -67,23 +67,23 @@ defmodule CredoCoreNode.Mining.Ip do
     end
   end
 
-  def valid_miner_ip_update?(miner_ip_update) do
+  defp valid_miner_ip_update?(miner_ip_update) do
     Mining.miner_exists?(miner_ip_update.to) && has_valid_signature?(miner_ip_update)
   end
 
-  def has_valid_signature?(miner_ip_update) do
+  defp has_valid_signature?(miner_ip_update) do
     {:ok, public_key} = Accounts.calculate_public_key(miner_ip_update)
 
     Mining.miner_exists?(miner_ip_update.to) &&
       miner_ip_update.to == Accounts.payment_address(public_key)
   end
 
-  def valid_miner_ip_updates?(miner_ip_updates) do
+  defp valid_miner_ip_updates?(miner_ip_updates) do
     Enum.filter(miner_ip_updates, &valid_miner_ip_update?(&1))
   end
 
-  def update_miner_ips(miner_ip_updates) do
-    Enum.each(miner_ip_updates, fn miner_ip_update ->
+  def apply_miner_ip_updates(miner_ip_updates) do
+    Enum.map(miner_ip_updates, fn miner_ip_update ->
       miner_ip_update.to
       |> Mining.get_miner()
       |> Map.merge(%{ip: parse_node_ip(miner_ip_update)})
