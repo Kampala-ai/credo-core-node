@@ -39,7 +39,7 @@ defmodule CredoCoreNode.Mining.Deposit do
     |> recognize_deposits()
   end
 
-  def parse_deposits(txs) do
+  defp parse_deposits(txs) do
     Enum.filter(txs, &is_deposit(&1))
   end
 
@@ -61,14 +61,14 @@ defmodule CredoCoreNode.Mining.Deposit do
     |> Enum.filter(&valid_deposit_timelock?(&1))
   end
 
-  def valid_deposit_size?(tx) do
+  defp valid_deposit_size?(tx) do
     D.cmp(tx.value, Mining.min_stake_size()) != :lt
   end
 
-  def parse_timelock(%{data: nil} = _tx), do: nil
-  def parse_timelock(%{data: data} = _tx) when not is_binary(data), do: nil
+  defp parse_timelock(%{data: nil} = _tx), do: nil
+  defp parse_timelock(%{data: data} = _tx) when not is_binary(data), do: nil
 
-  def parse_timelock(%{data: data} = tx) when is_binary(data) do
+  defp parse_timelock(%{data: data} = tx) when is_binary(data) do
     try do
       tx.data =~ "timelock" && Poison.decode!(tx.data)["timelock"]
     rescue
@@ -76,10 +76,10 @@ defmodule CredoCoreNode.Mining.Deposit do
     end
   end
 
-  def parse_node_ip(%{data: nil} = _tx), do: nil
-  def parse_node_ip(%{data: data} = _tx) when not is_binary(data), do: nil
+  defp parse_node_ip(%{data: nil} = _tx), do: nil
+  defp parse_node_ip(%{data: data} = _tx) when not is_binary(data), do: nil
 
-  def parse_node_ip(%{data: data} = tx) when is_binary(data) do
+  defp parse_node_ip(%{data: data} = tx) when is_binary(data) do
     try do
       tx.data =~ "node_ip" && Poison.decode!(tx.data)["node_ip"]
     rescue
@@ -87,20 +87,20 @@ defmodule CredoCoreNode.Mining.Deposit do
     end
   end
 
-  def valid_deposit_timelock?(tx) do
+  defp valid_deposit_timelock?(tx) do
     timelock = parse_timelock(tx)
 
     # use emtpy string for default timelock
     String.length(timelock) == 0 || (timelock >= @min_timelock && timelock <= @max_timelock)
   end
 
-  def get_miner_for_deposit(deposit) do
+  defp get_miner_for_deposit(deposit) do
     deposit
     |> Pool.get_transaction_from_address()
     |> Mining.get_miner()
   end
 
-  def miner_already_exists?(deposit) do
+  defp miner_already_exists?(deposit) do
     deposit
     |> get_miner_for_deposit()
     |> is_nil
