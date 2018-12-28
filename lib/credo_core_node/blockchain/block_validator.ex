@@ -67,7 +67,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   def valid_transaction_amounts?(block) do
     res =
       Enum.map(Pool.list_pending_transactions(block), fn tx ->
-        Pool.is_tx_from_balance_sufficient?(tx) || Coinbase.is_coinbase_tx(tx)
+        Pool.is_tx_from_balance_sufficient?(tx) || Coinbase.is_coinbase_tx?(tx)
       end)
 
     Enum.reduce(res, true, &(&1 && &2))
@@ -100,7 +100,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   def valid_coinbase_transaction?(block) do
     coinbase_txs = Coinbase.get_coinbase_txs(block)
 
-    length(coinbase_txs) == 1 && Coinbase.tx_fee_sums_match(block, coinbase_txs)
+    length(coinbase_txs) == 1 && Coinbase.tx_fee_sums_match?(block, coinbase_txs)
   end
 
   def valid_value_transfer_limits?(block) do

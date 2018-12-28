@@ -5,6 +5,8 @@ defmodule CredoCoreNode.Mining.Coinbase do
 
   alias Decimal, as: D
 
+  @behaviour CredoCoreNode.Adapters.CoinbaseAdapter
+
   def add_coinbase_tx(txs) when txs == [], do: []
 
   def add_coinbase_tx(txs) do
@@ -24,13 +26,13 @@ defmodule CredoCoreNode.Mining.Coinbase do
   def get_coinbase_txs(block) do
     block
     |> Pool.list_pending_transactions()
-    |> Enum.filter(&is_coinbase_tx(&1))
+    |> Enum.filter(&is_coinbase_tx?(&1))
   end
 
-  def is_coinbase_tx(%{data: nil} = _tx), do: false
-  def is_coinbase_tx(%{data: data} = _tx) when not is_binary(data), do: false
+  def is_coinbase_tx?(%{data: nil} = _tx), do: false
+  def is_coinbase_tx?(%{data: data} = _tx) when not is_binary(data), do: false
 
-  def is_coinbase_tx(%{data: data} = tx) when is_binary(data) do
+  def is_coinbase_tx?(%{data: data} = tx) when is_binary(data) do
     try do
       tx.data =~ "tx_type" && Poison.decode!(tx.data)["tx_type"] == Blockchain.coinbase_tx_type()
     rescue
@@ -38,12 +40,12 @@ defmodule CredoCoreNode.Mining.Coinbase do
     end
   end
 
-  def tx_fee_sums_match(block, coinbase_txs) do
+  def tx_fee_sums_match?(block, coinbase_txs) do
     [coinbase_tx] = coinbase_txs
 
     txs_minus_coinbase_tx =
       Pool.list_pending_transactions(block)
-      |> Enum.filter(&(!is_coinbase_tx(&1)))
+      |> Enum.filter(&(!is_coinbase_tx?(&1)))
 
     non_coinbase_tx_fees_sum = Pool.sum_pending_transaction_fees(txs_minus_coinbase_tx)
 

@@ -143,7 +143,7 @@ defmodule CredoCoreNode.BlockchainTest do
           "{\"tx_type\" : \"#{Blockchain.coinbase_tx_type()}\"}"
         )
 
-      assert Coinbase.is_coinbase_tx(pending_transaction)
+      assert Coinbase.is_coinbase_tx?(pending_transaction)
     end
 
     test "detecting deposit transaction type" do
