@@ -32,7 +32,7 @@ defmodule CredoCoreNode.DepositWithdrawalTest do
 
       {:ok, tx} = CredoCoreNode.Pool.generate_pending_transaction(account.private_key, attrs)
 
-      DepositWithdrawal.is_deposit_withdrawal(tx)
+      DepositWithdrawal.is_deposit_withdrawal?(tx)
     end
   end
 
@@ -55,7 +55,7 @@ defmodule CredoCoreNode.DepositWithdrawalTest do
 
       {:ok, tx} = CredoCoreNode.Pool.generate_pending_transaction(account.private_key, attrs)
 
-      assert DepositWithdrawal.valid_deposit_withdrawal_amount?(tx, %Block{number: 10})
+      assert DepositWithdrawal.valid_deposit_withdrawal?(tx, %Block{number: 10})
     end
   end
 end
