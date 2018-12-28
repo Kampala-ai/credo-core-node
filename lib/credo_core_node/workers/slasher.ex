@@ -8,7 +8,7 @@ defmodule CredoCoreNode.Workers.Slasher do
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.Mining.Slash
   alias CredoCoreNode.Adapters.BlockchainAdapter
-  alias CredoCoreNode.Adapters.DepositAdapter
+  alias CredoCoreNode.Adapters.SlashAdapter
 
   @default_interval 240_000
   @blockchain Application.get_env(:credo_core_node, BlockchainAdapter, Blockchain)
@@ -44,7 +44,7 @@ defmodule CredoCoreNode.Workers.Slasher do
     processable_blocks = @blockchain.list_processable_blocks(last_processed_block_number)
 
     processable_blocks
-    |> Enum.each(fn block -> @slash.maybe_slash_miners(block) end)
+    |> Enum.each(fn block -> @slash.maybe_apply_slashes(block) end)
 
     last_processed_block = @blockchain.last_processed_block(processable_blocks)
 

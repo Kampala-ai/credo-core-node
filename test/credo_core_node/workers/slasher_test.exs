@@ -5,7 +5,6 @@ defmodule CredoCoreNode.Workers.SlasherTest do
 
   alias CredoCoreNode.Blockchain
   alias CredoCoreNode.BlockchainMock
-  alias CredoCoreNode.DepositMock
   alias CredoCoreNode.Workers.Slasher
 
   setup :set_mox_from_context

@@ -12,7 +12,7 @@ defmodule CredoCoreNode.Mining.Slash do
   @slash_penalty_multiplier D.new(0.8)
 
   # A byzantine behavior proof should be two or more votes signed by the allegedly-byzantine miner for a given block number and voting round.
-  def slash_miner(private_key, byzantine_behavior_proof, miner_address) do
+  def generate_slash(private_key, byzantine_behavior_proof, miner_address) do
     construct_miner_slash_tx(private_key, byzantine_behavior_proof, miner_address)
     |> Pool.propagate_pending_transaction()
   end
@@ -34,14 +34,14 @@ defmodule CredoCoreNode.Mining.Slash do
     tx
   end
 
-  def maybe_slash_miners(block) do
+  def maybe_apply_slashes(block) do
     block
     |> Blockchain.list_transactions()
     |> get_slashes()
-    |> validate_and_slash_miners()
+    |> apply_valid_slashes()
   end
 
-  def get_slashes(txs) do
+  defp get_slashes(txs) do
     Enum.filter(txs, &is_slash(&1))
   end
 
@@ -56,10 +56,10 @@ defmodule CredoCoreNode.Mining.Slash do
     end
   end
 
-  def parse_proof(%{data: nil} = _slash), do: []
-  def parse_proof(%{data: data} = _slash) when not is_binary(data), do: []
+  def parse_slash_proof(%{data: nil} = _slash), do: []
+  def parse_slash_proof(%{data: data} = _slash) when not is_binary(data), do: []
 
-  def parse_proof(%{data: data} = slash) when is_binary(data) do
+  def parse_slash_proof(%{data: data} = slash) when is_binary(data) do
     try do
       slash.data =~ "byzantine_behavior_proof" &&
         Poison.decode!(slash.data)["byzantine_behavior_proof"]
@@ -68,12 +68,12 @@ defmodule CredoCoreNode.Mining.Slash do
     end
   end
 
-  def validate_and_slash_miners(slashes) do
+  def apply_valid_slashes(slashes) do
     Enum.each(slashes, fn slash ->
-      proof = parse_proof(slash)
+      proof = parse_slash_proof(slash)
 
       if valid_slash_proof?(proof) && target_miner_is_unslashed_for_block_number?(slash) do
-        execute_slash(slash)
+        apply_slash(slash)
       end
     end)
   end
@@ -101,13 +101,13 @@ defmodule CredoCoreNode.Mining.Slash do
     end
   end
 
-  def first_vote(slash) do
-    proof = parse_proof(slash)
+  defp first_vote(slash) do
+    proof = parse_slash_proof(slash)
     voteAttributes = for {key, val} <- hd(proof), into: %{}, do: {String.to_atom(key), val}
     struct(CredoCoreNode.Mining.Vote, voteAttributes)
   end
 
-  def target_miner_is_unslashed_for_block_number?(slash) do
+  defp target_miner_is_unslashed_for_block_number?(slash) do
     vote = first_vote(slash)
 
     Mining.list_slashes()
@@ -118,7 +118,7 @@ defmodule CredoCoreNode.Mining.Slash do
     |> Enum.empty?()
   end
 
-  def execute_slash(slash) do
+  defp apply_slash(slash) do
     slashed_miner = Mining.get_miner(slash.to)
 
     Mining.write_miner(%{

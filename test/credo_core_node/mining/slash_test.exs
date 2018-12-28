@@ -65,7 +65,7 @@ defmodule CredoCoreNode.SlashTest do
       tx = slash_tx_fixture(miner)
 
       assert Slash.is_slash(tx)
-      assert Slash.valid_slash_proof?(Slash.parse_proof(tx))
+      assert Slash.valid_slash_proof?(Slash.parse_slash_proof(tx))
     end
 
     test "processing a slash saves a slash a miner's stake" do
@@ -74,7 +74,7 @@ defmodule CredoCoreNode.SlashTest do
 
       stake_amount_before_slash = miner.stake_amount
 
-      Slash.validate_and_slash_miners([tx])
+      Slash.apply_valid_slashes([tx])
 
       slashed_miner = Mining.get_miner(miner.address)
 
@@ -86,7 +86,7 @@ defmodule CredoCoreNode.SlashTest do
       miner = miner_fixture()
       tx = slash_tx_fixture(miner)
 
-      Slash.validate_and_slash_miners([tx])
+      Slash.apply_valid_slashes([tx])
 
       assert !is_nil(Mining.get_slash(tx.hash))
     end
@@ -98,14 +98,14 @@ defmodule CredoCoreNode.SlashTest do
 
       stake_amount_before_slash = miner.stake_amount
 
-      Slash.validate_and_slash_miners([slash, second_slash])
+      Slash.apply_valid_slashes([slash, second_slash])
 
       slashed_miner = Mining.get_miner(miner.address)
 
       assert D.cmp(slashed_miner.stake_amount, D.mult(D.new(0.8), stake_amount_before_slash)) ==
                :eq
 
-      Slash.validate_and_slash_miners([second_slash])
+      Slash.apply_valid_slashes([second_slash])
 
       slashed_miner = Mining.get_miner(miner.address)
 
@@ -121,7 +121,7 @@ defmodule CredoCoreNode.SlashTest do
       miner = miner_fixture()
       tx = slash_tx_fixture(miner)
 
-      assert Slash.valid_slash_proof?(Slash.parse_proof(tx))
+      assert Slash.valid_slash_proof?(Slash.parse_slash_proof(tx))
     end
 
     test "returns true for a proof with votes specifying different voting rounds" do
@@ -148,7 +148,7 @@ defmodule CredoCoreNode.SlashTest do
 
       tx = slash_tx_fixture(miner, vote_round, different_miner_addresses_proof)
 
-      refute Slash.valid_slash_proof?(Slash.parse_proof(tx))
+      refute Slash.valid_slash_proof?(Slash.parse_slash_proof(tx))
     end
 
     test "returns false for a proof with a single vote" do
@@ -167,7 +167,7 @@ defmodule CredoCoreNode.SlashTest do
 
       tx = slash_tx_fixture(miner, vote_round, single_vote_proof)
 
-      refute Slash.valid_slash_proof?(Slash.parse_proof(tx))
+      refute Slash.valid_slash_proof?(Slash.parse_slash_proof(tx))
     end
 
     test "returns false for a proof with votes specifying different block numbers" do
@@ -193,7 +193,7 @@ defmodule CredoCoreNode.SlashTest do
 
       tx = slash_tx_fixture(miner, vote_round, different_block_numbers_proof)
 
-      refute Slash.valid_slash_proof?(Slash.parse_proof(tx))
+      refute Slash.valid_slash_proof?(Slash.parse_slash_proof(tx))
     end
 
     test "returns false for a proof with votes specifying the same block hash" do
@@ -219,7 +219,7 @@ defmodule CredoCoreNode.SlashTest do
 
       tx = slash_tx_fixture(miner, vote_round, same_block_hash_proof)
 
-      refute Slash.valid_slash_proof?(Slash.parse_proof(tx))
+      refute Slash.valid_slash_proof?(Slash.parse_slash_proof(tx))
     end
 
     test "returns false for a proof with votes specifying different miner addresses" do
@@ -246,7 +246,7 @@ defmodule CredoCoreNode.SlashTest do
 
       tx = slash_tx_fixture(miner, vote_round, different_miner_addresses_proof)
 
-      refute Slash.valid_slash_proof?(Slash.parse_proof(tx))
+      refute Slash.valid_slash_proof?(Slash.parse_slash_proof(tx))
     end
   end
 end
