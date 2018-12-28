@@ -11,6 +11,8 @@ defmodule CredoCoreNode.Blockchain do
 
   alias Decimal, as: D
 
+  @behaviour CredoCoreNode.Adapters.BlockchainAdapter
+
   @irreversibility_threshold 12
 
   def coinbase_tx_type, do: "coinbase"

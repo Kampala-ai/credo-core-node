@@ -1,6 +1,8 @@
 defmodule CredoCoreNode.Mining.Ip do
   alias CredoCoreNode.{Accounts, Blockchain, Mining, Network, Pool}
 
+  @behaviour CredoCoreNode.Adapters.IpAdapter
+
   def maybe_update_miner_ip do
     if Mining.is_miner?() && miner_ip_changed?() do
       construct_miner_ip_update_transaction("", Mining.my_miner().address)

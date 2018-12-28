@@ -7,6 +7,8 @@ defmodule CredoCoreNode.Mining.Slash do
 
   alias Decimal, as: D
 
+  @behaviour CredoCoreNode.Adapters.SlashAdapter
+
   @slash_penalty_multiplier D.new(0.8)
 
   # A byzantine behavior proof should be two or more votes signed by the allegedly-byzantine miner for a given block number and voting round.

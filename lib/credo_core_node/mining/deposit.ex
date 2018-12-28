@@ -7,6 +7,8 @@ defmodule CredoCoreNode.Mining.Deposit do
 
   alias Decimal, as: D
 
+  @behaviour CredoCoreNode.Adapters.DepositAdapter
+
   # TODO: specify actual timelock limits.
   @min_timelock 1
   @max_timelock 100
