@@ -15,3 +15,5 @@ config :logger, level: :warn
 
 config :credo_core_node, CredoCoreNode.Adapters.BlockchainAdapter, CredoCoreNode.BlockchainMock
 config :credo_core_node, CredoCoreNode.Adapters.DepositAdapter, CredoCoreNode.DepositMock
+config :credo_core_node, CredoCoreNode.Adapters.IpAdapter, CredoCoreNode.IpMock
+config :credo_core_node, CredoCoreNode.Adapters.SlashAdapter, CredoCoreNode.SlashMock
