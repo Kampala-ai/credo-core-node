@@ -1,11 +1,13 @@
 defmodule CredoCoreNode.Blockchain.BlockProducer do
-  alias CredoCoreNode.{Blockchain, Mining, Pool}
+  alias CredoCoreNode.{Mining, Pool}
   alias CredoCoreNode.Blockchain.BlockValidator
   alias CredoCoreNode.Mining.Coinbase
 
   alias Decimal, as: D
 
   require Logger
+
+  @behaviour CredoCoreNode.Adapters.BlockProducerAdapter
 
   @block_production_timeout 10000
 
@@ -24,7 +26,7 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
     if is_nil(produced_block), do: nil, else: {:ok, produced_block}
   end
 
-  def is_produced_by_my_miner?(pending_block) do
+  defp is_produced_by_my_miner?(pending_block) do
     case Mining.my_miner() do
       nil ->
         false
@@ -88,7 +90,7 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
     end
   end
 
-  def next_block?(block) do
+  defp next_block?(block) do
     Pool.get_block_by_number(block.number + 1)
   end
 end
