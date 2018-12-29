@@ -14,6 +14,7 @@ defmodule CredoCoreNode.Pool do
   @behaviour CredoCoreNode.Adapters.PoolAdapter
 
   @default_pending_transaction_query_limit 500
+  @target_txs_per_block 2
 
   @doc """
   Returns the list of pending_transactions.
@@ -123,8 +124,6 @@ defmodule CredoCoreNode.Pool do
 
     {:ok, tx}
   end
-
-  @target_txs_per_block 2
 
   @doc """
   Returns the list of pending_block_fragments.
@@ -329,7 +328,7 @@ defmodule CredoCoreNode.Pool do
   end
 
   # HACK: temporary disabled balance check to be able to generate pending transactions on testnet
-  def is_tx_invalid?(tx) do
+  def is_tx_invalid?(_tx) do
     # !is_tx_from_balance_sufficient?(tx)
     false
   end

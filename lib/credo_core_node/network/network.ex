@@ -9,6 +9,8 @@ defmodule CredoCoreNode.Network do
   alias CredoCoreNodeWeb.Endpoint
   alias Mnesia.Repo
 
+  @behaviour CredoCoreNode.Adapters.NetworkAdapter
+
   @localhost_ips [{127, 0, 0, 1}, {0, 0, 0, 0}]
 
   defp seed_node_ips(),
@@ -320,12 +322,12 @@ defmodule CredoCoreNode.Network do
     compare(updated_at(node_a.ip), updated_at(node_b.ip))
   end
 
-  def compare(updated_at_a, updated_at_b) do
-    updated_at_a <= updated_at_b
-  end
-
   def compare(%DateTime{} = updated_at_a, %DateTime{} = updated_at_b) do
     DateTime.compare(updated_at_a, updated_at_b) != :gt
+  end
+
+  def compare(updated_at_a, updated_at_b) do
+    updated_at_a <= updated_at_b
   end
 
   def propagate_record(record, options \\ []) do
