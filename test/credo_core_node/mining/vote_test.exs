@@ -5,9 +5,16 @@ defmodule CredoCoreNode.VoteTest do
     @describetag table_name: :votes
 
     test "has expected fields" do
-      assert CredoCoreNode.Mining.Vote.fields == [:hash, :miner_address, :block_number, :block_hash, :voting_round, :v, :r, :s]
+      assert CredoCoreNode.Mining.Vote.fields() == [
+               :hash,
+               :miner_address,
+               :block_number,
+               :block_hash,
+               :voting_round,
+               :v,
+               :r,
+               :s
+             ]
     end
-
   end
-
 end

@@ -313,8 +313,7 @@ defmodule CredoCoreNode.Blockchain do
   def block_body_fetched?(%Block{tx_root: nil}), do: false
   def block_body_fetched?(%Block{hash: nil}), do: false
 
-  def block_body_fetched?(%Block{hash: hash}),
-    do: MPT.RepoManager.trie_exists?("blocks", hash)
+  def block_body_fetched?(%Block{hash: hash}), do: MPT.RepoManager.trie_exists?("blocks", hash)
 
   defp block_tx_trie(%Block{tx_root: nil}), do: nil
   defp block_tx_trie(%Block{hash: nil}), do: nil

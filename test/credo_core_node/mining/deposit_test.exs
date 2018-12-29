@@ -10,9 +10,13 @@ defmodule CredoCoreNode.DepositTest do
     @describetag table_name: :deposits
 
     test "has expected fields" do
-      assert CredoCoreNode.Mining.Deposit.fields == [:tx_hash, :miner_address, :amount, :timelock]
+      assert CredoCoreNode.Mining.Deposit.fields() == [
+               :tx_hash,
+               :miner_address,
+               :amount,
+               :timelock
+             ]
     end
-
   end
 
   describe "constructing a miner deposit" do

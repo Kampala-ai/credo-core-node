@@ -5,9 +5,12 @@ defmodule CredoCoreNode.AccountTest do
     @describetag table_name: :accounts
 
     test "has expected fields" do
-      assert CredoCoreNode.Accounts.Account.fields == [:address, :private_key, :public_key, :label]
+      assert CredoCoreNode.Accounts.Account.fields() == [
+               :address,
+               :private_key,
+               :public_key,
+               :label
+             ]
     end
-
   end
-
 end

@@ -11,7 +11,12 @@ defmodule CredoCoreNode.VoteManagerTest do
   describe "counting votes" do
     @describetag table_name: :votes
 
-    def miner_fixture(stake_amount, inserted_at \\ DateTime.utc_now(), is_self \\ false, participation_rate \\ 1.0) do
+    def miner_fixture(
+          stake_amount,
+          inserted_at \\ DateTime.utc_now(),
+          is_self \\ false,
+          participation_rate \\ 1.0
+        ) do
       {:ok, account} = Accounts.generate_address("miner")
 
       Mining.write_miner(%{

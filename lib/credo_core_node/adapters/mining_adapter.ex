@@ -7,7 +7,8 @@ defmodule CredoCoreNode.Adapters.MiningAdapter do
   @callback default_tx_fee :: integer()
   @callback min_stake_size :: integer()
 
-  @callback become_miner(Decimal.t(), String.t(), String.t(), integer() | nil) :: %PendingTransaction{}
+  @callback become_miner(Decimal.t(), String.t(), String.t(), integer() | nil) ::
+              %PendingTransaction{}
   @callback delete_miner_for_insufficient_stake(%Miner{}) :: %Miner{}
   @callback my_miner() :: %Miner{} | nil
   @callback withdrawable_deposit_value(%Miner{}, %PendingBlock{} | %Block{}) :: Decimal.t()

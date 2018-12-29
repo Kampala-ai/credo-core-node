@@ -31,6 +31,7 @@ defmodule CredoCoreNode.Adapters.NetworkAdapter do
   @callback connected_to?(String.t(), :incoming | :outgoing) :: boolean()
   @callback connect_to(String.t(), integer()) :: %Connection{}
   @callback updated_at(String.t()) :: DateTime.t()
-  @callback compare(%KnownNode{} | %DateTime{} | any(), %KnownNode{} | %DateTime{} | any()) :: boolean()
+  @callback compare(%KnownNode{} | %DateTime{} | any(), %KnownNode{} | %DateTime{} | any()) ::
+              boolean()
   @callback propagate_record(any(), list()) :: any()
 end

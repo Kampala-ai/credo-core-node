@@ -11,9 +11,12 @@ defmodule CredoCoreNode.SlashTest do
     @describetag table_name: :slashes
 
     test "has expected fields" do
-      assert CredoCoreNode.Mining.Slash.fields == [:tx_hash, :target_miner_address, :infraction_block_number]
+      assert CredoCoreNode.Mining.Slash.fields() == [
+               :tx_hash,
+               :target_miner_address,
+               :infraction_block_number
+             ]
     end
-
   end
 
   describe "slashes" do

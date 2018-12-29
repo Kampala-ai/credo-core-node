@@ -5,9 +5,7 @@ defmodule CredoCoreNode.PendingBlockFragmentTest do
     @describetag table_name: :pending_block_fragments
 
     test "has expected fields" do
-      assert CredoCoreNode.Pool.PendingBlockFragment.fields == [:hash, :body]
+      assert CredoCoreNode.Pool.PendingBlockFragment.fields() == [:hash, :body]
     end
-
   end
-
 end

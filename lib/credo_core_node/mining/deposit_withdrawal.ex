@@ -36,7 +36,8 @@ defmodule CredoCoreNode.Mining.DepositWithdrawal do
     |> Enum.filter(&(!valid_deposit_withdrawal?(&1, block)))
   end
 
-  def valid_deposit_withdrawal?(deposit_withdrawal, block), do: valid_deposit_withdrawal_amount?(deposit_withdrawal, block)
+  def valid_deposit_withdrawal?(deposit_withdrawal, block),
+    do: valid_deposit_withdrawal_amount?(deposit_withdrawal, block)
 
   defp valid_deposit_withdrawal_amount?(deposit_withdrawal, block) do
     miner = get_miner_for_deposit_withdrawal(deposit_withdrawal)

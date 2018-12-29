@@ -269,8 +269,9 @@ defmodule CredoCoreNode.PoolTest do
           s: "7A4A73877604F44BC673D46CEF6E267283215FCF6CE7AF82C18BFEEBD8053468",
           to: "AF24738B406DB6387D05EB7CE1E90D420B25798F",
           v: 0,
-          value: Decimal.new(1000000.000000000000000000)
-        } |> Pool.write_pending_transaction()
+          value: Decimal.new(1_000_000.000000000000000000)
+        }
+        |> Pool.write_pending_transaction()
 
       assert Pool.get_batch_of_valid_pending_transactions() == [pending_transaction]
     end
