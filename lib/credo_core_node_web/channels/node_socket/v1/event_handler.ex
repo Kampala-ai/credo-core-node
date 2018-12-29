@@ -2,7 +2,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventHandler do
   require Logger
 
   alias CredoCoreNode.Blockchain
-  alias CredoCoreNode.Blockchain.Block
+  alias CredoCoreNode.Blockchain.{Block, BlockValidator}
   alias CredoCoreNode.Pool
   alias CredoCoreNode.Pool.{PendingBlock, PendingTransaction}
   alias CredoCoreNodeWeb.Endpoint
@@ -38,7 +38,8 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventHandler do
       Network.list_connections()
       |> Enum.find(&(&1.session_id == List.last(session_ids)))
 
-    if !Pool.get_pending_block(hash) && !already_processed?(session_ids) && connection do
+    if !Pool.get_pending_block(hash) && !already_processed?(session_ids) && connection &&
+         BlockValidator.valid_block?(blk, true) do
       Logger.info("Writing pending block and fetching body...")
 
       Pool.write_pending_block(blk)
@@ -57,7 +58,8 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventHandler do
       Network.list_connections()
       |> Enum.find(&(&1.session_id == List.last(session_ids)))
 
-    if !Blockchain.get_block(hash) && !already_processed?(session_ids) && connection do
+    if !Blockchain.get_block(hash) && !already_processed?(session_ids) && connection &&
+         BlockValidator.valid_block?(blk, true) do
       Logger.info("Writing block and fetching body...")
 
       Blockchain.write_block(blk)
@@ -72,7 +74,8 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventHandler do
 
     Logger.info("Received vote: #{inspect(vote)}")
 
-    if !Mining.get_vote(hash) && !already_processed?(session_ids) do
+    if !Mining.get_vote(hash) && !already_processed?(session_ids) &&
+         VoteManager.is_valid_vote?(vote) do
       Logger.info("Writing vote and propagating further...")
       Mining.write_vote(vote)
       VoteManager.propagate_vote(vote, session_ids: session_ids)
