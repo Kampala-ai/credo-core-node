@@ -12,6 +12,8 @@ defmodule CredoCoreNode.Mining do
 
   alias Decimal, as: D
 
+  @behaviour CredoCoreNode.Adapters.MiningAdapter
+
   require Logger
 
   @default_nonce 0
