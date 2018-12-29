@@ -13,8 +13,10 @@ defmodule CredoCoreNode.Accounts do
 
   alias Decimal, as: D
 
+  @behaviour CredoCoreNode.Adapters.AccountsAdapter
+
   @doc """
-  Calculates a public key for a given pending_transaction.
+  Calculates a public key.
   """
   def calculate_public_key(%PendingTransaction{} = tx),
     do: calculate_public_key_from_signature(tx)
@@ -22,21 +24,6 @@ defmodule CredoCoreNode.Accounts do
   def calculate_public_key(%Transaction{} = tx), do: calculate_public_key_from_signature(tx)
   def calculate_public_key(%Vote{} = vote), do: calculate_public_key_from_signature(vote)
 
-  def calculate_public_key_from_signature(tx) do
-    {:ok, sig} = Base.decode16(tx.r <> tx.s)
-
-    # HACK: the version of libsecp256k1 we use adds `4` byte value to the beginning of public key
-    {:ok, <<4>> <> public_key} =
-      tx
-      |> RLP.Hash.binary(type: :unsigned)
-      |> :libsecp256k1.ecdsa_recover_compact(sig, :uncompressed, tx.v)
-
-    {:ok, public_key}
-  end
-
-  @doc """
-  Calculates a public key for a given private key byte sequence.
-  """
   def calculate_public_key(private_key) when is_binary(private_key) do
     case :libsecp256k1.ec_pubkey_create(private_key, :uncompressed) do
       # HACK: the version of libsecp256k1 we use adds `4` byte value to the beginning of public key
@@ -46,6 +33,18 @@ defmodule CredoCoreNode.Accounts do
       result ->
         result
     end
+  end
+
+  defp calculate_public_key_from_signature(tx) do
+    {:ok, sig} = Base.decode16(tx.r <> tx.s)
+
+    # HACK: the version of libsecp256k1 we use adds `4` byte value to the beginning of public key
+    {:ok, <<4>> <> public_key} =
+      tx
+      |> RLP.Hash.binary(type: :unsigned)
+      |> :libsecp256k1.ecdsa_recover_compact(sig, :uncompressed, tx.v)
+
+    {:ok, public_key}
   end
 
   @doc """
