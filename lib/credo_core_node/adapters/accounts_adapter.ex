@@ -4,7 +4,8 @@ defmodule CredoCoreNode.Adapters.AccountsAdapter do
   alias CredoCoreNode.Mining.Vote
   alias CredoCoreNode.Pool.PendingTransaction
 
-  @callback calculate_public_key(%PendingTransaction{} | %Transaction{} | %Vote{} | String.t()) :: {:ok, String.t()}
+  @callback calculate_public_key(%PendingTransaction{} | %Transaction{} | %Vote{} | String.t()) ::
+              {:ok, String.t()}
   @callback payment_address(%Vote{} | String.t()) :: String.t()
 
   @callback generate_address(String.t() | nil) :: %Account{}

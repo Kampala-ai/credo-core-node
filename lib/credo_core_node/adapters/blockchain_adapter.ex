@@ -37,7 +37,8 @@ defmodule CredoCoreNode.Adapters.BlockchainAdapter do
   @callback propagate_block(%Block{}, list()) :: %Block{}
 
   @callback load_block_body(%Block{} | nil) :: %Block{} | nil
-  @callback fetch_block_body(%PendingBlock{} | %Block{}, String.t(), atom()) :: %PendingBlock{} | %Block{} | nil
+  @callback fetch_block_body(%PendingBlock{} | %Block{}, String.t(), atom()) ::
+              %PendingBlock{} | %Block{} | nil
   @callback block_body_fetched?(%Block{}) :: boolean()
 
   @callback mark_block_as_invalid(%PendingBlock{}) :: %PendingBlock{}

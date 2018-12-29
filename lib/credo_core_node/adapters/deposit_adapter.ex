@@ -2,7 +2,8 @@ defmodule CredoCoreNode.Adapters.DepositAdapter do
   alias CredoCoreNode.Blockchain.{Block, Transaction}
   alias CredoCoreNode.Pool.PendingTransaction
 
-  @callback construct_deposit(Decimal.t(), String.t(), String.t(), integer() | nil) :: %PendingTransaction{}
+  @callback construct_deposit(Decimal.t(), String.t(), String.t(), integer() | nil) ::
+              %PendingTransaction{}
 
   @callback is_deposit(%Transaction{}) :: boolean()
   @callback valid_deposits?(list(%Transaction{})) :: boolean()

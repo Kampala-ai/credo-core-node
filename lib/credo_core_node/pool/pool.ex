@@ -11,6 +11,8 @@ defmodule CredoCoreNode.Pool do
 
   alias Decimal, as: D
 
+  @behaviour CredoCoreNode.Adapters.PoolAdapter
+
   @default_pending_transaction_query_limit 500
 
   @doc """
@@ -30,6 +32,27 @@ defmodule CredoCoreNode.Pool do
         Exleveldb.close(elem(tx_trie.db, 1))
         txs
     end
+  end
+
+  @doc """
+  Gets a batch of a pending_transaction.
+
+  To be called when constructing a block.
+  """
+  def get_batch_of_valid_pending_transactions() do
+    list_pending_transactions()
+    |> Enum.sort(&(D.cmp(&1.fee, &2.fee) == :gt))
+    |> Enum.reduce_while([], fn tx, acc ->
+      if length(acc) >= @target_txs_per_block do
+        {:halt, acc}
+      else
+        if is_tx_valid?(tx) do
+          {:cont, acc ++ [tx]}
+        else
+          {:cont, acc}
+        end
+      end
+    end)
   end
 
   @doc """
@@ -92,16 +115,6 @@ defmodule CredoCoreNode.Pool do
     {:ok, %{tx | hash: RLP.Hash.hex(tx)}}
   end
 
-  def sign_message(private_key, message) do
-    {:ok, sig, v} =
-      message
-      |> RLP.Hash.binary(type: :unsigned)
-      |> :libsecp256k1.ecdsa_sign_compact(private_key, :default, <<>>)
-
-    sig = Base.encode16(sig)
-    Map.merge(message, %{v: v, r: String.slice(sig, 0, 64), s: String.slice(sig, 64, 64)})
-  end
-
   @doc """
   Propagates a pending_transaction.
   """
@@ -112,27 +125,6 @@ defmodule CredoCoreNode.Pool do
   end
 
   @target_txs_per_block 2
-
-  @doc """
-  Gets a batch of a pending_transaction.
-
-  To be called when constructing a block.
-  """
-  def get_batch_of_valid_pending_transactions() do
-    list_pending_transactions()
-    |> Enum.sort(&(D.cmp(&1.fee, &2.fee) == :gt))
-    |> Enum.reduce_while([], fn tx, acc ->
-      if length(acc) >= @target_txs_per_block do
-        {:halt, acc}
-      else
-        if is_tx_valid?(tx) do
-          {:cont, acc ++ [tx]}
-        else
-          {:cont, acc}
-        end
-      end
-    end)
-  end
 
   @doc """
   Returns the list of pending_block_fragments.
@@ -313,13 +305,6 @@ defmodule CredoCoreNode.Pool do
     {:ok, block}
   end
 
-  def get_transaction_from_address(tx) do
-    tx
-    |> Accounts.calculate_public_key()
-    |> elem(1)
-    |> Accounts.payment_address()
-  end
-
   def is_tx_unmined?(tx), do: is_tx_unmined?(tx, %Block{prev_hash: Blockchain.last_block().hash})
 
   def is_tx_unmined?(tx, block) do
@@ -361,6 +346,13 @@ defmodule CredoCoreNode.Pool do
   defp pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}),
     do: MPT.RepoManager.trie("pending_blocks", hash, tx_root)
 
+  def get_transaction_from_address(tx) do
+    tx
+    |> Accounts.calculate_public_key()
+    |> elem(1)
+    |> Accounts.payment_address()
+  end
+
   def outgoing_tx_count_for_from_address(tx, last_block) do
     # TODO: replace with more efficient implementation.
     from_address = get_transaction_from_address(tx)
@@ -375,5 +367,15 @@ defmodule CredoCoreNode.Pool do
     |> Enum.concat()
     |> Enum.reject(&is_nil(&1))
     |> Enum.reduce(0, fn x, acc -> x + acc end)
+  end
+
+  def sign_message(private_key, message) do
+    {:ok, sig, v} =
+      message
+      |> RLP.Hash.binary(type: :unsigned)
+      |> :libsecp256k1.ecdsa_sign_compact(private_key, :default, <<>>)
+
+    sig = Base.encode16(sig)
+    Map.merge(message, %{v: v, r: String.slice(sig, 0, 64), s: String.slice(sig, 64, 64)})
   end
 end
