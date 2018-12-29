@@ -10,7 +10,7 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.BlockController do
     blocks =
       Blockchain.list_blocks()
       |> Enum.filter(&(&1.number > offset))
-      |> Enum.sort(&(&1.number > &2.number))
+      |> Enum.sort(&(&1.number < &2.number))
       |> Enum.take(limit)
 
     render(conn, "index.json", blocks: blocks)
