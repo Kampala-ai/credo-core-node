@@ -30,15 +30,15 @@ defmodule CredoCoreNode.Mining.VoteManager do
     |> propagate_vote()
   end
 
-  def select_candidate(block, voting_round) when voting_round == 0, do: block
+  defp select_candidate(block, voting_round) when voting_round == 0, do: block
 
-  def select_candidate(block, voting_round) do
+  defp select_candidate(block, _voting_round) do
     # TODO: weight selection based on votes from prior round.
     Pool.list_pending_blocks(block.number)
     |> Enum.random()
   end
 
-  def construct_vote(candidate, voting_round) do
+  defp construct_vote(candidate, voting_round) do
     %Vote{
       miner_address: Mining.my_miner().address,
       block_number: candidate.number,
@@ -53,9 +53,9 @@ defmodule CredoCoreNode.Mining.VoteManager do
     Pool.sign_message(account.private_key, vote)
   end
 
-  def hash_vote(vote), do: %Vote{vote | hash: RLP.Hash.hex(vote)}
+  defp hash_vote(vote), do: %Vote{vote | hash: RLP.Hash.hex(vote)}
 
-  def save_vote(vote) do
+  defp save_vote(vote) do
     {:ok, vote} = Mining.write_vote(vote)
 
     vote
@@ -77,7 +77,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
     end
   end
 
-  def can_count_votes_early?(block, voting_round) do
+  defp can_count_votes_early?(block, voting_round) do
     length(get_valid_votes_for_block_and_round(block, voting_round)) >=
       @early_vote_counting_threshold
   end
@@ -121,17 +121,17 @@ defmodule CredoCoreNode.Mining.VoteManager do
     end)
   end
 
-  def get_valid_votes_for_block_and_round(block, voting_round) do
+  defp get_valid_votes_for_block_and_round(block, voting_round) do
     block
     |> Mining.list_votes_for_round(voting_round)
     |> get_valid_votes()
   end
 
-  def get_valid_votes(votes) do
-    Enum.filter(votes, &is_valid_vote(&1))
+  defp get_valid_votes(votes) do
+    Enum.filter(votes, &is_valid_vote?(&1))
   end
 
-  def is_valid_vote(vote) do
+  def is_valid_vote?(vote) do
     {:ok, public_key} = Accounts.calculate_public_key(vote)
 
     address = Accounts.payment_address(public_key)
@@ -142,12 +142,12 @@ defmodule CredoCoreNode.Mining.VoteManager do
     address == vote.miner_address && !is_nil(voter)
   end
 
-  def voter_has_completed_warm_up_period?(voter) do
+  defp voter_has_completed_warm_up_period?(voter) do
     is_nil(voter.inserted_at) ||
       DateTime.diff(DateTime.utc_now(), voter.inserted_at) > @num_seconds_for_voter_warm_up_period
   end
 
-  def total_voting_power(votes) do
+  defp total_voting_power(votes) do
     voting_miner_addresses = Enum.map(votes, & &1.miner_address)
 
     Mining.list_miners()
@@ -155,7 +155,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
     |> Enum.reduce(D.new(0), fn miner, acc -> D.add(miner.stake_amount, acc) end)
   end
 
-  def has_supermajority?(num_votes, votes) do
+  defp has_supermajority?(num_votes, votes) do
     D.cmp(num_votes, D.mult(D.new(2 / 3), total_voting_power(votes))) != :lt
   end
 
@@ -175,7 +175,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
   def update_participation_rates(block, voting_round) do
     votes = Mining.list_votes_for_round(block, voting_round)
 
-    Enum.each(Mining.list_miners(), fn miner ->
+    Enum.map(Mining.list_miners(), fn miner ->
       rate =
         if miner_voted?(votes, miner),
           do: min(miner.participation_rate + 0.01, @max_participation_rate),

@@ -147,7 +147,7 @@ defmodule CredoCoreNode.VoteManagerTest do
         | miner_address: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340"
       }
 
-      refute VoteManager.is_valid_vote(vote)
+      refute VoteManager.is_valid_vote?(vote)
     end
 
     test "deems votes from a new miner as invalid" do
@@ -156,7 +156,7 @@ defmodule CredoCoreNode.VoteManagerTest do
       vote =
         vote_fixture(miner, "EBA692825740B1C2FE4F0AC106B32B6F41A2DA6B638CB7302C2C98F9B91C96A6")
 
-      refute VoteManager.is_valid_vote(vote)
+      refute VoteManager.is_valid_vote?(vote)
     end
 
     test "deems votes with a valid signature from a miner that passed the warm up period as valid" do
@@ -165,7 +165,7 @@ defmodule CredoCoreNode.VoteManagerTest do
       vote =
         vote_fixture(miner, "EBA692825740B1C2FE4F0AC106B32B6F41A2DA6B638CB7302C2C98F9B91C96A6")
 
-      assert VoteManager.is_valid_vote(vote)
+      assert VoteManager.is_valid_vote?(vote)
     end
   end
 
