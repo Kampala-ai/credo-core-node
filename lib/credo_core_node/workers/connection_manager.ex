@@ -11,11 +11,13 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
   @default_interval 60_000
 
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, @default_interval, name: __MODULE__)
+    GenServer.start_link(__MODULE__, opts)
   end
 
-  def init(interval) do
+  def init(opts) do
     Logger.info("Initializing the connection manager...")
+
+    state = %{interval: Keyword.get(opts, :interval, @default_interval)}
 
     CredoCoreNode.Network.setup_seed_nodes()
 
@@ -23,22 +25,22 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
     |> Enum.filter(& &1.is_active)
     |> Enum.each(&Network.write_connection(%{&1 | is_active: false}))
 
-    handle_info(:manage_connections, interval)
+    handle_info(:manage_connections, state)
 
-    {:ok, interval}
+    {:ok, state}
   end
 
-  def handle_info(:manage_connections, interval) do
-    schedule_manage_connections(interval)
+  def handle_info(:manage_connections, state) do
+    schedule_manage_connections(state.interval)
 
     connect()
 
-    {:noreply, interval}
+    {:noreply, state}
   end
 
+  defp connect(), do: connect(0)
   defp connect(10), do: nil
-
-  defp connect(num_attempts \\ 0) do
+  defp connect(num_attempts) do
     unless Network.active_connections_limit_reached?(:outgoing) do
       known_node =
         Network.list_known_nodes()

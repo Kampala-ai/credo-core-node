@@ -11,26 +11,28 @@ defmodule CredoCoreNode.Workers.BlockSyncer do
   @default_interval 10_000
 
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, @default_interval, name: __MODULE__)
+    GenServer.start_link(__MODULE__, opts)
   end
 
-  def init(interval) do
+  def init(opts) do
     Logger.info("Initializing the block syncer...")
+
+    state = %{interval: Keyword.get(opts, :interval, @default_interval)}
 
     CredoCoreNode.Network.setup_seed_nodes()
 
-    handle_info(:sync_blocks, interval)
+    handle_info(:sync_blocks, state)
 
-    {:ok, interval}
+    {:ok, state}
   end
 
-  def handle_info(:sync_blocks, interval) do
-    schedule_sync_blocks(interval)
+  def handle_info(:sync_blocks, state) do
+    schedule_sync_blocks(state.interval)
 
     sync_headers()
     sync_bodies()
 
-    {:noreply, interval}
+    {:noreply, state}
   end
 
   defp sync_headers() do

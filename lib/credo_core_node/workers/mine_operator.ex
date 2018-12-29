@@ -10,18 +10,20 @@ defmodule CredoCoreNode.Workers.MineOperator do
   @default_interval 60_000
 
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, @default_interval, name: __MODULE__)
+    GenServer.start_link(__MODULE__, opts)
   end
 
-  def init(interval) do
+  def init(opts) do
     Logger.info("Initializing the mine operator...")
 
-    schedule_mine_block(interval)
+    state = %{interval: Keyword.get(opts, :interval, @default_interval)}
 
-    {:ok, interval}
+    schedule_mine_block(state.interval)
+
+    {:ok, state}
   end
 
-  def handle_info(:mine_block, interval) do
+  def handle_info(:mine_block, state) do
     case Mining.is_miner?() do
       true ->
         Blockchain.last_block()
@@ -30,10 +32,10 @@ defmodule CredoCoreNode.Workers.MineOperator do
         schedule_mine_block(2000)
 
       false ->
-        schedule_mine_block(interval)
+        schedule_mine_block(state.interval)
     end
 
-    {:noreply, interval}
+    {:noreply, state}
   end
 
   defp schedule_mine_block(interval) do

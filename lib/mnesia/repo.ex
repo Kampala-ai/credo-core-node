@@ -57,7 +57,7 @@ defmodule Mnesia.Repo do
   end
 
   def apply_limit(results, limit) when is_integer(limit), do: Enum.take(results, limit)
-  def apply_limit(results, limit), do: results
+  def apply_limit(results, _limit), do: results
 
   @doc """
   Gets a single record.

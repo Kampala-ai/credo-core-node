@@ -11,27 +11,29 @@ defmodule CredoCoreNode.Workers.GarbageCollector do
   @recency_length 60
 
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, @default_interval, name: __MODULE__)
+    GenServer.start_link(__MODULE__, opts)
   end
 
-  def init(interval) do
+  def init(opts) do
     Logger.info("Initializing the garbage collector...")
 
-    handle_info(:collect_garbage, interval)
+    state = %{interval: Keyword.get(opts, :interval, @default_interval)}
 
-    {:ok, interval}
+    schedule_collect_garbage(state.interval)
+
+    {:ok, state}
   end
 
-  def handle_info(:collect_garbage, interval) do
+  def handle_info(:collect_garbage, state) do
     Logger.info("Collecting garbage...")
 
-    schedule_collect_garbage(interval)
+    schedule_collect_garbage(state.interval)
 
     collect_pending_block_garbage()
 
     collect_pending_transaction_garbage()
 
-    {:noreply, interval}
+    {:noreply, state}
   end
 
   def collect_pending_block_garbage do

@@ -5,8 +5,6 @@ defmodule MPT.RepoManager do
 
   require Logger
 
-  alias CredoCoreNode.Blockchain.Block
-  alias CredoCoreNode.Pool.PendingBlock
   alias MerklePatriciaTree.Trie
 
   @max_attempts 5
@@ -15,7 +13,7 @@ defmodule MPT.RepoManager do
 
   def trie(dir, name, root), do: trie(dir, name, root, 0)
 
-  defp trie(dir, name, root, @max_attempts), do: nil
+  defp trie(_dir, _name, _root, @max_attempts), do: nil
 
   defp trie(dir, name, root, num_attempts) do
     path = "#{File.cwd!()}/leveldb/#{dir}/#{name}"

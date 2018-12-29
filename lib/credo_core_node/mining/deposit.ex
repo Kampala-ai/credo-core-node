@@ -100,13 +100,6 @@ defmodule CredoCoreNode.Mining.Deposit do
     |> Mining.get_miner()
   end
 
-  defp miner_already_exists?(deposit) do
-    deposit
-    |> get_miner_for_deposit()
-    |> is_nil
-    |> Kernel.not()
-  end
-
   def recognize_deposits(deposits) do
     Enum.map(deposits, fn deposit ->
       case get_miner_for_deposit(deposit) do

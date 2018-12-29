@@ -9,7 +9,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.Socket do
     {:ok, assign(socket, :session_id, session_id)}
   end
 
-  def connect(_params, socket) do
+  def connect(_params, _socket) do
     :error
   end
 
