@@ -7,6 +7,8 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
   alias Decimal, as: D
 
+  @behaviour CredoCoreNode.Adapters.BlockValidatorAdapter
+
   @min_txs_per_block 1
   @max_txs_per_block 250
   @max_data_length 50000

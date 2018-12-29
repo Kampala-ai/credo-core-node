@@ -4,6 +4,8 @@ defmodule CredoCoreNode.Mining.VoteManager do
 
   alias Decimal, as: D
 
+  @behaviour CredoCoreNode.Adapters.VoteManagerAdapter
+
   @vote_collection_timeout 500
   @quorum_size 1
   @early_vote_counting_threshold 50
