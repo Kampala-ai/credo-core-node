@@ -25,9 +25,11 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
         valid_deposit_withdrawals?(block) && valid_block_irreversibility?(block) &&
         valid_coinbase_transaction?(block) && valid_value_transfer_limits?(block)
 
-    unless skip_network_consensus_validation do
-      is_valid = is_valid && valid_network_consensus?(block)
-    end
+    is_valid =
+      case skip_network_consensus_validation do
+        true -> is_valid
+        false -> is_valid && valid_network_consensus?(block)
+      end
 
     if is_valid do
       {:ok, block}

@@ -183,7 +183,7 @@ defmodule CredoCoreNode.Mining do
   def timelock_is_block_height?(timelock),
     do: timelock > 0 && timelock < @max_timelock_block_height
 
-  def timelock_has_expired?(timelock, block) when is_bitstring(timelock), do: true
+  def timelock_has_expired?(timelock, _block) when is_bitstring(timelock), do: true
 
   def timelock_has_expired?(timelock, block) do
     if timelock_is_block_height?(timelock) do
@@ -222,7 +222,11 @@ defmodule CredoCoreNode.Mining do
   end
 
   def start_voting(block, voting_round) do
-    if voting_round == 0, do: voting_round = VoteManager.get_current_voting_round(block)
+    voting_round =
+      case voting_round do
+        0 -> VoteManager.get_current_voting_round(block)
+        _ -> voting_round
+      end
 
     Logger.info("Started voting at block height #{block.number} in round #{voting_round}.")
 
