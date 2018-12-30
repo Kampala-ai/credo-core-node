@@ -3,7 +3,7 @@ defmodule CredoCoreNode.Pool do
   The Pool context.
   """
 
-  alias CredoCoreNode.{Accounts, Blockchain, Network}
+  alias CredoCoreNode.{Accounts, Blockchain, Network, State}
   alias CredoCoreNode.Pool.{PendingBlock, PendingBlockFragment, PendingTransaction}
   alias CredoCoreNode.Blockchain.Block
   alias CredoCoreNodeWeb.Endpoint
@@ -261,16 +261,22 @@ defmodule CredoCoreNode.Pool do
 
     tx_root = Base.encode16(tx_trie.root_hash)
 
-    pending_block = %PendingBlock{
-      prev_hash: prev_hash,
-      number: number,
-      state_root: "",
-      receipt_root: "",
-      tx_root: tx_root,
-      body: ExRLP.encode(pending_transactions)
-    }
+    case State.calculate_world_state(pending_transactions) do
+      {:ok, state_root} ->
+        pending_block = %PendingBlock{
+          prev_hash: prev_hash,
+          number: number,
+          state_root: state_root,
+          receipt_root: "",
+          tx_root: tx_root,
+          body: ExRLP.encode(pending_transactions)
+        }
 
-    {:ok, %PendingBlock{pending_block | hash: RLP.Hash.hex(pending_block)}}
+        {:ok, %PendingBlock{pending_block | hash: RLP.Hash.hex(pending_block)}}
+
+      result ->
+        result
+    end
   end
 
   def fetch_pending_block_body(pending_block, ip),
@@ -342,8 +348,12 @@ defmodule CredoCoreNode.Pool do
   defp pending_block_tx_trie(%PendingBlock{tx_root: nil}), do: nil
   defp pending_block_tx_trie(%PendingBlock{hash: nil}), do: nil
 
-  defp pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}),
-    do: MPT.RepoManager.trie("pending_blocks", hash, tx_root)
+  defp pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}) do
+    case MPT.RepoManager.trie("pending_blocks", hash, tx_root) do
+      {:error, _reason} -> nil
+      trie -> trie
+    end
+  end
 
   def get_transaction_from_address(tx) do
     tx

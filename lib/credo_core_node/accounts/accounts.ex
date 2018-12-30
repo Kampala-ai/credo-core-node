@@ -3,15 +3,13 @@ defmodule CredoCoreNode.Accounts do
   The Accounts context.
   """
 
-  alias CredoCoreNode.{Blockchain, Pool}
+  alias CredoCoreNode.{Blockchain, State}
   alias CredoCoreNode.Accounts.Account
   alias CredoCoreNode.Pool.PendingTransaction
   alias CredoCoreNode.Blockchain.Transaction
   alias CredoCoreNode.Mining.Vote
 
   alias Mnesia.Repo
-
-  alias Decimal, as: D
 
   @behaviour CredoCoreNode.Adapters.AccountsAdapter
 
@@ -122,30 +120,15 @@ defmodule CredoCoreNode.Accounts do
   end
 
   def get_account_balance(address) do
-    # TODO: replace with more efficient implementation.
-    last_block = Blockchain.last_block()
+    state_trie =
+      Blockchain.last_confirmed_block_number()
+      |> State.calculate_world_state!()
+      |> State.state_trie()
 
-    for block <- Blockchain.list_preceding_blocks(last_block) ++ [last_block] do
-      for tx <- Blockchain.list_transactions(block) do
-        from = Pool.get_transaction_from_address(tx)
-        to = tx.to
+    account_state = State.get_account_state(state_trie, address)
 
-        unless to == address && from == address do
-          cond do
-            address == to ->
-              tx.value
+    Exleveldb.close(elem(state_trie.db, 1))
 
-            address == from ->
-              D.minus(tx.value)
-
-            true ->
-              D.new(0)
-          end
-        end
-      end
-    end
-    |> Enum.concat()
-    |> Enum.reject(&is_nil(&1))
-    |> Enum.reduce(D.new(0), fn x, acc -> D.add(x, acc) end)
+    account_state.balance
   end
 end

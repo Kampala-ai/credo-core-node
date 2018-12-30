@@ -3,9 +3,8 @@ defmodule CredoCoreNode.Blockchain do
   The Blockchain context.
   """
 
+  alias CredoCoreNode.{Pool, Network, State}
   alias CredoCoreNode.Blockchain.{Block, BlockFragment, Transaction}
-  alias CredoCoreNode.Pool
-  alias CredoCoreNode.Network
   alias CredoCoreNodeWeb.Endpoint
   alias MerklePatriciaTree.Trie
 
@@ -237,7 +236,7 @@ defmodule CredoCoreNode.Blockchain do
   @doc """
   Creates/updates a block.
   """
-  def write_block(%Block{hash: hash, body: body} = block)
+  def write_block(%Block{hash: hash, body: body, state_root: state_root} = block)
       when not is_nil(hash) and not is_nil(body) do
     transactions =
       body
@@ -253,10 +252,18 @@ defmodule CredoCoreNode.Blockchain do
     tx_root = Base.encode16(tx_trie.root_hash)
     Exleveldb.close(elem(tx_trie.db, 1))
 
-    block
-    |> Map.drop([:body])
-    |> Map.put(:tx_root, tx_root)
-    |> write_block()
+    if State.calculate_world_state(block.number) in [
+         {:ok, state_root},
+         {:error, :missing_block_body},
+         {:error, :db_inaccessible}
+       ] do
+      block
+      |> Map.drop([:body])
+      |> Map.put(:tx_root, tx_root)
+      |> write_block()
+    else
+      {:error, :invalid_state}
+    end
   end
 
   @doc """
@@ -318,6 +325,10 @@ defmodule CredoCoreNode.Blockchain do
   defp block_tx_trie(%Block{tx_root: nil}), do: nil
   defp block_tx_trie(%Block{hash: nil}), do: nil
 
-  defp block_tx_trie(%Block{tx_root: tx_root, hash: hash}),
-    do: MPT.RepoManager.trie("blocks", hash, tx_root)
+  defp block_tx_trie(%Block{tx_root: tx_root, hash: hash}) do
+    case MPT.RepoManager.trie("blocks", hash, tx_root) do
+      {:error, _reason} -> nil
+      trie -> trie
+    end
+  end
 end
