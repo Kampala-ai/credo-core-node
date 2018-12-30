@@ -7,6 +7,9 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
   alias Decimal, as: D
 
+  defdelegate valid_coinbase_transaction?(block), to: Coinbase
+  defdelegate valid_deposit_withdrawals?(block), to: DepositWithdrawal
+
   @behaviour CredoCoreNode.Adapters.BlockValidatorAdapter
 
   @min_txs_per_block 1
@@ -23,7 +26,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
         valid_transaction_count?(block) && valid_transaction_data_length?(block) &&
         valid_transaction_amounts?(block) && valid_transaction_are_unmined?(block) &&
         valid_deposit_withdrawals?(block) && valid_block_irreversibility?(block) &&
-        valid_coinbase_transaction?(block) && valid_value_transfer_limits?(block)
+        valid_value_transfer_limits?(block)
 
     is_valid =
       case skip_network_consensus_validation do
@@ -87,10 +90,6 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     Enum.reduce(res, true, &(&1 && &2))
   end
 
-  def valid_deposit_withdrawals?(block) do
-    DepositWithdrawal.valid_deposit_withdrawals?(block)
-  end
-
   def valid_block_irreversibility?(block) do
     _last_irreversible_block =
       Blockchain.list_blocks()
@@ -99,10 +98,6 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
     # Check that the current block is in a chain of blocks containing the last irreversible block.
     true
-  end
-
-  def valid_coinbase_transaction?(block) do
-    Coinbase.valid_coinbase_transaction?(block)
   end
 
   def valid_value_transfer_limits?(block) do

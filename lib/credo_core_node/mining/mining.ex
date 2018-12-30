@@ -90,7 +90,7 @@ defmodule CredoCoreNode.Mining do
   @first_stake_threshold D.new(1_000_000)
   @second_stake_threshold D.new(30_000_000)
 
-  def get_dampened_stake_amount(%Miner{stake_amount: stake_amount} = miner), do: get_dampened_stake_amount(stake_amount)
+  def get_dampened_stake_amount(%Miner{stake_amount: stake_amount}), do: get_dampened_stake_amount(stake_amount)
   def get_dampened_stake_amount(stake_amount) do
     if D.cmp(stake_amount, @first_stake_threshold) != :gt do
       stake_amount
