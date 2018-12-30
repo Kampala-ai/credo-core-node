@@ -102,9 +102,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   def valid_coinbase_transaction?(block) do
-    coinbase_txs = Coinbase.get_coinbase_txs(block)
-
-    length(coinbase_txs) == 1 && Coinbase.tx_fee_sums_match?(block, coinbase_txs)
+    Coinbase.valid_coinbase_transaction?(block)
   end
 
   def valid_value_transfer_limits?(block) do
