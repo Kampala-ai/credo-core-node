@@ -23,6 +23,7 @@ defmodule CredoCoreNode.Mining.Coinbase do
     txs ++ [tx]
   end
 
+  def valid_coinbase_transaction?(%{number: number}) when number == 0, do: true
   def valid_coinbase_transaction?(block) do
     coinbase_txs = get_coinbase_txs(block)
 
