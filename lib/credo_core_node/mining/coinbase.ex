@@ -43,7 +43,7 @@ defmodule CredoCoreNode.Mining.Coinbase do
 
   def get_coinbase_txs(block) do
     block
-    |> Pool.list_pending_transactions()
+    |> Blockchain.list_transactions()
     |> Enum.filter(&is_coinbase_tx?(&1))
   end
 
@@ -62,7 +62,7 @@ defmodule CredoCoreNode.Mining.Coinbase do
     coinbase_tx = List.first(coinbase_txs)
 
     txs_minus_coinbase_tx =
-      Pool.list_pending_transactions(block)
+      Blockchain.list_transactions(block)
       |> Enum.filter(&(!is_coinbase_tx?(&1)))
 
     non_coinbase_tx_fees_sum = Pool.sum_pending_transaction_fees(txs_minus_coinbase_tx)
