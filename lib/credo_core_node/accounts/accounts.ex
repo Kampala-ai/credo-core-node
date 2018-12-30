@@ -119,9 +119,15 @@ defmodule CredoCoreNode.Accounts do
     Repo.delete(account)
   end
 
-  def get_account_balance(address) do
+  def get_account_balance(address, last_block \\ nil) do
+    last_block_number =
+      case last_block do
+        %{number: number} -> number
+        _ -> Blockchain.last_confirmed_block_number()
+      end
+
     state_trie =
-      Blockchain.last_confirmed_block_number()
+      last_block_number
       |> State.calculate_world_state!()
       |> State.state_trie()
 

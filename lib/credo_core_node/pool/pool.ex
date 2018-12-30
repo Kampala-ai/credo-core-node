@@ -322,10 +322,10 @@ defmodule CredoCoreNode.Pool do
     |> Enum.reduce(true, &(&1 && &2))
   end
 
-  def is_tx_from_balance_sufficient?(tx) do
+  def is_tx_from_balance_sufficient?(tx, block \\ nil) do
     tx
     |> get_transaction_from_address()
-    |> Accounts.get_account_balance()
+    |> Accounts.get_account_balance(block)
     |> D.cmp(D.new(tx.value)) == :gt
   end
 

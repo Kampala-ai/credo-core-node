@@ -23,9 +23,27 @@ defmodule CredoCoreNode.Mining.Coinbase do
     txs ++ [tx]
   end
 
+  def valid_coinbase_transaction?(%{number: number}) when number == 0, do: true
+  def valid_coinbase_transaction?(block) do
+    coinbase_txs = get_coinbase_txs(block)
+
+    valid_number_of_txs?(coinbase_txs) && valid_value?(block, coinbase_txs) && valid_to?(coinbase_txs)
+  end
+
+  def valid_number_of_txs?(coinbase_txs), do: length(coinbase_txs) == 1
+
+  def valid_value?(block, coinbase_txs), do: tx_fee_sums_match?(block, coinbase_txs)
+
+  def valid_to?(coinbase_txs) do
+    to =
+      List.first(coinbase_txs).to
+
+    !is_nil(Mining.get_miner(to))
+  end
+
   def get_coinbase_txs(block) do
     block
-    |> Pool.list_pending_transactions()
+    |> Blockchain.list_transactions()
     |> Enum.filter(&is_coinbase_tx?(&1))
   end
 
@@ -41,10 +59,10 @@ defmodule CredoCoreNode.Mining.Coinbase do
   end
 
   def tx_fee_sums_match?(block, coinbase_txs) do
-    [coinbase_tx] = coinbase_txs
+    coinbase_tx = List.first(coinbase_txs)
 
     txs_minus_coinbase_tx =
-      Pool.list_pending_transactions(block)
+      Blockchain.list_transactions(block)
       |> Enum.filter(&(!is_coinbase_tx?(&1)))
 
     non_coinbase_tx_fees_sum = Pool.sum_pending_transaction_fees(txs_minus_coinbase_tx)
