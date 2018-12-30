@@ -7,6 +7,9 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
   alias Decimal, as: D
 
+  defdelegate valid_coinbase_transaction?(block), to: Coinbase
+  defdelegate valid_deposit_withdrawals?(block), to: DepositWithdrawal
+
   @behaviour CredoCoreNode.Adapters.BlockValidatorAdapter
 
   @min_txs_per_block 1
@@ -54,24 +57,25 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   def valid_transaction_count?(block) do
-    len = length(Pool.list_pending_transactions(block))
+    len = length(Blockchain.list_transactions(block))
 
     len >= @min_txs_per_block && len <= @max_txs_per_block
   end
 
   def valid_transaction_data_length?(block) do
     res =
-      Enum.map(Pool.list_pending_transactions(block), fn tx ->
+      Enum.map(Blockchain.list_transactions(block), fn tx ->
         String.length(tx.data) <= @max_data_length
       end)
 
     Enum.reduce(res, true, &(&1 && &2))
   end
 
+  def valid_transaction_amounts?(%{number: number}) when number == 0, do: true
   def valid_transaction_amounts?(block) do
     res =
-      Enum.map(Pool.list_pending_transactions(block), fn tx ->
-        Pool.is_tx_from_balance_sufficient?(tx) || Coinbase.is_coinbase_tx?(tx)
+      Enum.map(Blockchain.list_transactions(block), fn tx ->
+        Pool.is_tx_from_balance_sufficient?(tx, block) || Coinbase.is_coinbase_tx?(tx)
       end)
 
     Enum.reduce(res, true, &(&1 && &2))
@@ -80,15 +84,11 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   def valid_transaction_are_unmined?(block) do
     # TODO: replace with more efficient implementation.
     res =
-      Enum.map(Pool.list_pending_transactions(block), fn tx ->
+      Enum.map(Blockchain.list_transactions(block), fn tx ->
         Pool.is_tx_unmined?(tx, block)
       end)
 
     Enum.reduce(res, true, &(&1 && &2))
-  end
-
-  def valid_deposit_withdrawals?(block) do
-    DepositWithdrawal.valid_deposit_withdrawals?(block)
   end
 
   def valid_block_irreversibility?(block) do
@@ -101,14 +101,9 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     true
   end
 
-  def valid_coinbase_transaction?(block) do
-    coinbase_txs = Coinbase.get_coinbase_txs(block)
-
-    length(coinbase_txs) == 1 && Coinbase.tx_fee_sums_match?(block, coinbase_txs)
-  end
-
+  def valid_value_transfer_limits?(%{number: number}) when number == 0, do: true
   def valid_value_transfer_limits?(block) do
-    txs = Pool.list_pending_transactions(block)
+    txs = Blockchain.list_transactions(block)
 
     valid_per_tx_value_transfer_limits?(txs) && valid_per_block_value_transfer_limits?(txs)
   end
@@ -126,6 +121,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     D.cmp(Pool.sum_pending_transaction_values(txs), @max_value_transfer_per_block) != :gt
   end
 
+  def valid_per_block_chain_segment_value_transfer_limits?(%{number: number}) when number < @block_chain_segment_length + 1, do: true
   def valid_per_block_chain_segment_value_transfer_limits?(block) do
     pending_block_value = Pool.sum_pending_transaction_values(block)
 
@@ -140,7 +136,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
   def valid_nonces?(block) do
     res =
-      Enum.map(Pool.list_pending_transactions(block), fn tx ->
+      Enum.map(Blockchain.list_transactions(block), fn tx ->
         tx.nonce == Pool.outgoing_tx_count_for_from_address(tx, block)
       end)
 

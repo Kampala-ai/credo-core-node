@@ -1,6 +1,5 @@
 defmodule CredoCoreNode.Mining.DepositWithdrawal do
-  alias CredoCoreNode.Mining
-  alias CredoCoreNode.Pool
+  alias CredoCoreNode.{Blockchain, Mining, Pool}
 
   alias Decimal, as: D
 
@@ -8,7 +7,7 @@ defmodule CredoCoreNode.Mining.DepositWithdrawal do
 
   def valid_deposit_withdrawals?(block) do
     block
-    |> Pool.list_pending_transactions()
+    |> Blockchain.list_transactions()
     |> get_deposit_withdrawals()
     |> get_invalid_deposit_withdrawals(block)
     |> Enum.empty?()

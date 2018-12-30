@@ -121,9 +121,9 @@ defmodule CredoCoreNode.Accounts do
     Repo.delete(account)
   end
 
-  def get_account_balance(address) do
+  def get_account_balance(address, last_block \\ nil) do
     # TODO: replace with more efficient implementation.
-    last_block = Blockchain.last_block()
+    last_block = last_block || Blockchain.last_block()
 
     for block <- Blockchain.list_preceding_blocks(last_block) ++ [last_block] do
       for tx <- Blockchain.list_transactions(block) do
