@@ -100,6 +100,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     true
   end
 
+  def valid_value_transfer_limits?(%{number: number}) when number == 0, do: true
   def valid_value_transfer_limits?(block) do
     txs = Pool.list_pending_transactions(block)
 
@@ -119,6 +120,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     D.cmp(Pool.sum_pending_transaction_values(txs), @max_value_transfer_per_block) != :gt
   end
 
+  def valid_per_block_chain_segment_value_transfer_limits?(%{number: number}) when number < @block_chain_segment_length + 1, do: true
   def valid_per_block_chain_segment_value_transfer_limits?(block) do
     pending_block_value = Pool.sum_pending_transaction_values(block)
 
