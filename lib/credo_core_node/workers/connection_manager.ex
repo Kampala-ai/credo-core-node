@@ -40,6 +40,7 @@ defmodule CredoCoreNode.Workers.ConnectionManager do
 
   defp connect(), do: connect(0)
   defp connect(10), do: nil
+
   defp connect(num_attempts) do
     unless Network.active_connections_limit_reached?(:outgoing) do
       known_node =

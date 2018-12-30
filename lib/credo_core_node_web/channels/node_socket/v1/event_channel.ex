@@ -33,11 +33,17 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
 
         if BlockValidator.valid_block_hash?(blk, hash) &&
              BlockValidator.valid_block_body?(blk, body) do
-          Logger.info("Writing block #{hash}")
+          if BlockValidator.valid_block?(blk, true) do
+            Logger.info("Writing block #{hash}")
 
-          blk
-          |> Map.put(:body, body)
-          |> Blockchain.write_block()
+            blk
+            |> Map.put(:body, body)
+            |> Blockchain.write_block()
+          else
+            Logger.info("Deleting invalid block #{hash}")
+
+            Blockchain.delete_block(blk)
+          end
         else
           Logger.info("Invalid block #{hash}, ignoring")
         end
@@ -84,11 +90,17 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventChannel do
 
         if BlockValidator.valid_block_hash?(blk, hash) &&
              BlockValidator.valid_block_body?(blk, body) do
-          Logger.info("Writing pending_block #{hash}")
+          if BlockValidator.valid_block?(blk, true) do
+            Logger.info("Writing pending block #{hash}")
 
-          blk
-          |> Map.put(:body, body)
-          |> Pool.write_pending_block()
+            blk
+            |> Map.put(:body, body)
+            |> Pool.write_pending_block()
+          else
+            Logger.info("Deleting invalid pending block #{hash}")
+
+            Pool.delete_pending_block(blk)
+          end
         else
           Logger.info("Invalid pending_block #{hash}, ignoring")
         end

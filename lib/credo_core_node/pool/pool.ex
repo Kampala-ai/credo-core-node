@@ -5,11 +5,13 @@ defmodule CredoCoreNode.Pool do
 
   alias CredoCoreNode.{Accounts, Blockchain, Network}
   alias CredoCoreNode.Pool.{PendingBlock, PendingBlockFragment, PendingTransaction}
-  alias CredoCoreNode.Blockchain.Block
+  alias CredoCoreNode.Blockchain.{Block, BlockValidator}
   alias CredoCoreNodeWeb.Endpoint
   alias MerklePatriciaTree.Trie
 
   alias Decimal, as: D
+
+  require Logger
 
   @behaviour CredoCoreNode.Adapters.PoolAdapter
 
@@ -282,8 +284,16 @@ defmodule CredoCoreNode.Pool do
 
     case :hackney.request(:get, url, headers, "", [:with_body, pool: false]) do
       {:ok, 200, _headers, body} ->
-        write_pending_block(%{pending_block | body: body})
-        propagate_pending_block(pending_block)
+        if BlockValidator.valid_block?(%{pending_block | body: body}, true) do
+          Logger.info("Writing pending block #{pending_block.hash}")
+
+          write_pending_block(%{pending_block | body: body})
+          propagate_pending_block(pending_block)
+        else
+          Logger.info("Deleting invalid pending block #{pending_block.hash}")
+
+          delete_pending_block(pending_block)
+        end
 
       _ ->
         nil

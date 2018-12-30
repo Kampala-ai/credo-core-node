@@ -3,7 +3,7 @@ defmodule CredoCoreNode.Blockchain do
   The Blockchain context.
   """
 
-  alias CredoCoreNode.Blockchain.{Block, BlockFragment, Transaction}
+  alias CredoCoreNode.Blockchain.{Block, BlockFragment, BlockValidator, Transaction}
   alias CredoCoreNode.Pool
   alias CredoCoreNode.Pool.PendingBlock
   alias CredoCoreNode.Network
@@ -11,6 +11,8 @@ defmodule CredoCoreNode.Blockchain do
   alias MerklePatriciaTree.Trie
 
   alias Decimal, as: D
+
+  require Logger
 
   @behaviour CredoCoreNode.Adapters.BlockchainAdapter
 
@@ -46,6 +48,7 @@ defmodule CredoCoreNode.Blockchain do
   Returns the list of transactions.
   """
   def list_transactions(%PendingBlock{} = block), do: Pool.list_pending_transactions(block)
+
   def list_transactions(%Block{} = block) do
     case block_tx_trie(block) do
       nil ->
@@ -272,6 +275,7 @@ defmodule CredoCoreNode.Blockchain do
   Marks a block as invalid.
   """
   def mark_block_as_invalid(%Block{}), do: nil
+
   def mark_block_as_invalid(pending_block) do
     Pool.delete_pending_block(pending_block)
   end
@@ -291,8 +295,16 @@ defmodule CredoCoreNode.Blockchain do
 
     case :hackney.request(:get, url, headers, "", [:with_body, pool: false]) do
       {:ok, 200, _headers, body} ->
-        write_block(%{block | body: body})
-        propagate_block(block)
+        if BlockValidator.valid_block?(%{block | body: body}, true) do
+          Logger.info("Writing and propagating block #{block.hash}")
+
+          write_block(%{block | body: body})
+          propagate_block(block)
+        else
+          Logger.info("Deleting invalid block #{block.hash}")
+
+          delete_block(block)
+        end
 
       _ ->
         nil
