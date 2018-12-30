@@ -71,6 +71,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     Enum.reduce(res, true, &(&1 && &2))
   end
 
+  def valid_transaction_amounts?(%{number: number}) when number == 0, do: true
   def valid_transaction_amounts?(block) do
     res =
       Enum.map(Pool.list_pending_transactions(block), fn tx ->
