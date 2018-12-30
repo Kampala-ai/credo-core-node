@@ -26,7 +26,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
         valid_transaction_count?(block) && valid_transaction_data_length?(block) &&
         valid_transaction_amounts?(block) && valid_transaction_are_unmined?(block) &&
         valid_deposit_withdrawals?(block) && valid_block_irreversibility?(block) &&
-        valid_value_transfer_limits?(block)
+        valid_coinbase_transaction?(block) && valid_value_transfer_limits?(block)
 
     is_valid =
       case skip_network_consensus_validation do
