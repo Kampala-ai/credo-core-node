@@ -55,7 +55,14 @@ defmodule RLP.Serializer do
               case field_type do
                 {:decimal, decimal_places} ->
                   unsigned_value = :binary.decode_unsigned(raw_field_value)
-                  precision = :math.floor(:math.log10(unsigned_value)) + decimal_places
+                  precision =
+                    case unsigned_value do
+                      0 ->
+                        decimal_places
+
+                      value ->
+                        :math.floor(:math.log10(value)) + decimal_places
+                    end
 
                   D.with_context(%D.Context{precision: trunc(precision)}, fn ->
                     unsigned_value
