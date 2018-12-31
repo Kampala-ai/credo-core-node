@@ -16,8 +16,5 @@ defmodule CredoCoreNodeWeb.NodeApi.V1.BlockController do
     render(conn, "index.json", blocks: blocks)
   end
 
-  defp filter_blocks_by_number(blocks, offset) when offset == 0,
-    do: Enum.filter(blocks, &(&1.number >= offset))
-
-  defp filter_blocks_by_number(blocks, offset), do: Enum.filter(blocks, &(&1.number > offset))
+  defp filter_blocks_by_number(blocks, offset), do: Enum.filter(blocks, &(&1.number >= offset))
 end
