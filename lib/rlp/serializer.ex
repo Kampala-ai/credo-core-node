@@ -81,7 +81,13 @@ defmodule RLP.Serializer do
           end)
 
         record = struct(__MODULE__, attributes)
-        %{record | hash: RLP.Hash.hex(record, options)}
+
+        case Map.has_key?(record, :hash) do
+          true ->
+            %{record | hash: RLP.Hash.hex(record, options)}
+          false ->
+            record
+        end
       end
 
       unless Module.defines?(__MODULE__, {:to_rlp, 2}) do
