@@ -12,7 +12,13 @@ defmodule CredoCoreNode.State do
   Gets a single account_state.
   """
   def get_account_state(trie, address) do
-    MPT.Repo.get(trie, AccountState, address)
+    case MPT.Repo.get(trie, AccountState, address) do
+      nil ->
+        %AccountState{address: address, balance: D.new(0), nonce: 0, storage_root: "", code_hash: ""}
+
+      state ->
+        Map.merge(state, %{address: address})
+    end
   end
 
   @doc """
