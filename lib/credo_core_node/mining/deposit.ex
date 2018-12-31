@@ -60,6 +60,7 @@ defmodule CredoCoreNode.Mining.Deposit do
     |> Enum.filter(&valid_deposit_size?(&1))
     |> Enum.filter(&valid_deposit_timelock?(&1))
     |> Enum.filter(&valid_deposit_node_ip?(&1))
+    |> Enum.filter(&valid_deposit_to?(&1))
   end
 
   defp valid_deposit_size?(tx) do
@@ -70,6 +71,10 @@ defmodule CredoCoreNode.Mining.Deposit do
     node_ip = parse_node_ip(tx)
 
     !is_nil(node_ip) && node_ip != ""
+  end
+
+  defp valid_deposit_to?(tx) do
+    Accounts.valid_address?(tx.to)
   end
 
   defp parse_timelock(%{data: nil} = _tx), do: nil

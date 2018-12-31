@@ -15,6 +15,25 @@ defmodule CredoCoreNode.Accounts do
 
   @behaviour CredoCoreNode.Adapters.AccountsAdapter
 
+  @base16_alphabet [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
+  ]
+
   @doc """
   Calculates a public key.
   """
@@ -147,5 +166,12 @@ defmodule CredoCoreNode.Accounts do
     |> Enum.concat()
     |> Enum.reject(&is_nil(&1))
     |> Enum.reduce(D.new(0), fn x, acc -> D.add(x, acc) end)
+  end
+
+  def valid_address?(address) do
+    String.length(address) == 40 &&
+      Enum.reduce(String.split(address, "", trim: true), true, fn char ->
+        Enum.member?(@base16_alphabet, char)
+      end)
   end
 end
