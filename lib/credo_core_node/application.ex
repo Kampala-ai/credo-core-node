@@ -33,7 +33,7 @@ defmodule CredoCoreNode.Application do
   end
 
   defp setup_leveldb do
-    Enum.each(["/leveldb", "/leveldb/blocks", "/leveldb/pending_blocks"], fn path ->
+    Enum.each(["/leveldb", "/leveldb/blocks", "/leveldb/pending_blocks", "/leveldb/state"], fn path ->
       File.mkdir("#{File.cwd!()}#{path}")
     end)
   end
