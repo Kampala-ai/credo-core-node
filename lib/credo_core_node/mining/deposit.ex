@@ -59,10 +59,17 @@ defmodule CredoCoreNode.Mining.Deposit do
     deposits
     |> Enum.filter(&valid_deposit_size?(&1))
     |> Enum.filter(&valid_deposit_timelock?(&1))
+    |> Enum.filter(&valid_deposit_node_ip?(&1))
   end
 
   defp valid_deposit_size?(tx) do
     D.cmp(tx.value, Mining.min_stake_size()) != :lt
+  end
+
+  defp valid_deposit_node_ip?(tx) do
+    node_ip = parse_node_ip(tx)
+
+    !is_nil(node_ip) && node_ip != ""
   end
 
   defp parse_timelock(%{data: nil} = _tx), do: nil
