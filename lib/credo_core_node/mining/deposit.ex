@@ -9,7 +9,7 @@ defmodule CredoCoreNode.Mining.Deposit do
 
   @behaviour CredoCoreNode.Adapters.DepositAdapter
 
-  @min_timelock 1
+  @min_timelock 2_500
   @max_timelock 1640995200 # unix timestamp for 2022
 
   def construct_deposit(amount, private_key, to, timelock \\ nil) do
