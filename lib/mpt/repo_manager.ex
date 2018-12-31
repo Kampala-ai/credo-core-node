@@ -67,6 +67,9 @@ defmodule MPT.RepoManager do
           ArgumentError ->
             {:error, :invalid_root}
         end
+
+      true ->
+        {:error, :missing_database}
     end
   end
 end
