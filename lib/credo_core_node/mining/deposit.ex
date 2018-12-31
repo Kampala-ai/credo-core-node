@@ -3,7 +3,7 @@ defmodule CredoCoreNode.Mining.Deposit do
     table_name: :deposits,
     fields: [:tx_hash, :miner_address, :amount, :timelock]
 
-  alias CredoCoreNode.{Blockchain, Network, Pool, Mining}
+  alias CredoCoreNode.{Accounts, Blockchain, Network, Pool, Mining}
 
   alias Decimal, as: D
 
