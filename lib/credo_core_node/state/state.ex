@@ -128,7 +128,7 @@ defmodule CredoCoreNode.State do
 
     Exleveldb.close(elem(trie.db, 1))
 
-    trie.root_hash
+    Base.encode16(trie.root_hash)
   end
 
   defp last_existing_state(block_number) do
