@@ -171,8 +171,8 @@ defmodule CredoCoreNode.Accounts do
 
   def valid_address?(address) do
     String.length(address) == 40 &&
-      Enum.reduce(String.split(address, "", trim: true), true, fn char ->
-        Enum.member?(@base16_alphabet, char)
+      Enum.reduce(String.split(address, "", trim: true), true, fn char, acc ->
+        acc && Enum.member?(@base16_alphabet, char)
       end)
   end
 end
