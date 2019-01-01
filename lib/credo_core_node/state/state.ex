@@ -85,7 +85,7 @@ defmodule CredoCoreNode.State do
       blk
       |> Blockchain.list_preceding_blocks()
       |> filter_blocks_by_number(start_block_number)
-      |> Kernel.++([blk])
+      |> List.insert_at(0, blk)
 
     txs =
       blks
