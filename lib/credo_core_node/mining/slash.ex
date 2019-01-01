@@ -126,6 +126,8 @@ defmodule CredoCoreNode.Mining.Slash do
       | stake_amount: D.mult(slashed_miner.stake_amount, @slash_penalty_multiplier)
     })
 
+    Mining.delete_miner_for_insufficient_stake(slashed_miner)
+
     vote = first_vote(slash)
 
     Mining.write_slash(%{

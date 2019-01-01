@@ -3,15 +3,14 @@ defmodule CredoCoreNode.Mining.Deposit do
     table_name: :deposits,
     fields: [:tx_hash, :miner_address, :amount, :timelock]
 
-  alias CredoCoreNode.{Blockchain, Network, Pool, Mining}
+  alias CredoCoreNode.{Accounts, Blockchain, Network, Pool, Mining}
 
   alias Decimal, as: D
 
   @behaviour CredoCoreNode.Adapters.DepositAdapter
 
-  # TODO: specify actual timelock limits.
-  @min_timelock 1
-  @max_timelock 100
+  @min_timelock 2_500
+  @max_timelock 1640995200 # unix timestamp for 2022
 
   def construct_deposit(amount, private_key, to, timelock \\ nil) do
     {:ok, tx} =
@@ -59,10 +58,22 @@ defmodule CredoCoreNode.Mining.Deposit do
     deposits
     |> Enum.filter(&valid_deposit_size?(&1))
     |> Enum.filter(&valid_deposit_timelock?(&1))
+    |> Enum.filter(&valid_deposit_node_ip?(&1))
+    |> Enum.filter(&valid_deposit_to?(&1))
   end
 
   defp valid_deposit_size?(tx) do
     D.cmp(tx.value, Mining.min_stake_size()) != :lt
+  end
+
+  defp valid_deposit_node_ip?(tx) do
+    node_ip = parse_node_ip(tx)
+
+    !is_nil(node_ip) && node_ip != ""
+  end
+
+  defp valid_deposit_to?(tx) do
+    Accounts.valid_address?(tx.to)
   end
 
   defp parse_timelock(%{data: nil} = _tx), do: nil
