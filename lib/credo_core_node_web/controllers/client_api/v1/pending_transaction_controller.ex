@@ -16,7 +16,7 @@ defmodule CredoCoreNodeWeb.ClientApi.V1.PendingTransactionController do
 
     {:ok, tx} = Pool.generate_pending_transaction(private_key, attrs)
 
-    if Pool.is_tx_invalid?(tx) do
+    if Pool.invalid_tx?(tx) do
       send_resp(conn, :unprocessable_entity, "")
     else
       tx

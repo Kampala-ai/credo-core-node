@@ -47,7 +47,7 @@ defmodule CredoCoreNode.Pool do
       if length(acc) >= @target_txs_per_block do
         {:halt, acc}
       else
-        if is_tx_valid?(tx) do
+        if valid_tx?(tx) do
           {:cont, acc ++ [tx]}
         else
           {:cont, acc}
@@ -329,12 +329,12 @@ defmodule CredoCoreNode.Pool do
     |> D.cmp(D.new(tx.value)) == :gt
   end
 
-  def is_tx_valid?(tx) do
+  def valid_tx?(tx) do
     is_tx_from_balance_sufficient?(tx) && is_tx_unmined?(tx)
   end
 
   # HACK: temporary disabled balance check to be able to generate pending transactions on testnet
-  def is_tx_invalid?(_tx) do
+  def invalid_tx?(_tx) do
     # !is_tx_from_balance_sufficient?(tx)
     false
   end

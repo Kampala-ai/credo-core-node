@@ -19,7 +19,7 @@ defmodule CredoCoreNodeWeb.NodeSocket.V1.EventHandler do
 
     Logger.info("Received pending transaction: #{inspect(tx)}")
 
-    if !Pool.get_pending_transaction(hash) && !Pool.is_tx_invalid?(tx) &&
+    if !Pool.get_pending_transaction(hash) && !Pool.invalid_tx?(tx) &&
          !already_processed?(session_ids) do
       Logger.info("Writing pending transaction and propagating further...")
       Pool.write_pending_transaction(tx)

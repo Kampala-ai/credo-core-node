@@ -33,8 +33,8 @@ defmodule CredoCoreNode.Adapters.PoolAdapter do
   @callback is_tx_unmined?(%PendingTransaction{} | %Transaction{}, %PendingBlock{} | %Block{}) ::
               boolean()
   @callback is_tx_from_balance_sufficient?(%PendingTransaction{} | %Transaction{}) :: boolean()
-  @callback is_tx_valid?(%PendingTransaction{} | %Transaction{}) :: boolean()
-  @callback is_tx_invalid?(%PendingTransaction{} | %Transaction{}) :: boolean()
+  @callback valid_tx?(%PendingTransaction{} | %Transaction{}) :: boolean()
+  @callback invalid_tx?(%PendingTransaction{} | %Transaction{}) :: boolean()
 
   @callback get_transaction_from_address(%PendingTransaction{} | %Transaction{}) ::
               %PendingTransaction{} | %Transaction{}
