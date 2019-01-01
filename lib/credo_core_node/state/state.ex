@@ -106,7 +106,7 @@ defmodule CredoCoreNode.State do
       Enum.reduce(txs, state_trie(start_root), fn tx, trie ->
         from = Pool.get_transaction_from_address(tx)
         from_account_state = get_account_state(trie, from)
-        from_nonce = tx.nonce + 1
+        from_nonce = from_account_state.nonce + 1
 
         # HACK: testnet may contain accounts with effectively negative balance, storing them as 0
         #   instead as we (technically) can't store negative numbers; to be removed after moving

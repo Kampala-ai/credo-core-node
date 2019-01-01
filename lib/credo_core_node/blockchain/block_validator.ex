@@ -146,7 +146,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
 
     res =
       Enum.map(Blockchain.list_transactions(block), fn tx ->
-        tx.nonce == Accounts.get_account_nonce(prev_block) + 1
+        Pool.valid_nonce?(tx, prev_block)
       end)
 
     Enum.reduce(res, true, &(&1 && &2))

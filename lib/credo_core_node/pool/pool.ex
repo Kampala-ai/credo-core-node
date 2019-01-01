@@ -4,8 +4,9 @@ defmodule CredoCoreNode.Pool do
   """
 
   alias CredoCoreNode.{Accounts, Blockchain, Network, State}
-  alias CredoCoreNode.Pool.{PendingBlock, PendingBlockFragment, PendingTransaction}
   alias CredoCoreNode.Blockchain.Block
+  alias CredoCoreNode.Pool.{PendingBlock, PendingBlockFragment, PendingTransaction}
+  alias CredoCoreNode.State.AccountState
   alias CredoCoreNodeWeb.Endpoint
   alias MerklePatriciaTree.Trie
 
@@ -311,7 +312,6 @@ defmodule CredoCoreNode.Pool do
   end
 
   def is_tx_unmined?(tx), do: is_tx_unmined?(tx, %Block{prev_hash: Blockchain.last_block().hash})
-
   def is_tx_unmined?(tx, block) do
     for block <- Blockchain.list_preceding_blocks(block) do
       for mined_tx <- Blockchain.list_transactions(block) do
@@ -322,6 +322,17 @@ defmodule CredoCoreNode.Pool do
     |> Enum.reduce(true, &(&1 && &2))
   end
 
+  def valid_nonce?(%AccountState{} = from_account_state, tx), do: tx.nonce == from_account_state.nonce + 1
+  def valid_nonce?(tx, block \\ nil) do
+    from_nonce =
+      tx
+      |> get_transaction_from_address()
+      |> Accounts.get_account_nonce(block)
+
+    tx.nonce == from_nonce + 1
+  end
+
+  def is_tx_from_balance_sufficient?(%AccountState{} = from_account_state, tx), do: D.cmp(from_account_state.balance, D.new(tx.value)) == :gt
   def is_tx_from_balance_sufficient?(tx, block \\ nil) do
     tx
     |> get_transaction_from_address()
@@ -330,7 +341,12 @@ defmodule CredoCoreNode.Pool do
   end
 
   def valid_tx?(tx) do
-    is_tx_from_balance_sufficient?(tx) && is_tx_unmined?(tx)
+    from_account_state =
+      tx
+      |> get_transaction_from_address()
+      |> Accounts.get_account_state()
+
+    is_tx_from_balance_sufficient?(from_account_state, tx) && valid_nonce?(from_account_state, tx)
   end
 
   # HACK: temporary disabled balance check to be able to generate pending transactions on testnet

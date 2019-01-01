@@ -119,7 +119,7 @@ defmodule CredoCoreNode.Accounts do
     Repo.delete(account)
   end
 
-  def get_account_state(address, last_block) do
+  def get_account_state(address, last_block \\ nil) do
     last_block_number =
       case last_block do
         %{number: number} -> number
