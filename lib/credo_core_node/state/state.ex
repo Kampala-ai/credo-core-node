@@ -78,7 +78,7 @@ defmodule CredoCoreNode.State do
     blks =
       blk
       |> Blockchain.list_preceding_blocks()
-      |> Enum.filter(&(&1.number > start_block_number))
+      |> filter_blocks_by_number(start_block_number)
       |> Kernel.++([blk])
 
     txs =
@@ -163,4 +163,10 @@ defmodule CredoCoreNode.State do
   end
 
   def state_trie(state_root), do: MPT.RepoManager.trie("state", "state", state_root)
+
+  defp filter_blocks_by_number(blocks, start_block_number) when start_block_number == 0,
+    do: Enum.filter(blocks, &(&1.number >= start_block_number))
+
+  defp filter_blocks_by_number(blocks, start_block_number),
+    do: Enum.filter(blocks, &(&1.number > start_block_number))
 end
