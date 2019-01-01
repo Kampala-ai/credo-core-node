@@ -3,7 +3,14 @@ defmodule CredoCoreNode.State do
   The State context.
   """
 
-  alias CredoCoreNode.State.{AccountState, InvalidRootError, MissingBlockBodyError, DbAccessError}
+  alias CredoCoreNode.State.{
+    AccountState,
+    InvalidRootError,
+    MissingBlockBodyError,
+    DbAccessError,
+    InvalidBlockNumberError
+  }
+
   alias CredoCoreNode.{Blockchain, Pool}
   alias MerklePatriciaTree.Trie
   alias Decimal, as: D
@@ -41,10 +48,11 @@ defmodule CredoCoreNode.State do
     try do
       {:ok, calculate_world_state!(arg)}
     rescue
-      State.MissingBlockBodyError -> {:error, :missing_block_body}
-      State.DbAccessError -> {:error, :db_inaccessible}
-      State.InvalidStateError -> {:error, :invalid_state}
-      State.InvalidRootError -> {:error, :invalid_root}
+      MissingBlockBodyError -> {:error, :missing_block_body}
+      DbAccessError -> {:error, :db_inaccessible}
+      InvalidStateError -> {:error, :invalid_state}
+      InvalidRootError -> {:error, :invalid_root}
+      InvalidBlockNumberError -> {:error, :invalid_block_number}
     end
   end
 
@@ -141,7 +149,7 @@ defmodule CredoCoreNode.State do
   defp last_existing_state(block_number) do
     case Blockchain.get_block_by_number(block_number) do
       nil ->
-        {nil, 0}
+        raise InvalidBlockNumberError, block_number: block_number
 
       # TODO: backwards-compatibility block, only possible on the current testnet version,
       #   to be removed after moving to mainnet
