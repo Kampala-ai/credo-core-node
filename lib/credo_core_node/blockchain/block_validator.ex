@@ -77,8 +77,8 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     prev_block = Blockchain.get_block(block.prev_hash)
 
     res =
-      Enum.map(Blockchain.list_transactions(block), fn tx ->
-        Pool.is_tx_from_balance_sufficient?(tx, prev_block) || Coinbase.is_coinbase_tx?(tx)
+      Enum.map(Blockchain.list_non_coinbase_transactions(block), fn tx ->
+        Pool.is_tx_from_balance_sufficient?(tx, prev_block)
       end)
 
     Enum.reduce(res, true, &(&1 && &2))
@@ -145,7 +145,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     prev_block = Blockchain.get_block(block.prev_hash)
 
     res =
-      Enum.map(Blockchain.list_transactions(block), fn tx ->
+      Enum.map(Blockchain.list_non_coinbase_transactions(block), fn tx ->
         Pool.valid_nonce?(tx, prev_block)
       end)
 

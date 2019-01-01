@@ -5,6 +5,7 @@ defmodule CredoCoreNode.Blockchain do
 
   alias CredoCoreNode.{Pool, Network, State}
   alias CredoCoreNode.Blockchain.{Block, BlockFragment, Transaction}
+  alias CredoCoreNode.Mining.Coinbase
   alias CredoCoreNode.Pool.PendingBlock
   alias CredoCoreNodeWeb.Endpoint
   alias MerklePatriciaTree.Trie
@@ -56,6 +57,12 @@ defmodule CredoCoreNode.Blockchain do
         Exleveldb.close(elem(tx_trie.db, 1))
         txs
     end
+  end
+
+  def list_non_coinbase_transactions(block) do
+    block
+    |> list_transactions()
+    |> Enum.reject(&(Coinbase.is_coinbase_tx?(&1)))
   end
 
   def sum_transaction_values(%Block{} = block) do
