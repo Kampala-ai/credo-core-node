@@ -14,7 +14,7 @@ defmodule CredoCoreNode.Pool do
 
   @behaviour CredoCoreNode.Adapters.PoolAdapter
 
-  @default_pending_transaction_query_limit 500
+  @default_pending_transaction_query_limit 2000
   @target_txs_per_block 2
 
   @doc """
