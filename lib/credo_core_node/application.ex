@@ -10,6 +10,8 @@ defmodule CredoCoreNode.Application do
 
     Mnesia.Repo.setup()
 
+    maybe_load_genesis_block()
+
     # Define workers and child supervisors to be supervised
     children =
       [
@@ -39,6 +41,13 @@ defmodule CredoCoreNode.Application do
         File.mkdir("#{File.cwd!()}#{path}")
       end
     )
+  end
+
+  defp maybe_load_genesis_block do
+    :timer.sleep(100)
+
+    unless CredoCoreNode.Blockchain.get_block_by_number(0),
+      do: CredoCoreNode.Blockchain.load_genesis_block()
   end
 
   defp background_workers(children) do

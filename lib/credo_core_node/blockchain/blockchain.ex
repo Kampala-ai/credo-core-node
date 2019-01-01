@@ -23,7 +23,7 @@ defmodule CredoCoreNode.Blockchain do
   def irreversibility_threshold, do: @irreversibility_threshold
 
   def last_irreversible_block_number,
-    do: max(last_confirmed_block_number() - irreversibility_threshold(), 0)
+    do: max(last_confirmed_block_number() - irreversibility_threshold(), -1)
 
   def last_confirmed_block_number() do
     case last_block() do
@@ -31,7 +31,7 @@ defmodule CredoCoreNode.Blockchain do
         number
 
       nil ->
-        0
+        -1
     end
   end
 
@@ -62,7 +62,7 @@ defmodule CredoCoreNode.Blockchain do
   def list_non_coinbase_transactions(block) do
     block
     |> list_transactions()
-    |> Enum.reject(&(Coinbase.is_coinbase_tx?(&1)))
+    |> Enum.reject(&Coinbase.is_coinbase_tx?(&1))
   end
 
   def sum_transaction_values(%Block{} = block) do
@@ -161,47 +161,47 @@ defmodule CredoCoreNode.Blockchain do
   def last_block() do
     list_blocks()
     |> Enum.sort(&(&1.number > &2.number))
-    |> List.first() || load_genesis_block()
+    |> List.first()
   end
 
   def load_genesis_block() do
     if block = get_block_by_number(0) do
       block
     else
-      genesis_block_attrs =
-        [
-          struct(
-            CredoCoreNode.Pool.PendingTransaction,
-            data: "",
-            fee: D.new(1.1),
-            hash: "680E3A773979575FC3E8B8FE2A42D864F881FD29C018A8F129629EC7084EB7DB",
-            nonce: 0,
-            r: "B7A3424EB20CB5A75BFEC0B2BC7A9EF0CC649B7EFD784442A11B612492349686",
-            s: "4355A76B08672ADDFD0BED4F42DB5A6EFBE7AC582FCAE2E6D26AF3921A009C79",
-            to: "F7DA6E2803E37C10D591C08EBFE2F8A018352955",
-            v: 1,
-            value: D.new(1_374_719_257.2286)
-          ),
-          struct(
-            CredoCoreNode.Pool.PendingTransaction,
-            data:
-              "{\"tx_type\" : \"security_deposit\", \"node_ip\" : \"10.0.1.9\", \"timelock\": \"\"}",
-            fee: D.new(1.0),
-            hash: "A588D170F64FC3ADAF805670DA67C152FA906B8BB855AAA9B2041ED8E2747FF1",
-            nonce: 0,
-            r: "389576343235F0311A7FA5DD8BCE9C6E529698B66AB146427403C4B6863DC801",
-            s: "46A623CC9B3FAFB41F35A698EE4C7ED73C76FA01D8E12209A76046C0B120D0E9",
-            to: "A9A2B9A1EBDDE9EEB5EF733E47FC137D7EB95340",
-            v: 0,
-            value: D.new(10000.0)
-          )
-        ]
-        |> CredoCoreNode.Pool.generate_pending_block()
-        |> elem(1)
-        |> Map.to_list()
-
       block =
-        struct(CredoCoreNode.Blockchain.Block, genesis_block_attrs)
+        %Block{
+          body:
+            <<249, 1, 216, 248, 198, 128, 168, 70, 55, 68, 65, 54, 69, 50, 56, 48, 51, 69, 51, 55,
+              67, 49, 48, 68, 53, 57, 49, 67, 48, 56, 69, 66, 70, 69, 50, 70, 56, 65, 48, 49, 56,
+              51, 53, 50, 57, 53, 53, 140, 4, 113, 36, 32, 67, 34, 130, 250, 144, 107, 128, 0,
+              136, 15, 67, 252, 44, 4, 238, 0, 0, 128, 1, 184, 64, 66, 55, 65, 51, 52, 50, 52, 69,
+              66, 50, 48, 67, 66, 53, 65, 55, 53, 66, 70, 69, 67, 48, 66, 50, 66, 67, 55, 65, 57,
+              69, 70, 48, 67, 67, 54, 52, 57, 66, 55, 69, 70, 68, 55, 56, 52, 52, 52, 50, 65, 49,
+              49, 66, 54, 49, 50, 52, 57, 50, 51, 52, 57, 54, 56, 54, 184, 64, 52, 51, 53, 53, 65,
+              55, 54, 66, 48, 56, 54, 55, 50, 65, 68, 68, 70, 68, 48, 66, 69, 68, 52, 70, 52, 50,
+              68, 66, 53, 65, 54, 69, 70, 66, 69, 55, 65, 67, 53, 56, 50, 70, 67, 65, 69, 50, 69,
+              54, 68, 50, 54, 65, 70, 51, 57, 50, 49, 65, 48, 48, 57, 67, 55, 57, 249, 1, 13, 128,
+              168, 65, 57, 65, 50, 66, 57, 65, 49, 69, 66, 68, 68, 69, 57, 69, 69, 66, 53, 69, 70,
+              55, 51, 51, 69, 52, 55, 70, 67, 49, 51, 55, 68, 55, 69, 66, 57, 53, 51, 52, 48, 138,
+              2, 30, 25, 224, 201, 186, 178, 64, 0, 0, 136, 13, 224, 182, 179, 167, 100, 0, 0,
+              184, 72, 123, 34, 116, 120, 95, 116, 121, 112, 101, 34, 32, 58, 32, 34, 115, 101,
+              99, 117, 114, 105, 116, 121, 95, 100, 101, 112, 111, 115, 105, 116, 34, 44, 32, 34,
+              110, 111, 100, 101, 95, 105, 112, 34, 32, 58, 32, 34, 49, 48, 46, 48, 46, 49, 46,
+              57, 34, 44, 32, 34, 116, 105, 109, 101, 108, 111, 99, 107, 34, 58, 32, 34, 34, 125,
+              128, 184, 64, 51, 56, 57, 53, 55, 54, 51, 52, 51, 50, 51, 53, 70, 48, 51, 49, 49,
+              65, 55, 70, 65, 53, 68, 68, 56, 66, 67, 69, 57, 67, 54, 69, 53, 50, 57, 54, 57, 56,
+              66, 54, 54, 65, 66, 49, 52, 54, 52, 50, 55, 52, 48, 51, 67, 52, 66, 54, 56, 54, 51,
+              68, 67, 56, 48, 49, 184, 64, 52, 54, 65, 54, 50, 51, 67, 67, 57, 66, 51, 70, 65, 70,
+              66, 52, 49, 70, 51, 53, 65, 54, 57, 56, 69, 69, 52, 67, 55, 69, 68, 55, 51, 67, 55,
+              54, 70, 65, 48, 49, 68, 56, 69, 49, 50, 50, 48, 57, 65, 55, 54, 48, 52, 54, 67, 48,
+              66, 49, 50, 48, 68, 48, 69, 57>>,
+          hash: "C34C9F7B1C2657DB01B825F805AC1363804DFA7FA884BD8A9D085C1FD7BD137A",
+          number: 0,
+          prev_hash: "",
+          receipt_root: "",
+          state_root: "",
+          tx_root: "55A0D0EC08B7490480D2F2080B4B318E2223D2530845E811A2F265D4E8AD9E6B"
+        }
         |> CredoCoreNode.Blockchain.write_block()
         |> elem(1)
 
@@ -262,17 +262,23 @@ defmodule CredoCoreNode.Blockchain do
     tx_root = Base.encode16(tx_trie.root_hash)
     Exleveldb.close(elem(tx_trie.db, 1))
 
-    if State.calculate_world_state(transactions) in [
-         {:ok, state_root},
-         {:error, :missing_block_body},
-         {:error, :db_inaccessible}
-       ] do
-      block
-      |> Map.drop([:body])
-      |> Map.put(:tx_root, tx_root)
-      |> write_block()
-    else
-      {:error, :invalid_state}
+    case State.calculate_world_state(transactions) do
+      {:ok, ^state_root} ->
+        block
+        |> Map.drop([:body])
+        |> Map.put(:tx_root, tx_root)
+        |> write_block()
+
+      # TODO: backwards-compatibility block. On the current testnet version, early blocks have
+      #   empty `state_root` value. To be removed after moving to mainnet.
+      {:ok, _state_root} when state_root == "" ->
+        block
+        |> Map.drop([:body])
+        |> Map.put(:tx_root, tx_root)
+        |> write_block()
+
+      _ ->
+        {:error, :invalid_state}
     end
   end
 
