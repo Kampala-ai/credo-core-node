@@ -262,7 +262,7 @@ defmodule CredoCoreNode.Blockchain do
     tx_root = Base.encode16(tx_trie.root_hash)
     Exleveldb.close(elem(tx_trie.db, 1))
 
-    if State.calculate_world_state(block.number) in [
+    if State.calculate_world_state(transactions) in [
          {:ok, state_root},
          {:error, :missing_block_body},
          {:error, :db_inaccessible}
