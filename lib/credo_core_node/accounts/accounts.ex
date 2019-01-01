@@ -119,7 +119,7 @@ defmodule CredoCoreNode.Accounts do
     Repo.delete(account)
   end
 
-  def get_account_balance(address, last_block \\ nil) do
+  def get_account_state(address, last_block) do
     last_block_number =
       case last_block do
         %{number: number} -> number
@@ -135,6 +135,18 @@ defmodule CredoCoreNode.Accounts do
 
     Exleveldb.close(elem(state_trie.db, 1))
 
+    account_state
+  end
+
+  def get_account_balance(address, last_block \\ nil) do
+    account_state = get_account_state(address, last_block)
+
     account_state.balance
+  end
+
+  def get_account_nonce(address, last_block \\ nil) do
+    account_state = get_account_state(address, last_block)
+
+    account_state.nonce
   end
 end

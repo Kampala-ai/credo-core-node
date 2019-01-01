@@ -142,9 +142,11 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   def valid_nonces?(block) do
+    prev_block = Blockchain.get_block(block.prev_hash)
+
     res =
       Enum.map(Blockchain.list_transactions(block), fn tx ->
-        tx.nonce == Pool.outgoing_tx_count_for_from_address(tx, block)
+        tx.nonce == Accounts.get_account_nonce(prev_block) + 1
       end)
 
     Enum.reduce(res, true, &(&1 && &2))
