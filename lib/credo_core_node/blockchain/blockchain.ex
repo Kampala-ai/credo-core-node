@@ -23,7 +23,7 @@ defmodule CredoCoreNode.Blockchain do
   def irreversibility_threshold, do: @irreversibility_threshold
 
   def last_irreversible_block_number,
-    do: max(last_confirmed_block_number() - irreversibility_threshold(), -1)
+    do: max(last_confirmed_block_number() - irreversibility_threshold(), 0)
 
   def last_confirmed_block_number() do
     case last_block() do
