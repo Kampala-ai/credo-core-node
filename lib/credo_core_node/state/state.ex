@@ -86,6 +86,7 @@ defmodule CredoCoreNode.State do
       |> Blockchain.list_preceding_blocks()
       |> filter_blocks_by_number(start_block_number)
       |> List.insert_at(0, blk)
+      |> Enum.reverse()
 
     txs =
       blks
