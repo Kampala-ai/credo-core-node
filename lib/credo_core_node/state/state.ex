@@ -14,7 +14,13 @@ defmodule CredoCoreNode.State do
   def get_account_state(trie, address) do
     case MPT.Repo.get(trie, AccountState, address) do
       nil ->
-        %AccountState{address: address, balance: D.new(0), nonce: 0, storage_root: "", code_hash: ""}
+        %AccountState{
+          address: address,
+          balance: D.new(0),
+          nonce: 0,
+          storage_root: "",
+          code_hash: ""
+        }
 
       state ->
         Map.merge(state, %{address: address})
@@ -101,12 +107,12 @@ defmodule CredoCoreNode.State do
         from_account_state = get_account_state(trie, from)
         from_nonce = tx.nonce + 1
 
+        # HACK: testnet may contain accounts with effectively negative balance, storing them as 0
+        #   instead as we (technically) can't store negative numbers; to be removed after moving
+        #   to mainnet
         from_balance =
           from_account_state.balance
           |> D.sub(tx.value)
-          # HACK: testnet may contain accounts with effectively negative balance, storing them as 0
-          #   instead as we (technically) can't store negative numbers; to be removed after moving
-          #   to mainnet
           |> D.max(0)
 
         {:ok, trie, _account_state} =

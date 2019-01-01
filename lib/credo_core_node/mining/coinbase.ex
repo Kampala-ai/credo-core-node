@@ -24,10 +24,12 @@ defmodule CredoCoreNode.Mining.Coinbase do
   end
 
   def valid_coinbase_transaction?(%{number: number}) when number == 0, do: true
+
   def valid_coinbase_transaction?(block) do
     coinbase_txs = get_coinbase_txs(block)
 
-    valid_number_of_txs?(coinbase_txs) && valid_value?(block, coinbase_txs) && valid_to?(coinbase_txs)
+    valid_number_of_txs?(coinbase_txs) && valid_value?(block, coinbase_txs) &&
+      valid_to?(coinbase_txs)
   end
 
   def valid_number_of_txs?(coinbase_txs), do: length(coinbase_txs) == 1
@@ -35,8 +37,7 @@ defmodule CredoCoreNode.Mining.Coinbase do
   def valid_value?(block, coinbase_txs), do: tx_fee_sums_match?(block, coinbase_txs)
 
   def valid_to?(coinbase_txs) do
-    to =
-      List.first(coinbase_txs).to
+    to = List.first(coinbase_txs).to
 
     !is_nil(Mining.get_miner(to))
   end

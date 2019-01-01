@@ -55,6 +55,7 @@ defmodule RLP.Serializer do
               case field_type do
                 {:decimal, decimal_places} ->
                   unsigned_value = :binary.decode_unsigned(raw_field_value)
+
                   precision =
                     case unsigned_value do
                       0 ->
@@ -85,6 +86,7 @@ defmodule RLP.Serializer do
         case Map.has_key?(record, :hash) do
           true ->
             %{record | hash: RLP.Hash.hex(record, options)}
+
           false ->
             record
         end

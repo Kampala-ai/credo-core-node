@@ -45,6 +45,7 @@ defmodule CredoCoreNode.Blockchain do
   Returns the list of transactions.
   """
   def list_transactions(%PendingBlock{} = block), do: Pool.list_pending_transactions(block)
+
   def list_transactions(%Block{} = block) do
     case block_tx_trie(block) do
       nil ->
@@ -279,6 +280,7 @@ defmodule CredoCoreNode.Blockchain do
   Marks a block as invalid.
   """
   def mark_block_as_invalid(%Block{}), do: nil
+
   def mark_block_as_invalid(pending_block) do
     Pool.delete_pending_block(pending_block)
   end
