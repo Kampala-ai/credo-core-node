@@ -282,7 +282,7 @@ defmodule CredoCoreNode.Blockchain do
   def mark_block_as_invalid(%Block{}), do: nil
 
   def mark_block_as_invalid(pending_block) do
-    Pool.delete_pending_block(pending_block)
+    # Pool.delete_pending_block(pending_block)
   end
 
   @doc """
