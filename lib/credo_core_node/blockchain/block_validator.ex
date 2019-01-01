@@ -74,9 +74,11 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   def valid_transaction_amounts?(%{number: number}) when number == 0, do: true
 
   def valid_transaction_amounts?(block) do
+    prev_block = Blockchain.get_block(block.prev_hash)
+
     res =
       Enum.map(Blockchain.list_transactions(block), fn tx ->
-        Pool.is_tx_from_balance_sufficient?(tx, block) || Coinbase.is_coinbase_tx?(tx)
+        Pool.is_tx_from_balance_sufficient?(tx, prev_block) || Coinbase.is_coinbase_tx?(tx)
       end)
 
     Enum.reduce(res, true, &(&1 && &2))
