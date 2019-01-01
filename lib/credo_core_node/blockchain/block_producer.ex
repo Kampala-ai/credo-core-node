@@ -69,7 +69,10 @@ defmodule CredoCoreNode.Blockchain.BlockProducer do
     # TODO: implement a more memory-efficient weighting mechanism.
     miner_addresses =
       for miner <- Mining.list_miners() do
-        for _ <- 0..round(D.to_float(Mining.get_dampened_stake_amount(miner)) * miner.participation_rate) do
+        for _ <-
+              0..round(
+                D.to_float(Mining.get_dampened_stake_amount(miner)) * miner.participation_rate
+              ) do
           miner.address
         end
       end

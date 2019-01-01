@@ -3,15 +3,13 @@ defmodule CredoCoreNode.Accounts do
   The Accounts context.
   """
 
-  alias CredoCoreNode.{Blockchain, Pool}
+  alias CredoCoreNode.{Blockchain, State}
   alias CredoCoreNode.Accounts.Account
   alias CredoCoreNode.Pool.PendingTransaction
   alias CredoCoreNode.Blockchain.Transaction
   alias CredoCoreNode.Mining.Vote
 
   alias Mnesia.Repo
-
-  alias Decimal, as: D
 
   @behaviour CredoCoreNode.Adapters.AccountsAdapter
 
@@ -121,31 +119,34 @@ defmodule CredoCoreNode.Accounts do
     Repo.delete(account)
   end
 
-  def get_account_balance(address, last_block \\ nil) do
-    # TODO: replace with more efficient implementation.
-    last_block = last_block || Blockchain.last_block()
-
-    for block <- Blockchain.list_preceding_blocks(last_block) ++ [last_block] do
-      for tx <- Blockchain.list_transactions(block) do
-        from = Pool.get_transaction_from_address(tx)
-        to = tx.to
-
-        unless to == address && from == address do
-          cond do
-            address == to ->
-              tx.value
-
-            address == from ->
-              D.minus(tx.value)
-
-            true ->
-              D.new(0)
-          end
-        end
+  def get_account_state(address, last_block \\ nil) do
+    last_block_number =
+      case last_block do
+        %{number: number} -> number
+        _ -> Blockchain.last_confirmed_block_number()
       end
-    end
-    |> Enum.concat()
-    |> Enum.reject(&is_nil(&1))
-    |> Enum.reduce(D.new(0), fn x, acc -> D.add(x, acc) end)
+
+    state_trie =
+      last_block_number
+      |> State.calculate_world_state!()
+      |> State.state_trie()
+
+    account_state = State.get_account_state(state_trie, address)
+
+    Exleveldb.close(elem(state_trie.db, 1))
+
+    account_state
+  end
+
+  def get_account_balance(address, last_block \\ nil) do
+    account_state = get_account_state(address, last_block)
+
+    account_state.balance
+  end
+
+  def get_account_nonce(address, last_block \\ nil) do
+    account_state = get_account_state(address, last_block)
+
+    account_state.nonce
   end
 end

@@ -55,7 +55,15 @@ defmodule RLP.Serializer do
               case field_type do
                 {:decimal, decimal_places} ->
                   unsigned_value = :binary.decode_unsigned(raw_field_value)
-                  precision = :math.floor(:math.log10(unsigned_value)) + decimal_places
+
+                  precision =
+                    case unsigned_value do
+                      0 ->
+                        decimal_places
+
+                      value ->
+                        :math.floor(:math.log10(value)) + decimal_places
+                    end
 
                   D.with_context(%D.Context{precision: trunc(precision)}, fn ->
                     unsigned_value
@@ -74,7 +82,14 @@ defmodule RLP.Serializer do
           end)
 
         record = struct(__MODULE__, attributes)
-        %{record | hash: RLP.Hash.hex(record, options)}
+
+        case Map.has_key?(record, :hash) do
+          true ->
+            %{record | hash: RLP.Hash.hex(record, options)}
+
+          false ->
+            record
+        end
       end
 
       unless Module.defines?(__MODULE__, {:to_rlp, 2}) do

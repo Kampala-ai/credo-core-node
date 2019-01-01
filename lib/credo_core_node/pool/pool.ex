@@ -3,9 +3,10 @@ defmodule CredoCoreNode.Pool do
   The Pool context.
   """
 
-  alias CredoCoreNode.{Accounts, Blockchain, Network}
-  alias CredoCoreNode.Pool.{PendingBlock, PendingBlockFragment, PendingTransaction}
+  alias CredoCoreNode.{Accounts, Blockchain, Network, State}
   alias CredoCoreNode.Blockchain.Block
+  alias CredoCoreNode.Pool.{PendingBlock, PendingBlockFragment, PendingTransaction}
+  alias CredoCoreNode.State.AccountState
   alias CredoCoreNodeWeb.Endpoint
   alias MerklePatriciaTree.Trie
 
@@ -13,7 +14,7 @@ defmodule CredoCoreNode.Pool do
 
   @behaviour CredoCoreNode.Adapters.PoolAdapter
 
-  @default_pending_transaction_query_limit 500
+  @default_pending_transaction_query_limit 2000
   @target_txs_per_block 2
 
   @doc """
@@ -47,7 +48,7 @@ defmodule CredoCoreNode.Pool do
       if length(acc) >= @target_txs_per_block do
         {:halt, acc}
       else
-        if is_tx_valid?(tx) do
+        if valid_tx?(tx) do
           {:cont, acc ++ [tx]}
         else
           {:cont, acc}
@@ -261,16 +262,22 @@ defmodule CredoCoreNode.Pool do
 
     tx_root = Base.encode16(tx_trie.root_hash)
 
-    pending_block = %PendingBlock{
-      prev_hash: prev_hash,
-      number: number,
-      state_root: "",
-      receipt_root: "",
-      tx_root: tx_root,
-      body: ExRLP.encode(pending_transactions)
-    }
+    case State.calculate_world_state(pending_transactions) do
+      {:ok, state_root} ->
+        pending_block = %PendingBlock{
+          prev_hash: prev_hash,
+          number: number,
+          state_root: state_root,
+          receipt_root: "",
+          tx_root: tx_root,
+          body: ExRLP.encode(pending_transactions)
+        }
 
-    {:ok, %PendingBlock{pending_block | hash: RLP.Hash.hex(pending_block)}}
+        {:ok, %PendingBlock{pending_block | hash: RLP.Hash.hex(pending_block)}}
+
+      result ->
+        result
+    end
   end
 
   def fetch_pending_block_body(pending_block, ip),
@@ -316,6 +323,21 @@ defmodule CredoCoreNode.Pool do
     |> Enum.reduce(true, &(&1 && &2))
   end
 
+  def valid_nonce?(%AccountState{} = from_account_state, tx),
+    do: tx.nonce == from_account_state.nonce + 1
+
+  def valid_nonce?(tx, block \\ nil) do
+    from_nonce =
+      tx
+      |> get_transaction_from_address()
+      |> Accounts.get_account_nonce(block)
+
+    tx.nonce == from_nonce + 1
+  end
+
+  def is_tx_from_balance_sufficient?(%AccountState{} = from_account_state, tx),
+    do: D.cmp(from_account_state.balance, D.new(tx.value)) == :gt
+
   def is_tx_from_balance_sufficient?(tx, block \\ nil) do
     tx
     |> get_transaction_from_address()
@@ -323,12 +345,17 @@ defmodule CredoCoreNode.Pool do
     |> D.cmp(D.new(tx.value)) == :gt
   end
 
-  def is_tx_valid?(tx) do
-    is_tx_from_balance_sufficient?(tx) && is_tx_unmined?(tx)
+  def valid_tx?(tx) do
+    from_account_state =
+      tx
+      |> get_transaction_from_address()
+      |> Accounts.get_account_state()
+
+    is_tx_from_balance_sufficient?(from_account_state, tx) && valid_nonce?(from_account_state, tx)
   end
 
   # HACK: temporary disabled balance check to be able to generate pending transactions on testnet
-  def is_tx_invalid?(_tx) do
+  def invalid_tx?(_tx) do
     # !is_tx_from_balance_sufficient?(tx)
     false
   end
@@ -342,8 +369,12 @@ defmodule CredoCoreNode.Pool do
   defp pending_block_tx_trie(%PendingBlock{tx_root: nil}), do: nil
   defp pending_block_tx_trie(%PendingBlock{hash: nil}), do: nil
 
-  defp pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}),
-    do: MPT.RepoManager.trie("pending_blocks", hash, tx_root)
+  defp pending_block_tx_trie(%PendingBlock{tx_root: tx_root, hash: hash}) do
+    case MPT.RepoManager.trie("pending_blocks", hash, tx_root) do
+      {:error, _reason} -> nil
+      trie -> trie
+    end
+  end
 
   def get_transaction_from_address(tx) do
     tx

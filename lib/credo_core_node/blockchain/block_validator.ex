@@ -24,7 +24,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     is_valid =
       valid_block_hash?(block, block.hash) && valid_prev_hash?(block) && valid_format?(block) &&
         valid_transaction_count?(block) && valid_transaction_data_length?(block) &&
-        valid_transaction_amounts?(block) && valid_transaction_are_unmined?(block) &&
+        valid_transaction_amounts?(block) && valid_nonces?(block) &&
         valid_deposit_withdrawals?(block) && valid_block_irreversibility?(block) &&
         valid_coinbase_transaction?(block) && valid_value_transfer_limits?(block)
 
@@ -72,10 +72,13 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   def valid_transaction_amounts?(%{number: number}) when number == 0, do: true
+
   def valid_transaction_amounts?(block) do
+    prev_block = Blockchain.get_block(block.prev_hash)
+
     res =
-      Enum.map(Blockchain.list_transactions(block), fn tx ->
-        Pool.is_tx_from_balance_sufficient?(tx, block) || Coinbase.is_coinbase_tx?(tx)
+      Enum.map(Blockchain.list_non_coinbase_transactions(block), fn tx ->
+        Pool.is_tx_from_balance_sufficient?(tx, prev_block)
       end)
 
     Enum.reduce(res, true, &(&1 && &2))
@@ -102,6 +105,7 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   def valid_value_transfer_limits?(%{number: number}) when number == 0, do: true
+
   def valid_value_transfer_limits?(block) do
     txs = Blockchain.list_transactions(block)
 
@@ -121,7 +125,10 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
     D.cmp(Pool.sum_pending_transaction_values(txs), @max_value_transfer_per_block) != :gt
   end
 
-  def valid_per_block_chain_segment_value_transfer_limits?(%{number: number}) when number < @block_chain_segment_length + 1, do: true
+  def valid_per_block_chain_segment_value_transfer_limits?(%{number: number})
+      when number < @block_chain_segment_length + 1,
+      do: true
+
   def valid_per_block_chain_segment_value_transfer_limits?(block) do
     pending_block_value = Pool.sum_pending_transaction_values(block)
 
@@ -135,9 +142,11 @@ defmodule CredoCoreNode.Blockchain.BlockValidator do
   end
 
   def valid_nonces?(block) do
+    prev_block = Blockchain.get_block(block.prev_hash)
+
     res =
-      Enum.map(Blockchain.list_transactions(block), fn tx ->
-        tx.nonce == Pool.outgoing_tx_count_for_from_address(tx, block)
+      Enum.map(Blockchain.list_non_coinbase_transactions(block), fn tx ->
+        Pool.valid_nonce?(tx, prev_block)
       end)
 
     Enum.reduce(res, true, &(&1 && &2))

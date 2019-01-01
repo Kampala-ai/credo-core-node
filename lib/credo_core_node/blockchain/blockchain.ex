@@ -3,10 +3,10 @@ defmodule CredoCoreNode.Blockchain do
   The Blockchain context.
   """
 
+  alias CredoCoreNode.{Pool, Network, State}
   alias CredoCoreNode.Blockchain.{Block, BlockFragment, Transaction}
-  alias CredoCoreNode.Pool
+  alias CredoCoreNode.Mining.Coinbase
   alias CredoCoreNode.Pool.PendingBlock
-  alias CredoCoreNode.Network
   alias CredoCoreNodeWeb.Endpoint
   alias MerklePatriciaTree.Trie
 
@@ -46,6 +46,7 @@ defmodule CredoCoreNode.Blockchain do
   Returns the list of transactions.
   """
   def list_transactions(%PendingBlock{} = block), do: Pool.list_pending_transactions(block)
+
   def list_transactions(%Block{} = block) do
     case block_tx_trie(block) do
       nil ->
@@ -56,6 +57,12 @@ defmodule CredoCoreNode.Blockchain do
         Exleveldb.close(elem(tx_trie.db, 1))
         txs
     end
+  end
+
+  def list_non_coinbase_transactions(block) do
+    block
+    |> list_transactions()
+    |> Enum.reject(&(Coinbase.is_coinbase_tx?(&1)))
   end
 
   def sum_transaction_values(%Block{} = block) do
@@ -239,7 +246,7 @@ defmodule CredoCoreNode.Blockchain do
   @doc """
   Creates/updates a block.
   """
-  def write_block(%Block{hash: hash, body: body} = block)
+  def write_block(%Block{hash: hash, body: body, state_root: state_root} = block)
       when not is_nil(hash) and not is_nil(body) do
     transactions =
       body
@@ -255,10 +262,18 @@ defmodule CredoCoreNode.Blockchain do
     tx_root = Base.encode16(tx_trie.root_hash)
     Exleveldb.close(elem(tx_trie.db, 1))
 
-    block
-    |> Map.drop([:body])
-    |> Map.put(:tx_root, tx_root)
-    |> write_block()
+    if State.calculate_world_state(transactions) in [
+         {:ok, state_root},
+         {:error, :missing_block_body},
+         {:error, :db_inaccessible}
+       ] do
+      block
+      |> Map.drop([:body])
+      |> Map.put(:tx_root, tx_root)
+      |> write_block()
+    else
+      {:error, :invalid_state}
+    end
   end
 
   @doc """
@@ -272,8 +287,9 @@ defmodule CredoCoreNode.Blockchain do
   Marks a block as invalid.
   """
   def mark_block_as_invalid(%Block{}), do: nil
+
   def mark_block_as_invalid(pending_block) do
-    Pool.delete_pending_block(pending_block)
+    # Pool.delete_pending_block(pending_block)
   end
 
   @doc """
@@ -321,6 +337,10 @@ defmodule CredoCoreNode.Blockchain do
   defp block_tx_trie(%Block{tx_root: nil}), do: nil
   defp block_tx_trie(%Block{hash: nil}), do: nil
 
-  defp block_tx_trie(%Block{tx_root: tx_root, hash: hash}),
-    do: MPT.RepoManager.trie("blocks", hash, tx_root)
+  defp block_tx_trie(%Block{tx_root: tx_root, hash: hash}) do
+    case MPT.RepoManager.trie("blocks", hash, tx_root) do
+      {:error, _reason} -> nil
+      trie -> trie
+    end
+  end
 end

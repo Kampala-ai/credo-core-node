@@ -17,7 +17,7 @@ defmodule CredoCoreNode.Mining.VoteManager do
     Mining.list_votes()
     |> Enum.filter(
       &(&1.block_number == block.number && &1.voting_round == voting_round &&
-          &1.miner_address == Mining.my_miner().address)
+          &1.miner_address == Mining.my_miner().address) && !is_nil(Pool.get_pending_block(&1.block_hash))
     )
     |> Enum.any?()
   end

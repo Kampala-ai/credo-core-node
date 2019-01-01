@@ -8,7 +8,8 @@ defmodule CredoCoreNodeWeb.ClientApi.V1.AccountView do
   def render("show.json", %{account: account}) do
     %{
       address: account.address,
-      balance: account.balance
+      balance: account.balance,
+      nonce: account.nonce
     }
   end
 
